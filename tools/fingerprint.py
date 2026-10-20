@@ -44,6 +44,8 @@ TRAITS = [
     ("chroma_phase_correction", "model", "Per-line chroma phase correction (C3)", ""),
     ("line_jitter_correction", "model", "Random line-jitter correction (H1, 50 ns rms)", ""),
     ("head_switch_correction", "model", "Head-switch skew correction (H4, 10 µs)", ""),
+    ("fast_timing_correction", "model", "Corrects timing changes at 1 kHz (H6 r3)", ""),
+    ("step_recovery", "model", "After a timing step (H3)", ""),
     ("slow_timing_correction", "model", "Slow timing correction (H2, H3, F1)", ""),
     ("progressive_240p", "model", "240p input (S5)", ""),
     ("no_vsync_position", "model", "Picture with no V-sync (S4 r6)", ""),
@@ -59,6 +61,9 @@ TRAITS = [
     ("noise_out_ire", "unit", "Output noise on gray (V0)", "IRE rms"),
     ("acc_fraction", "unit", "ACC fraction (0 none, 1 full)", ""),
     ("jitter_correction_db", "unit", "H1 r4 correction (input ÷ residual)", "dB"),
+    ("correction_bandwidth_hz", "unit", "Timing-correction bandwidth (H1, CH2)", "Hz"),
+    ("h6_passed_1k", "unit", "Jitter passed at 1 kHz (H6 r3)", "%"),
+    ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
 ]
 INFO = {k: (kind, label, unit) for k, kind, label, unit in TRAITS}
@@ -144,6 +149,21 @@ def traits_of(runs):
         ratio = ex / 50.0
         t["line_jitter_correction"] = "corrects" if ratio < 0.2 else "partial" if ratio < 0.7 else "none"
         t["jitter_correction_db"] = round(20 * math.log10(50.0 / max(ex, 1.0)), 1)
+
+    jt = ((h1 or {}).get("input") or {}).get("jitter_transfer")
+    if jt:
+        t["correction_bandwidth_hz"] = 8000.0 if jt["corrects_all"] else round(jt["bandwidth_hz"] or 0.0)
+    for rung, key in ((3, "h6_passed_1k"), (4, "h6_passed_3k")):
+        h6 = find(runs, "H6", rung)
+        dd = (pic(h6) or {}).get("displacement")
+        if dd and floor.get("rms_ns") is not None:
+            t[key] = round(100 * grade.excess(dd["rms_ns"], floor["rms_ns"]) / (float(h6["test"]["params"]["peak_ns"]) / math.sqrt(2)))
+    if "h6_passed_1k" in t:
+        t["fast_timing_correction"] = "yes" if t["h6_passed_1k"] < 100 * grade.LIMITS["h6_passed_slow"] else "no"
+    sr = (pic(find(runs, "H3", 5)) or {}).get("step_recovery")
+    if sr:
+        t["step_recovery"] = ("no visible disturbance" if sr["events"] == 0 else
+                              f"settles within {sr['max_lines']} lines" if sr["max_lines"] <= 3 else "settles slowly")
 
     vh4 = verdict(G, "H4", 5)
     if vh4:

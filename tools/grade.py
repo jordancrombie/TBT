@@ -40,13 +40,16 @@ LIMITS = {
     "killed_chroma_ire": 3.0,    # C2: chroma left with no burst
     "noise_gain": 1.1,           # L2: output noise / input noise
     "wander_ire": 1.0,           # L3: blanking wander, rms
+    "h6_passed_slow": 0.3,       # H6 at 1 kHz and below: share of the jitter passed (main)
+    "h6_passed_fast": 0.5,       # H6 above 1 kHz: share passed (minor)
+    "recovery_lines": 3,         # H3: lines until the picture is back after a step
 }
 # Nominal picture (SMPTE bars, 75 %) for single-channel runs.
 NOMINAL = {"yellow_hue_deg": 167.1, "yellow_chroma_pp_ire": 62.0, "burst_pp_ire": 40.0, "gray_ire": 76.9}
 # Group weights for the overall score: re-timing is the TBC's core job.
 WEIGHTS = {"H": 3.0, "F": 1.5, "S": 2.0, "C": 1.5, "L": 1.0, "X": 1.0, "V": 1.0}
 # Ladders that aren't ordered mild -> severe: graded as "k of n rungs".
-UNORDERED = {"S4", "S6", "C1", "X1"}
+UNORDERED = {"S4", "S6", "C1", "X1", "H6"}   # H6: a frequency sweep, not a severity ladder
 STRUCTURE = {"S5", "S6", "S7", "S8"}     # line vs frame ideals differ
 PICTURE_TESTS = re.compile(r"^(V0|H\d|F\d|S[1239]|C\d|L\d)$")
 DISPLACEMENT_TESTS = re.compile(r"^(H\d|F\d|S[1239])$")   # timing tests (noise tests raise the floor themselves)
@@ -155,12 +158,29 @@ def picture_checks(r, ctx, tid):
     out = []
 
     d = pc.get("displacement")
-    if d and DISPLACEMENT_TESTS.match(tid):
+    if d and tid == "H6":
+        # Share of the injected jitter (peak / sqrt 2, rms) still on the output.
+        hz, peak = float(p["hz"]), float(p["peak_ns"])
+        passed = excess(d["rms_ns"], ctx["floor_ns"]) / (peak / math.sqrt(2))
+        slow = hz <= 1000
+        lim = LIMITS["h6_passed_slow" if slow else "h6_passed_fast"]
+        out.append(check(f"jitter at {hz:g} Hz corrected", passed < lim, f"{100 * passed:.0f} % passed",
+                         f"< {100 * lim:.0f} %", minor=not slow))
+    elif d and DISPLACEMENT_TESTS.match(tid):
         ex, exp_ = excess(d["rms_ns"], ctx["floor_ns"]), excess(d["peak_ns"], ctx["floor_peak_ns"])
+        # A line TBC times each line from its own sync, so lines with no sync
+        # (S3) are its known weak spot: minor under --class line.
         out.append(check("residual H displacement", ex < LIMITS["disp_rms_ns"],
-                         f"{ex:.1f} ns rms over V0", f"< {LIMITS['disp_rms_ns']:g} ns"))
+                         f"{ex:.1f} ns rms over V0", f"< {LIMITS['disp_rms_ns']:g} ns",
+                         minor=tid == "S3" and ctx["class"] == "line"))
         out.append(check("residual H displacement, peak", exp_ < LIMITS["disp_peak_ns"],
                          f"{exp_:.0f} ns over V0", f"< {LIMITS['disp_peak_ns']:g} ns", minor=True))
+
+    sr = pc.get("step_recovery")
+    if sr is not None and tid == "H3":
+        out.append(check("back in place after a step", sr["max_lines"] <= LIMITS["recovery_lines"],
+                         f"{sr['max_lines']} lines ({sr['events']} disturbance(s))",
+                         f"≤ {LIMITS['recovery_lines']} lines"))
 
     if tid == "C2":   # no burst: the ideal is monochrome
         c = pc["yellow_chroma_pp_ire"]

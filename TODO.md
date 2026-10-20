@@ -85,7 +85,7 @@ order. Measured facts and open issues live in
 ## Generator
 - [ ] Root-cause the intermittent DMA stop (watchdog recovers it; see
       bench notes).
-- [ ] H6 velocity error: timing that drifts *within* a line (needs
+- [ ] H7 velocity error: timing that drifts *within* a line (needs
       pre-stretched line copies). For line TBCs and the tape-deck phase.
 - [ ] Tape program mode: step through test rungs on a timed schedule while
       recording a test tape, logging each segment's manifest; a V0 segment

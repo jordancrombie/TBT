@@ -75,7 +75,9 @@ smoothly back and forth.
 **Imitates:** a sudden jump in timing, such as a splice or a tape-tension
 change. The whole picture timing jumps, and jumps back every 0.5 s.
 **Good TBC:** the picture stays put, recovering within a few lines of each
-jump.
+jump. TBT measures how many lines the picture takes to settle after each
+jump (it captures 1.1 s so at least two jumps are seen). A line TBC shows no
+disturbance at all.
 
 | Rung | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|
@@ -102,6 +104,24 @@ normal.
 |---|---|---|---|---|---|---|---|---|
 | Shift (samples) | +2 | −2 | +4 | −4 | +10 | −10 | +20 | −20 |
 | Shift (time) | +140 ns | −140 ns | +279 ns | −279 ns | +698 ns | −698 ns | +1.4 µs | −1.4 µs |
+
+### H6 · Jitter frequency sweep
+**Imitates:** nothing on its own. It measures **how fast a timing error can
+change and still be corrected**, which is what separates a line TBC from a
+frame synchroniser. Each rung is a sine-wave timing wobble of the same size
+(200 ns peak) at a different speed.
+**Good TBC:** a line TBC re-times every line, so it removes the wobble at
+every rung. A frame synchroniser's lock only follows slow changes: it
+removes the 50 Hz rung but passes the faster ones.
+**Graded on:** the share of the wobble still on the output. At 1 kHz and
+below, under 30 % must be left; above, under 50 % is a minor check. On a
+two-channel rig, H1 also gives the full curve (see "jitter transfer" in
+[design.md](design.md)).
+
+| Rung | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Wobble speed | 50 Hz | 250 Hz | 1 kHz | 3 kHz | 7 kHz |
+| Size | 200 ns peak | 200 ns | 200 ns | 200 ns | 200 ns |
 
 ## F: Frequency
 

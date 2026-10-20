@@ -195,6 +195,7 @@ through.
 | H3 | timing step, µs, toggles every 0.5 s | both | 0.25, 0.5, 1, 2, 5 |
 | H4 | head-switch skew, µs (lines 520–256) | both | 0.5, 1, 2, 5, 10 |
 | H5 | displaced single line (100 and 362), samples | both | +2, −2, +4, −4, +10, −10, +20, −20 (8 rungs) |
+| H6 | jitter frequency sweep: 200 ns peak sine at Hz (line TBC or frame sync?) | both | 50, 250, 1000, 3000, 7000 |
 | F1 | sample-clock offset, ppm | both | +10, −10, +30, −30 … +1000, −1000 (10 rungs) |
 | S3 | missing H syncs from line 100, lines | both | 1, 2, 5, 10, 20 |
 | S4 | malformed vertical interval, variant | frame | 1 EQ pulses → H sync · 2 unserrated V-sync · 3 both · 4/5 V-sync missing in field 1 every 30/6 frames · 6 V-sync missing in every field |

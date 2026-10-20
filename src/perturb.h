@@ -15,7 +15,7 @@ namespace perturb {
 enum Kind : uint8_t {
     NONE,            // V0: clean baseline
     JITTER_RANDOM,   // H1: p1 = rms ns (Irwin-Hall n=4 approx. Gaussian)
-    JITTER_SINE,     // H2: p1 = peak ns, p2 = Hz
+    JITTER_SINE,     // H2, H6: p1 = peak ns, p2 = Hz
     STEP_SQUARE,     // H3: p1 = step us, toggles every 0.5 s
     HEAD_SWITCH,     // H4: p1 = us offset on head B (lines 520..256)
     DISPLACED_LINE,  // H5: p1 = samples, lines 100 and 362 only

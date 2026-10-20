@@ -90,6 +90,12 @@ def picture_metrics(x, hs, fs, tip, blank):
             continue
         _, burst = demod(s, 5.8, 7.6)
         y_y, yel = demod(s, *bar(1))
+        # ...and yellow almost as bright as gray (69 vs 77 IRE). A Pioneer
+        # DVR-220 outputs a stray copy of our marker 4 lines above it, whose
+        # start cell lands on the gray bar; this keeps it (and any other odd
+        # line a device inserts) out.
+        if y_y < 0.7 * g_y:
+            continue
         i0, i1 = int(s + bar(0, 0.15, 0.85)[0] * us), int(s + bar(0, 0.15, 0.85)[1] * us)
         sel.append(s)
         rows.append((abs(burst) * 2, np.degrees(np.angle(yel) - np.angle(burst)) + 180, abs(yel) * 2, g_y,
@@ -417,7 +423,14 @@ def analyze(run, ch=1):
         out["field_summary"] = summarize_fields(fl)
         ours = {f["i"] for f in fl if f["class"] == "ours" and not f["ghost"]}
         fidx = np.searchsorted(vs, hs) - 1
-        out["picture"] = picture_metrics(x, hs[np.isin(fidx, list(ours))], fs, tip, blank) if ours else None
+        # Our own frame-marker lines aren't colour bars, but on some devices
+        # (a Pioneer DVR-220) they pass the bar-line test and skew the figures:
+        # leave them out.
+        mark_at = np.array([m[0] * fs for m in marks])
+        not_marker = (np.min(np.abs(hs[:, None] - mark_at[None, :]), axis=1) > 2 * us
+                      if len(mark_at) else np.ones(len(hs), bool))
+        sel = hs[np.isin(fidx, list(ours)) & not_marker]
+        out["picture"] = picture_metrics(x, sel, fs, tip, blank) if ours else None
         tid = man["test"]["id"]
         if tid in ("S10", "S11"):
             out["loss"] = loss_summary(man["test"], fl)

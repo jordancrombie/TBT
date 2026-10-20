@@ -263,7 +263,41 @@ so runs are now deleted after their report unless `--keep` is given.
 - **Ghost detection** first flagged every field because of the lower output
   level. Marker cells are now judged against each field's own framing cells.
 
+## Pioneer DVR-220 (DVD recorder, line-in to line-out)
+
+- **First field trial, 2026-10-20** (CH2 at its input, single termination;
+  `reports/20261020-164815_*`): 31 / 100, provisional.
+- **Locked to its input** (+0.1 ppm), the first device that is. Latency is
+  fixed within a run (steady to 0.05 ms), but varies from 2.0 to 3.5 fields
+  between runs as it relocks: a frame store of about two frames.
+- **Lost fields: ∞ / ∞, cleanly.** No garbled fields on recovery, the best
+  of the three devices so far.
+- **Picture:** luma, chroma and burst within 2 % of its input on V0, and
+  hue +0.7°. But saturation varies by up to ±8 % from run to run, so most
+  C and L tests miss the 5 % saturation check against V0. No colour killer
+  (C2 passes chroma through).
+- **Timing:** doesn't correct random line jitter (40 ns rms left at 50 ns
+  in). Slow timing errors (H3, F1) and head-switch skew (H4) leave
+  11–13 ns: just over the 10 ns threshold, where the TBCs passed. Missing
+  syncs (S3, 20 lines) leave 179 ns: it doesn't flywheel well.
+- **Rejects some inputs outright.** It outputs plain black, as with no input,
+  for S4 r6 (no V-sync) and S6 r5 (10 lines short per field). It outputs
+  garbled video for S1 r5 (10 IRE sync) and S4 r3 (malformed vertical
+  interval).
+- **To look at on the monitor:** L3 (20 IRE hum) reads the gray bar 37 IRE
+  low. X1 r4 (noise bar + jitter) wasn't clean after the stress.
+- **Stray marker copy.** It outputs a partial copy of our frame marker
+  4 lines above the real one. That fooled the bar-line test until
+  2026-10-20 (see below).
+
 ## Measurement pitfalls
+
+- **Bar lines must look like bars.** A line qualifies for picture figures
+  only if gray is high, blue low, *and* yellow at least 0.7× gray. The
+  DVR-220's stray marker copy (black, with the marker's start cell on the
+  gray bar) passed the old test. One such line per field made the
+  displacement floor read 76 ns instead of 11, and the hue jitter ±7°
+  instead of ±0.5°. Frame-marker lines themselves are also excluded.
 
 - **Generator output on CH2** (tee at the TBC's 75 Ω input): sync 0.226 V
   (79 % of 286 mV), burst 27 IRE p-p and yellow chroma 44 IRE p-p (both

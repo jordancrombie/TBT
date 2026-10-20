@@ -82,6 +82,12 @@ def common_checks(r, ctx, tid):
                          ", ".join(f"{k}×{v}" for k, v in lengths.items()), "262.5 lines"))
     fs_ = r.get("field_summary") or {}
     out.append(check("never its own pattern", fs_.get("fallback", 0) == 0, fs_.get("fallback", 0), "0 fields"))
+    if tid not in ("S10", "S11", "X1") and fs_ and not (fs_.get("ours", 0) or fs_.get("unmarked", 0)):
+        # The output is video, but none of it is our picture: say what it is.
+        what = max(("blank", "garbled", "fallback", "blend"), key=lambda k: fs_.get(k, 0))
+        desc = {"blank": "black: it treated the input as no signal", "garbled": "garbled picture",
+                "fallback": "its own pattern", "blend": "blended fields"}[what]
+        out.append(check("our picture comes through", False, desc, "our frames"))
     j = r["h"]["jitter_ns_rms"]
     if j is not None:
         out.append(check("output H stability", j < LIMITS["output_jitter_ns"], f"{j:.2f} ns rms",

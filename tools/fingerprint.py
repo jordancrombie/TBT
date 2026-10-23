@@ -44,6 +44,7 @@ TRAITS = [
     ("chroma_phase_correction", "model", "Per-line chroma phase correction (C3)", ""),
     ("line_jitter_correction", "model", "Random line-jitter correction (H1, 50 ns rms)", ""),
     ("head_switch_correction", "model", "Head-switch skew correction (H4, 10 µs)", ""),
+    ("timing_class", "model", "Timing correction class", ""),
     ("fast_timing_correction", "model", "Corrects timing changes at 1 kHz (H6 r3)", ""),
     ("step_recovery", "model", "After a timing step (H3)", ""),
     ("slow_timing_correction", "model", "Slow timing correction (H2, H3, F1)", ""),
@@ -62,6 +63,8 @@ TRAITS = [
     ("acc_fraction", "unit", "ACC fraction (0 none, 1 full)", ""),
     ("jitter_correction_db", "unit", "H1 r4 correction (input ÷ residual)", "dB"),
     ("correction_bandwidth_hz", "unit", "Timing-correction bandwidth (H1, CH2)", "Hz"),
+    ("near_line_rate_passed", "unit", "Jitter passed at 4-8 kHz (H1, CH2)", "%"),
+    ("h4_residual_ns", "unit", "Head-switch skew left (H4 r5, over V0)", "ns rms"),
     ("h6_passed_1k", "unit", "Jitter passed at 1 kHz (H6 r3)", "%"),
     ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
@@ -162,8 +165,17 @@ def traits_of(runs):
         t["fast_timing_correction"] = "yes" if t["h6_passed_1k"] < 100 * grade.LIMITS["h6_passed_slow"] else "no"
     sr = (pic(find(runs, "H3", 5)) or {}).get("step_recovery")
     if sr:
-        t["step_recovery"] = ("no visible disturbance" if sr["events"] == 0 else
+        t["step_recovery"] = ("no visible disturbance" if not step_disturbed(sr) else
                               f"settles within {sr['max_lines']} lines" if sr["max_lines"] <= 3 else "settles slowly")
+
+    h4 = (pic(find(runs, "H4", 5)) or {}).get("displacement")
+    if h4 and floor.get("rms_ns") is not None:
+        t["h4_residual_ns"] = round(grade.excess(h4["rms_ns"], floor["rms_ns"]), 1)
+    if jt and jt.get("bands"):
+        hi = [b["passed"] for b in jt["bands"] if b["lo_hz"] >= 4000]
+        if hi:
+            t["near_line_rate_passed"] = round(100 * max(hi))
+    t.update(timing_class(t, sr))
 
     vh4 = verdict(G, "H4", 5)
     if vh4:
@@ -217,6 +229,39 @@ def traits_of(runs):
         if sd:
             t["sync_depth_v"] = round(sd, 3)
     return t, G
+
+
+STEP_JOLT_NS = 300   # a real disturbance at a 5 us H3 step; below this it's the noise floor
+
+
+def step_disturbed(sr):
+    return bool(sr and sr["events"] and sr["peak_ns"] >= STEP_JOLT_NS)
+
+
+def timing_class(t, sr):
+    """Line TBC, fast-locking decoder, or frame synchroniser (slow lock).
+
+    Calibrated 2026-10-23 on three devices (see docs/design.md):
+      slow lock: bandwidth under 1 kHz, or over half the 1 kHz H6 jitter
+                 passed (AVT-8710: 0.4-0.5 kHz, 87 %)
+      line TBC:  fast lock, and jitter near the line rate still reduced
+                 (under 90 % passed), head-switch skew gone (under 5 ns),
+                 no real disturbance at a 5 us step (under 300 ns; ES-10:
+                 38-73 %, 2.4-3.5 ns, 51-56 ns, i.e. at the noise floor)
+      otherwise: fast lock without per-line correction (DVR-220: 99-112 %
+                 near the line rate, 10.6-12.5 ns, a 1.4 us one-line jolt;
+                 the AVT's is 1.3 us)
+    """
+    bw, h6 = t.get("correction_bandwidth_hz"), t.get("h6_passed_1k")
+    if bw is None and h6 is None:
+        return {}
+    if (bw is not None and bw < 1000) or (h6 is not None and h6 >= 50):
+        return {"timing_class": "frame synchroniser (slow lock)"}
+    near, h4 = t.get("near_line_rate_passed"), t.get("h4_residual_ns")
+    if h4 is None:
+        return {}
+    clean = (near is None or near < 90) and h4 < 5 and not step_disturbed(sr)
+    return {"timing_class": "line TBC" if clean else "fast lock, no per-line correction"}
 
 
 def aggregate(per_trial):

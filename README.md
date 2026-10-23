@@ -398,21 +398,29 @@ same unit.
 the library that identification will match unknown TBCs against.
 `--html` writes a readable trait card to `reports/`.
 
-The library holds two TBCs so far. They share most behaviours: both
-free-run, and both correct slow timing errors but not random line jitter,
-head-switch skew or chroma phase. They differ where it counts:
+The library holds four devices so far. The **timing correction class** comes
+from how fast and how completely each one corrects line timing (see
+[docs/design.md](docs/design.md)).
 
-| Trait | Datavideo TBC-1000 (6 trials) | AVT-8710, green (3 trials) |
-|---|---|---|
-| With no input at all | black | **its own colour bars** |
-| Lost fields ridden through | ∞ (more than 10) | **6**, then its own bars at 7 |
-| Colour killer (no burst) | yes | **no** |
-| Output line rate vs input | +22.1 ppm | +12.4 ppm |
-| Luma gain | ×0.63 | ×0.99 |
-| Saturation (chroma/burst) | ×0.94 | ×0.99 |
-| Output burst | 38 IRE p-p | 43 IRE p-p |
-| Output H jitter | 0.87 ns rms | 0.42 ns rms |
-| Field-trial score (provisional) | 50–53 | 42–44 |
+| Trait | Datavideo TBC-1000 | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
+|---|---|---|---|---|
+| Timing correction class | not yet measured* | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
+| Correction bandwidth | — | 0.5 kHz | 3.8 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 101 ns | 98 ns | 11 ns | 3 ns |
+| With no input at all | black | its own colour bars | black | no output |
+| Lost fields ridden through | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
+| Colour killer | yes | no | no | no |
+| Output vs input | free-running, +22 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
+| Luma gain | ×0.63 | ×0.99 | ×1.00 | ×1.02 |
+| Field-trial score (provisional) | 50–53 | 36–44 | 22–31 | 59–62 |
+
+\* The TBC-1000's trials predate H6 and the jitter-transfer measurement. Its
+H1 and H4 results (jitter passed straight through, 101 ns of skew left)
+suggest a frame synchroniser too.
+
+The fingerprints were built from 2 to 6 trials each. The ES-10's come
+from lid-off trials: with the lid on, an overheating fault spoils its colour
+(see the bench notes).
 
 ## Comparing field trials
 
@@ -455,6 +463,22 @@ Results go to `reports/<time>_dropout_<dut>.json`, plus `.html` with `--html`
 (timeline, episode table, per-phase breakdown). Suite reports also flag any
 run where the TBC's output was dead ("output dead"), and tolerance figures
 skip those runs.
+
+## Colour watch
+
+`tools/colour_watch.py` keeps an eye on a device's colour over time. It
+starts clean V0 once and then only listens, so the picture never blinks.
+Every few seconds it logs hue and chroma against the input (needs CH2),
+burst, noise, the output clock against the input, and whether the output
+is still our picture. Start it with the device cold to see whether a fault
+appears at a consistent warm-up time:
+
+```
+python3 tools/colour_watch.py --minutes 30 --interval 10 --dut "Panasonic DMR-ES10"
+```
+
+It found the DMR-ES10's overheating colour fault (see
+[docs/bench-notes.md](docs/bench-notes.md#panasonic-dmr-es10-dvd-recorder-line-in-to-line-out)).
 
 ## Serial commands (921600 baud)
 
@@ -532,6 +556,7 @@ rms line jitter.
 | `fingerprints/` | the fingerprint library, one JSON per unit or model |
 | `tools/grade.py` | grades a field trial: per run, per test and overall (provisional thresholds) |
 | `tools/compare_suites.py` | lines up several suites' results test by test; dead-output episodes, level and latency |
+| `tools/colour_watch.py` | listens to a device's output every few seconds for minutes (hue, chroma, noise, clock); finds warm-up and intermittent colour faults |
 | `tools/dropout_watch.py` | samples the TBC output once a second through clean / input-loss / clean phases; dead-output episodes |
 | `tools/verify_timing.py`, `tools/check_lines.py` | firmware verification over serial |
 | `tools/analyze_capture.py` | levels, line rate and bar colours from a capture |

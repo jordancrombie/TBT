@@ -290,6 +290,41 @@ so runs are now deleted after their report unless `--keep` is given.
   4 lines above the real one. That fooled the bar-line test until
   2026-10-20 (see below).
 
+## Panasonic DMR-ES10 (DVD recorder, line-in to line-out)
+
+- **A line TBC, by measurement** (2026-10-20 to 10-23): it corrects jitter
+  up to the line rate (38–73 % left near 8 kHz, against 99–116 % for the
+  others), removes head-switch skew (2.4–3.5 ns left) and shows nothing at a
+  5 µs timing step. Lid-off field trials score 59–62.
+- **Lost fields:** ∞ with no signal. With snow it shows its own picture from
+  rung 2 (S11 tolerance 1).
+- **Latency:** 4–7 fields, through its encoder path. Output clock: wanders
+  between −43 and +12 ppm against its input, and often pulls in to 0.
+- **Intermittent colour fault: overheating.** The bad state looks the same
+  every time:
+  - hue about −16° against its input (read as +164° after a frame drop,
+    a 180° ambiguity);
+  - chroma about ×0.94, instead of ×1.12 when healthy;
+  - noise about 2 IRE, 4× normal, in slow 2-minute waves;
+  - **the output clock pinned at −19.4 ppm**, which looks like a fallback
+    mode.
+
+  Once in it, the unit stays there until it cools. A channel change cleared
+  it once; a quick power cycle didn't.
+  - Cover on: it failed after long warm running and load. Once it failed
+    spontaneously, with the generator idle. Once it failed 10 runs into a
+    field trial, on H4 r5 (10 µs head-switch skew), and stayed bad.
+  - Cover off: 4 back-to-back field trials (44 minutes, 216 clean-signal
+    runs) with no fault. Neither our test restarts (75 per trial) nor heat
+    without load triggered it.
+  - The main processing chips were very hot. Pressing a finger on them,
+    which both cools and presses, then power-cycling, cleared it. Suspects:
+    cooling (fan, heatsink, thermal pad), or cracked BGA solder joints
+    that open when hot.
+- **Our test restarts flash the output black for ~0.1 s** (the parking
+  frame). `tools/colour_watch.py` therefore starts V0 once and only
+  listens.
+
 ## Measurement pitfalls
 
 - **Bar lines must look like bars.** A line qualifies for picture figures

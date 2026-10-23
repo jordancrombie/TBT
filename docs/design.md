@@ -93,15 +93,15 @@ synchroniser's lock follows only slow changes. TBT measures it two ways:
   bandwidth where half gets through.
 
 Bandwidth alone isn't enough: any digital decoder with a line-locked clock
-follows sync quickly. Calibrated on three devices (2026-10-20 to 10-23):
+follows sync quickly. Calibrated on four devices (2026-10-20 to 10-23):
 
-| | AVT-8710 (frame sync) | Pioneer DVR-220 (no TBC) | Panasonic DMR-ES10 (line TBC) |
-|---|---|---|---|
-| Correction bandwidth (H1, CH2) | 0.4–0.5 kHz | 2.8–3.8 kHz | 2.6 kHz to over 8 kHz |
-| Jitter passed at 4–8 kHz | 110–116 % (amplified) | 99–112 % (amplified) | 38–73 % |
-| H6 at 1 kHz | 87 % | 13 % | 21–23 % |
-| H4 head-switch skew left | 75–101 ns | 10.6–12.5 ns | 2.4–3.5 ns |
-| H3 5 µs step | one line jolted 1.3 µs | one line jolted 1.4 µs | nothing above the 50 ns floor |
+| | AVT-8710 (frame sync) | Datavideo TBC-1000 (frame sync) | Pioneer DVR-220 (no TBC) | Panasonic DMR-ES10 (line TBC) |
+|---|---|---|---|---|
+| Correction bandwidth (H1, CH2) | 0.4–0.5 kHz | 0.4 kHz | 2.8–3.8 kHz | 2.6 kHz to over 8 kHz |
+| Jitter passed at 4–8 kHz | 110–116 % (amplified) | 108–111 % (amplified) | 99–112 % (amplified) | 38–73 % |
+| H6 at 1 kHz | 87 % | 95 % | 13 % | 21–23 % |
+| H4 head-switch skew left | 75–101 ns | 85–109 ns | 10.6–12.5 ns | 2.4–3.5 ns |
+| H3 5 µs step | one line jolted 1.3 µs | no jolt (glides through) | one line jolted 1.4 µs | nothing above the 50 ns floor |
 
 So `fingerprint.py` sorts devices into three timing classes:
 - **Frame synchroniser (slow lock):** bandwidth under 1 kHz, or more than
@@ -113,7 +113,7 @@ So `fingerprint.py` sorts devices into three timing classes:
   decoder of a DVD recorder without a TBC.
 
 Single-channel rigs use H6 instead of the bandwidth. The thresholds come
-from one unit of each class, so more devices may move them.
+from one or two units of each class, so more devices may move them.
 
 ### F — Frequency
 

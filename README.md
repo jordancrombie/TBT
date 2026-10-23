@@ -404,9 +404,9 @@ from how fast and how completely each one corrects line timing (see
 
 | Trait | Datavideo TBC-1000 | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
 |---|---|---|---|---|
-| Timing correction class | not yet measured* | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | — | 0.5 kHz | 3.8 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 101 ns | 98 ns | 11 ns | 3 ns |
+| Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
+| Correction bandwidth | 0.4 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 107 ns | 98 ns | 11 ns | 3 ns |
 | With no input at all | black | its own colour bars | black | no output |
 | Lost fields ridden through | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
 | Colour killer | yes | no | no | no |
@@ -414,11 +414,11 @@ from how fast and how completely each one corrects line timing (see
 | Luma gain | ×0.63 | ×0.99 | ×1.00 | ×1.02 |
 | Field-trial score (provisional) | 50–53 | 36–44 | 22–31 | 59–62 |
 
-\* The TBC-1000's trials predate H6 and the jitter-transfer measurement. Its
-H1 and H4 results (jitter passed straight through, 101 ns of skew left)
-suggest a frame synchroniser too.
+The two frame synchronisers differ in one timing detail: at a 5 µs timing
+step the AVT-8710 jolts one line by 1.3 µs, while the TBC-1000's slower lock
+glides through with no jolt.
 
-The fingerprints were built from 2 to 6 trials each. The ES-10's come
+The fingerprints were built from 2 to 7 trials each. The ES-10's come
 from lid-off trials: with the lid on, an overheating fault spoils its colour
 (see the bench notes).
 

@@ -569,6 +569,21 @@ rms line jitter.
 
 ## Measurement pitfalls
 
+- **A bouncing sync edge** (found 2026-10-24, DMR-ES10 on the bench). CH2's
+  line jitter read 18–20 ns instead of 6, at the calibrated levels (8 ns at
+  the old ones), whether the ES-10 was on or off. The falling sync edge
+  bounces: 0.306 → 0.213 → 0.218 → **0.255** → 0.187 → 0.108 V, likely the
+  DAC glitching as the code crosses 16 on the way down (17 → 8). With the
+  ES-10's input on the line the bounce rose back above the slicer on ~10 %
+  of lines, so the edge was taken at the second crossing, ~50 ns late. With
+  the TBC-3000 it stayed below. Sliced at 15–70 % of sync depth on the first
+  crossing, the input was clean (4.9–6.5 ns). `sync_pulses` now closes gaps
+  above the slicer shorter than 0.25 µs and takes the first crossing: CH2
+  6.0–6.2 ns at both levels, and kept runs analyse identically. The
+  TBC-3000 rebaseline and every earlier trial read 6.0–6.5 ns on CH2, so
+  they weren't affected. A reconstruction low-pass after the DAC would
+  remove the glitch at its source (TODO).
+
 - **Output H jitter depends on the capture rate:** 0.62 ns at 50 MS/s, 2.51
   ns at 12.5 MS/s on the same unit (V0, TBC-3000), from coarser sampling of
   the sync edges. B3 and X1 capture at 12.5 MS/s, so their 2.5 ns isn't the

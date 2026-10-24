@@ -27,11 +27,29 @@ def load(run, ch):
     return x, float(z["rate"]), json.load(open(os.path.join(run, "manifest.json")))
 
 
+GLITCH_US = 0.25   # a pulse that pops back above the slicer for less than this is one pulse
+
+
 def sync_pulses(x, us):
-    """Falling-edge times (samples, sub-sample) and widths (us) of all sync-level pulses > 1.5 us."""
+    """Falling-edge times (samples, sub-sample) and widths (us) of all sync-level pulses > 1.5 us.
+
+    A falling edge can bounce: the generator's DAC glitches as it crosses a
+    major code transition, and some loads make the bounce rise back above
+    the slicer (seen with a DMR-ES10 on the line, 2026-10-24). Taken at face
+    value that moves the edge to the second crossing, ~50 ns late, on ~10 %
+    of lines. So a gap above the slicer shorter than GLITCH_US inside a pulse
+    is closed, and the edge is the first crossing."""
     tip, top = np.percentile(x, 0.5), np.percentile(x, 99.5)
     mid = tip + 0.15 * (top - tip)
     b = x < mid
+    up = np.where(b[:-1] & ~b[1:])[0] + 1            # first sample back above
+    dn = np.where(~b[:-1] & b[1:])[0] + 1            # first sample below again
+    j = np.searchsorted(dn, up)
+    ok = j < len(dn)
+    gap_ok = ok.copy()
+    gap_ok[ok] = (dn[j[ok]] - up[ok]) < GLITCH_US * us
+    for u, d in zip(up[gap_ok], dn[j[gap_ok]]):
+        b[u:d] = True
     f = np.where(~b[:-1] & b[1:])[0]
     r = np.where(b[:-1] & ~b[1:])[0]
     ri = np.searchsorted(r, f)

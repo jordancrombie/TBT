@@ -68,6 +68,9 @@ Scored for value against what the suite already covers.
       colour slightly at full amplitude into 150 Ω (hue −2.6°, chroma −7 %).
 - [ ] Measure the DAC's staircase (all 256 codes on CH2) for its linearity;
       a one-code step at code 64 is known.
+- [ ] A reconstruction low-pass after the DAC (with the buffer): the falling
+      sync edge bounces ~40 mV (a DAC glitch near code 16), which the
+      analysis now tolerates but a TBC's own sync slicer might not.
 - [ ] **Rebaseline every unit on the calibrated rig** (CH1 terminated,
       levels 5/92), 3 field trials each, moving old entries to
       `fingerprints/old-rig/`:

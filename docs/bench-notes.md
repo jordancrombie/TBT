@@ -485,7 +485,10 @@ rms line jitter.
   past verdicts, all fail to pass or marginal (H1 r2, S10 r8/r9 and others):
   some of the "variable" behaviours in the fingerprints came from this. The
   first field start now counts only if the capture began 12 or more lines
-  before it (`observe_tbc.field_starts`).
+  before it (`observe_tbc.field_starts`). Results saved before the fix are
+  corrected the same way when `grade.py` or `fingerprint.py` loads them
+  (`correct_saved`), and the fingerprint library was rebuilt with it. Scores
+  quoted in the device sections above are as measured at the time.
 
 - **"Locked" means within ±0.5 ppm.** Genuinely locked devices read
   0.0 ± 0.1 ppm against their input. A blind-tested unit (2026-10-23) held a

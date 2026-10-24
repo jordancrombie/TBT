@@ -2,6 +2,10 @@
 
 usage: run_test.py TEST [RUNG] [--channels 1|2] [--dut NAME] [--note TEXT] [--keep]
                    [--html [PATH]] [--title [SECONDS]] [--seed N] [--rate HZ] [--seconds S] [--out DIR]
+                   [--leave]
+
+When the run is done the generator goes back to V0 (clean bars), as after a
+field trial. --leave keeps the test playing, e.g. to watch it on a monitor.
 
 --title shows the TBT title card on the generator first (5 s by default),
 for photos. It is never part of a test and nothing is captured while it shows.
@@ -169,13 +173,20 @@ def main():
     ap.add_argument("test")
     ap.add_argument("rung", nargs="?", type=int, default=1)
     add_common_args(ap)
+    ap.add_argument("--leave", action="store_true", help="leave the test playing afterwards (default: back to V0)")
     a = ap.parse_args()
     dut = dut_of(a)
 
     with dwf_scope.Scope(a.rate, a.seconds, channels=a.channels) as scope:  # settles while the test starts
         s = open_gen()
         prepare(s, a.title)
-        run, cap = run_one(s, scope, a.test, a.rung, a.seed, a.settle, a.out, dut, (a.rate, a.seconds))
+        try:
+            run, cap = run_one(s, scope, a.test, a.rung, a.seed, a.settle, a.out, dut, (a.rate, a.seconds))
+        finally:
+            # Back to the clean baseline, as run_suite.py does, so a finished run
+            # never leaves its test playing (and looking like a run in progress).
+            if not a.leave:
+                request(s, "test V0", until="\n", timeout=10)
     for ch in range(cap["raw"].shape[0]):
         v = dwf_scope.volts(cap, ch)
         print(f"ch{ch + 1}: {v.min():.3f} .. {v.max():.3f} V")

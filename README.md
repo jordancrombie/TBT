@@ -452,10 +452,10 @@ from how fast and how completely each one corrects line timing (see
 | With no input at all | black | black | its own colour bars | black | no output |
 | Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
 | Colour killer | yes | yes | no | no | no |
-| Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
+| Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−18 to +1.6 ppm) |
 | Luma gain | ×0.63 | ×0.82 / ×0.79 (hue −1° / +3°) | ×0.99 | ×1.00 | ×1.02 |
 | Output noise / jitter | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
-| Field-trial score (provisional) | 50–53 | 48–50 / 51–52 | 36–44 | 22–31 | 59–62 |
+| Field-trial score (provisional) | 51–53 | 49–51 / 51–52 | 38–44 | 31–32 | 62–64 |
 | Captions / VBI lines 10–20 (B1, B2) | not yet tested | captions intact (one field damaged after each signal loss) / blanked | not yet tested | not yet tested | not yet tested |
 
 The TBC-3000 was identified **blind** (2026-10-23). Its timing and
@@ -465,13 +465,20 @@ two inputs were tested as separate "unknowns" and recognised as one unit
 with two inputs: the same crystal (+1.75 / +1.85 ppm) and timing core, but
 different front ends. The TBC-3000 figures above are with its controls at
 baseline. With input B's picture controls moved off baseline, it gained a
-2-line 1.2 µs jolt at timing steps, failed L4 and scored 40–43. That run is
+2-line 1.2 µs jolt at timing steps, failed L4 and scored 42–44. That run is
 kept as `datavideo-tbc-3000-input-b-adjusted.json`, an example of settings
 showing up in a fingerprint.
 
 The fingerprints were built from 2 to 7 trials each. The ES-10's come
 from lid-off trials: with the lid on, an overheating fault spoils its colour
 (see the bench notes).
+
+The fingerprints were rebuilt on 2026-10-24 from the same trials, with two
+analysis corrections those entries predated: a capture that starts inside
+a vertical interval no longer counts its partial first field (it had failed
+about one structure check per trial at random), and "locked" means within
+0.5 ppm (it was 2). Scores rose by 0 to 5 points, and the behaviours that
+had looked variable because of the first field are gone.
 
 ## Comparing field trials
 

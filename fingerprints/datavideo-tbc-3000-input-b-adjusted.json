@@ -1,20 +1,20 @@
 {
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-3000 (input B, adjusted controls)",
- "notes": "Input B with its picture controls moved off baseline (luma x1.02, sat x1.12, hue -2.6 deg): adds a 2-line 1.2 us jolt at a timing step and fails L4. Kept as an example of settings showing up in a fingerprint.",
- "created": "2026-10-23 23:07",
+ "notes": "Blind test 2, trial 1 of 3.",
+ "created": "2026-10-24 13:43",
  "trials": [
   {
    "trial": "20261023-223510",
    "channels": 2,
    "runs": 76,
-   "score": 42.7
+   "score": 44.3
   },
   {
    "trial": "20261023-224618",
    "channels": 2,
    "runs": 76,
-   "score": 40.2
+   "score": 41.8
   },
   {
    "trial": "20261023-225725",
@@ -26,8 +26,8 @@
  "score": {
   "median": 42.7,
   "range": [
-   40.2,
-   42.7
+   41.8,
+   44.3
   ]
  },
  "traits": {
@@ -376,26 +376,6 @@
   }
  },
  "variable": [
-  {
-   "test": "S2",
-   "rung": 3,
-   "trials": 3,
-   "verdicts": {
-    "fail": 1,
-    "pass": 2
-   },
-   "pass_rate": 0.67
-  },
-  {
-   "test": "S3",
-   "rung": 5,
-   "trials": 3,
-   "verdicts": {
-    "pass": 2,
-    "fail": 1
-   },
-   "pass_rate": 0.67
-  },
   {
    "test": "S6",
    "rung": 6,

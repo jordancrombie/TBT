@@ -2,13 +2,13 @@
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-3000 (input A)",
  "notes": "Blind test, trial 1 of 3.",
- "created": "2026-10-24 00:54",
+ "created": "2026-10-24 13:43",
  "trials": [
   {
    "trial": "20261023-214157",
    "channels": 2,
    "runs": 76,
-   "score": 50.4
+   "score": 51.1
   },
   {
    "trial": "20261023-215305",
@@ -20,7 +20,7 @@
    "trial": "20261023-220412",
    "channels": 2,
    "runs": 76,
-   "score": 48.3
+   "score": 48.6
   },
   {
    "trial": "20261024-001613",
@@ -44,8 +44,8 @@
  "score": {
   "median": 49.849999999999994,
   "range": [
-   48.3,
-   50.4
+   48.6,
+   51.1
   ]
  },
  "traits": {
@@ -72,10 +72,10 @@
    "n": 6,
    "value": 11,
    "range": [
-    7,
+    11,
     11
    ],
-   "agree": 0.83
+   "agree": 1.0
   },
   "lost_fields_snow": {
    "kind": "model",
@@ -395,16 +395,6 @@
  },
  "variable": [
   {
-   "test": "H1",
-   "rung": 2,
-   "trials": 6,
-   "verdicts": {
-    "fail": 1,
-    "pass": 5
-   },
-   "pass_rate": 0.83
-  },
-  {
    "test": "S4",
    "rung": 6,
    "trials": 6,
@@ -443,26 +433,6 @@
     "fail": 3
    },
    "pass_rate": 0.5
-  },
-  {
-   "test": "S10",
-   "rung": 8,
-   "trials": 6,
-   "verdicts": {
-    "pass": 5,
-    "fail": 1
-   },
-   "pass_rate": 0.83
-  },
-  {
-   "test": "S10",
-   "rung": 9,
-   "trials": 6,
-   "verdicts": {
-    "pass": 5,
-    "fail": 1
-   },
-   "pass_rate": 0.83
   },
   {
    "test": "X1",

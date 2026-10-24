@@ -2,13 +2,13 @@
  "schema": "tbt-fingerprint/1",
  "name": "Panasonic DMR-ES10",
  "notes": "Lid-off back-to-back series, trial 1 of 4: does the colour fault trip without the cover?",
- "created": "2026-10-23 19:35",
+ "created": "2026-10-24 13:43",
  "trials": [
   {
    "trial": "20261021-224221",
    "channels": 2,
    "runs": 76,
-   "score": 61.4
+   "score": 62.3
   },
   {
    "trial": "20261021-225322",
@@ -20,7 +20,7 @@
    "trial": "20261021-230423",
    "channels": 2,
    "runs": 76,
-   "score": 58.6
+   "score": 64.0
   },
   {
    "trial": "20261021-231526",
@@ -30,10 +30,10 @@
   }
  ],
  "score": {
-  "median": 61.5,
+  "median": 62.349999999999994,
   "range": [
-   58.6,
-   62.4
+   61.6,
+   64.0
   ]
  },
  "traits": {
@@ -43,11 +43,7 @@
    "unit": "",
    "n": 4,
    "value": "free-running",
-   "agree": 0.75,
-   "seen": {
-    "free-running": 3,
-    "locked": 1
-   }
+   "agree": 1.0
   },
   "no_signal_output": {
    "kind": "model",
@@ -159,11 +155,7 @@
    "unit": "",
    "n": 4,
    "value": "corrects",
-   "agree": 0.75,
-   "seen": {
-    "corrects": 3,
-    "partial": 1
-   }
+   "agree": 1.0
   },
   "progressive_240p": {
    "kind": "model",
@@ -390,36 +382,6 @@
   }
  },
  "variable": [
-  {
-   "test": "H2",
-   "rung": 3,
-   "trials": 4,
-   "verdicts": {
-    "pass": 3,
-    "fail": 1
-   },
-   "pass_rate": 0.75
-  },
-  {
-   "test": "H6",
-   "rung": 1,
-   "trials": 4,
-   "verdicts": {
-    "fail": 1,
-    "pass": 3
-   },
-   "pass_rate": 0.75
-  },
-  {
-   "test": "S6",
-   "rung": 5,
-   "trials": 4,
-   "verdicts": {
-    "pass": 3,
-    "fail": 1
-   },
-   "pass_rate": 0.75
-  },
   {
    "test": "C3",
    "rung": 1,

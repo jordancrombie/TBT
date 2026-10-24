@@ -24,3 +24,7 @@ extern const int NUM_PATTERNS;
 
 // Parameter shared by the flat-field pattern (IRE).
 extern float g_flat_ire;
+
+// The "card" pattern's text: "px:text|px:text|..." (up to 6 lines, 40
+// characters each). Returns false if the spec can't be parsed.
+bool set_card_text(const char *spec);

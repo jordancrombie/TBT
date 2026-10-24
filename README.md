@@ -291,6 +291,37 @@ Nothing is captured while it shows. Every run also switches the generator
 back to the test pattern before testing, so a title card left up never
 ends up in the results.
 
+## Test cards
+
+`--cards` on `run_suite.py` shows a text card for 5 seconds before each test
+(`--cards 8` for 8 seconds). It makes a field trial easy to follow on the
+monitor, or on video:
+
+```
+H1 * TEST 2 OF 31
+RANDOM LINE JITTER
+6 RUNGS: 5 TO 200 NS RMS
+WATCH: EDGES SHOULD STAY STRAIGHT
+LAST: V0 RUNG 1: FAIL
+```
+
+Each card shows:
+- the test and where it falls in the trial;
+- its name;
+- its rungs in plain units;
+- what to look for on the monitor;
+- the previous test's grade.
+
+A closing card shows the trial's score. Names and ladders come from the
+firmware's catalog, and the "watch" hints are in `tools/cards.py`.
+
+```
+python3 tools/run_suite.py full --grade --html --cards   # adds ~2.5 min to a full trial (31 cards)
+```
+
+As with the title card, nothing is captured while a card shows, and the test
+pattern is restored before each test.
+
 ## Sample report
 
 [docs/sample-report.html](docs/sample-report.html) is an early `--html`
@@ -499,7 +530,8 @@ It found the DMR-ES10's overheating colour fault (see
 | `test <id> [rung] [seed] [start_frame]` | start a test; `test V0` is the clean baseline. `start_frame` begins at a given frame (e.g. inside a loss or stress window) |
 | `chroma [under\|follows]` | colour-under (default, VHS/Betamax) or direct colour |
 | `manifest` | the current run's manifest, one JSON line |
-| `list` / `p <n\|name>` | list or select pattern: `smpte_bars`, `eia_bars_75`, `staircase`, `flat`, `crosshatch`, `black`, `title` (the title card) |
+| `list` / `p <n\|name>` | list or select pattern: `smpte_bars`, `eia_bars_75`, `staircase`, `flat`, `crosshatch`, `black`, `title` (the title card), `card` (the last text card) |
+| `card px:text\|px:text\|...` | show a text card: up to 6 lines of 40 characters, each at font size `px` (shrunk to fit). Not a test pattern |
 | `flat <ire>` | flat field at the given IRE level |
 | `levels <sync> <white>` | DAC codes for −40 and 100 IRE |
 | `ppm <x>` | trim the sample clock (1.8 ppm steps), e.g. to correct crystal error |
@@ -529,6 +561,7 @@ It found the DMR-ES10's overheating colour fault (see
 | `tools/html_report.py` | the optional HTML reports (suites and the dropout watch) |
 | `tools/fingerprint.py` | builds a TBC's fingerprint (model traits, unit traits, variable behaviours) from several field trials |
 | `fingerprints/` | the fingerprint library, one JSON per unit or model |
+| `tools/cards.py` | the text cards shown between tests (`--cards`): layout and "watch" hints |
 | `tools/grade.py` | grades a field trial: per run, per test and overall (provisional thresholds) |
 | `tools/colour_watch.py`, `tools/dropout_watch.py` | long-running watches: colour and clock over time; dead output |
 | `tools/compare_suites.py` | lines up several suites' results test by test; dead-output episodes, level and latency |

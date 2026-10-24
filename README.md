@@ -583,6 +583,7 @@ It found the DMR-ES10's overheating colour fault (see
 | `docs/tests.md` | every test in plain words, with all its rungs |
 | `docs/design.md` | test catalog, signal conventions, scoring and the grader contract |
 | `docs/bench-notes.md` | measured hardware, toolchain and signal facts, open issues |
+| `docs/validation.md` | what to run before a merge: tiers by what a change touches, and the regression field trial |
 
 ## Disclaimer
 

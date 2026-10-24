@@ -42,6 +42,20 @@ def sync_pulses(x, us):
     return f + (x[f] - mid) / (x[f] - x[f + 1]), w
 
 
+def field_starts(ft, w, us):
+    """Field starts: the first broad (V-sync) pulse after a gap.
+
+    A capture that begins inside a vertical interval sees only its later
+    broad pulses, so its first "field" would measure 0.5-3 lines short (and
+    read as non-standard). That first start is used only if the capture
+    began at least 12 lines before it, i.e. the whole interval was captured."""
+    broad = ft[w > 20]
+    vs = broad[np.concatenate([[True], np.diff(broad) > 100 * us])] if len(broad) else broad
+    if len(vs) and vs[0] < 12 * 63.556 * us:
+        vs = vs[1:]
+    return vs
+
+
 def frame_events(frames):
     """Classify the frame-counter sequence: each frame should show up twice (two fields)."""
     if len(frames) < 3:
@@ -210,8 +224,7 @@ def jitter_transfer(run, out, inp, first=30, n=128):
         us = fs / 1e6
         ft, w = sync_pulses(x, us)
         hs = ft[(w > 3.5) & (w < 6)]
-        b = ft[w > 20]
-        vs = b[np.concatenate([[True], np.diff(b) > 100 * us])] if len(b) else b
+        vs = field_starts(ft, w, us)
         fields = {}
         for f in r.get("field_log", []):
             if f["class"] == "ours" and f["frame"] is not None and f["i"] + 1 < len(vs):
@@ -627,8 +640,7 @@ def analyze(run, ch=1):
                 "irregular_intervals": int(np.sum(np.abs(per - 63.556) >= 1.0))}
 
     # Vertical sync: first broad pulse (> 20 us) after a gap marks a field start.
-    broad = ft[w > 20]
-    vs = broad[np.concatenate([[True], np.diff(broad) > 100 * us])] if len(broad) else broad
+    vs = field_starts(ft, w, us)
     line = np.median(full) * us if len(full) else 63.556 * us
     fields = np.round(np.diff(vs) / line * 2) / 2
     out["fields"] = {"count": int(len(vs)), "lengths": {f"{k:g}": int(v) for k, v in Counter(fields.tolist()).items()},

@@ -362,6 +362,11 @@ rms line jitter.
     +1.85 ppm.
 - **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
   output jitter 0.57–0.58 ns.
+- **Output H jitter drifts with the session:** 0.57–0.58 ns in the
+  2026-10-23 trials, 0.59 the next morning, 0.62–0.67 that afternoon. An A/B
+  test (V0 five times each, old and new firmware, interleaved twice) read
+  0.62–0.67 on both, so it's the unit or the rig on the day, not the
+  generator.
 - **Vertical blanking (input A, 2026-10-24, first B-test unit):**
   - **Captions (line 21) pass intact** in both fields, clean (77 of 77) and
     through a dropped field every 30 frames (76 of 76), at ×0.84 of the
@@ -469,6 +474,18 @@ rms line jitter.
   second.
 
 ## Measurement pitfalls
+
+- **A capture that starts inside a vertical interval** (fixed 2026-10-24,
+  found by the PR #29 regression trial). It sees only that interval's later
+  broad pulses, so its first "field" measured 0.5–3 lines short and read as
+  non-standard. That failed whatever structure check it landed on, at
+  random, about once per field trial on every unit. In the 39 saved trials
+  that record field times, 160 runs began this way. All 36 non-standard first
+  fields were among them, and none was a real field. Correcting them changes 23
+  past verdicts, all fail to pass or marginal (H1 r2, S10 r8/r9 and others):
+  some of the "variable" behaviours in the fingerprints came from this. The
+  first field start now counts only if the capture began 12 or more lines
+  before it (`observe_tbc.field_starts`).
 
 - **"Locked" means within ±0.5 ppm.** Genuinely locked devices read
   0.0 ± 0.1 ppm against their input. A blind-tested unit (2026-10-23) held a

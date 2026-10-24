@@ -75,6 +75,7 @@ TRAITS = [
     ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
     ("caption_gain", "unit", "Caption data level (B1, out ÷ in)", "×"),
     ("ch1_termination", "rig", "CH1 (TBC output) termination, from its sync depth", ""),
+    ("input_sync_v", "rig", "Generator sync into the TBC (V0, CH2; nominal 0.286)", "V"),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
     # The scope's noise floor shows through these: an unterminated CH1 has
     # twice the volts, so they read lower (0.66 vs 0.97 ns, 0.33 vs 0.39 IRE
@@ -270,6 +271,12 @@ def traits_of(runs):
             t["sync_depth_v"] = round(sd, 3)
             # A TBC's regenerated sync is ~0.29 V into 75 ohms, twice that open.
             t["ch1_termination"] = "75 ohm (terminated)" if sd < TERMINATED_BELOW_V else "open (unterminated)"
+        si = ((v0.get("input") or {}).get("level") or {}).get("sync_depth_v")
+        if si:
+            # The input level the TBC saw. A TBC regenerates its own sync but
+            # passes the picture in proportion, so its luma gain (against its
+            # own sync) reads low by as much as the input was low.
+            t["input_sync_v"] = round(si, 3)
     return t, G
 
 

@@ -86,6 +86,7 @@ def phasor(codes, sync, t0_us, t1_us, start_mod4, e):
     sync, against the continuous reference sin((pi/2)(start + e + k)), where
     start is the nominal sample count before this line (mod 4)."""
     k = np.arange(int(sync + t0_us * US), int(sync + t1_us * US))
+    k = k[:len(k) // 4 * 4]   # whole subcarrier cycles: a partial one biases the amplitude by a few %
     seg = codes[k] - codes[k].mean()
     th = np.pi / 2 * (k + start_mod4 + e)
     c, s = 2 * np.mean(seg * np.cos(th)), 2 * np.mean(seg * np.sin(th))
@@ -362,6 +363,11 @@ def main():
             cells = [c[int(round(st + (10.5 + 1.4 * (i + 0.5) - 0.4) * US)):
                        int(round(st + (10.5 + 1.4 * (i + 0.5) + 0.4) * US))].mean() for i in range(36)]
             marks.append(pm.decode_marker([1 if x > (lo + hi) / 2 else 0 for x in cells]))
+            if marks[-1] is None:  # show what was in the buffer, to tell a rendering fault from a read race
+                want = pm.marker_word(int(man["test"]["code"]), rung, frame & 0xFFFF)
+                bits = [1, 0] + [(want >> (31 - j)) & 1 for j in range(32)] + [0, 1]
+                print(f"   marker slot {i} (line {L}) undecodable: sync at {st:.2f}, cells {[round(float(x), 1) for x in cells]}; "
+                      f"expected bits {''.join(map(str, bits))}")
         g.cmd("hold 0", until="frames")
 
         ph_max = np.max(np.abs(ph_err)) if len(ph_err) else 0.0
@@ -380,6 +386,8 @@ def main():
               f"{' |' + struct_note if struct_note else ''}")
     g.cmd("chroma under")
     g.cmd("test V0")
+    import gen_cmd
+    print(f"line dumps re-read after a serial transfer error: {gen_cmd.DUMP_RETRIES}")
     print("ALL PASS" if ok_all else "SOME FAILED")
 
 

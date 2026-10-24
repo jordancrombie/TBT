@@ -42,7 +42,7 @@ Open work is in [TODO.md](TODO.md).
 | Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | In progress | CH2 wired; CH1 terminated 2026-10-24 (its sync now 0.281 V); chroma within ~5 % of nominal since 2026-10-15. Still to do: calibrate the generator's levels (sync 82 % of nominal) |
+| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. Fingerprints are being re-measured on the calibrated rig |
 
 Open work is in [TODO.md](TODO.md).
 
@@ -76,13 +76,48 @@ record which way CH1 was wired, worked out from the sync depth, and don't
 compare those figures. Our own rig was unterminated until 2026-10-24; see
 [Fingerprints](#fingerprints).
 
-The default levels (`levels 0 73`) still need calibrating. The target is
-286 mV of sync and 714 mV of white above blanking. Measured on CH2 into the
-TBC's 75 Ω input: 236 mV of sync (82 %). Relative to that sync, burst reads
-36–39 IRE p-p and yellow chroma 57–61 IRE (nominal 40 and 62), so chroma is
-within about 5 % since 2026-10-15. Before then it read about 0.68× (27 IRE
-burst); something on the rig changed overnight, and it is no longer
-reproduced.
+### Calibrating the levels
+
+The firmware's default levels (`levels 5 92`: DAC codes for the sync tip and
+white) were calibrated on our rig on 2026-10-24: **283 mV of sync and 718 mV
+of white** above blanking on CH2, against the standard 286 and 714 mV. Your
+board, resistor and TBC may differ, so measure yours:
+
+```
+python3 tools/calibrate_levels.py                  # measure on CH2, and suggest codes
+python3 tools/calibrate_levels.py --set 5 92       # try codes, then measure again
+```
+
+Then put the codes in `DEFAULT_LEVELS` (`src/main.cpp`) and reflash.
+
+**The trade-off.** The ESP32's DAC is built to drive a high-impedance input,
+not the 150 Ω of a 75 Ω source resistor into a 75 Ω input. At full video
+amplitude it distorts slightly: on our rig, yellow's hue reads 2.6° low and
+its chroma 7 % low, and the 50 IRE step is 3 % off linear (there is also a
+one-code step at DAC code 64). At the old, uncalibrated levels (82 % of
+nominal) the colour was cleaner (hue +1.2°, chroma −4 %). We chose correct
+levels because a level error fools the measurements and can't be corrected
+afterwards, while a colour error is measured on CH2 and every TBC is judged
+against the input it really got. A video buffer amplifier between the DAC
+and the 75 Ω resistor would give both; see [TODO](TODO.md).
+
+### Why we terminate CH1 and calibrate the levels (and what if you can't)
+
+TBCs are built for a standard signal: 1 V into 75 Ω. Their sync slicers,
+clamps and automatic gain all assume it.
+- **An under-level input skews the results.** A TBC regenerates its own sync
+  at full size but passes the picture in proportion to its input. At our old
+  82 % input, every TBC's luma gain read about 18 % low against its own sync:
+  the TBC-3000 read ×0.79 where its true gain is about ×0.95, and "failed" V0
+  for it. Calibrated levels remove that.
+- **An unterminated output only changes volts.** See above: the picture
+  figures are self-scaled, and only the jitter and noise floors move.
+
+If you can't do either, TBT still works, and is still consistent run to run
+on your rig: grades of timing, structure, colour and VBI behaviour don't
+depend on either. Just don't compare luma gain, output jitter or noise with
+another rig's. Fingerprints record both conditions (CH1 termination, and
+the generator's sync level into the TBC), so it's always visible.
 
 ### Minimal rig: one scope channel
 
@@ -469,14 +504,16 @@ the library that identification will match unknown TBCs against.
 
 The library holds five devices so far (the TBC-3000 once per input).
 
-> **Every fingerprint in the library so far was measured with CH1
-> unterminated** (2026-10-13 to 10-24, before our rig had its terminator).
-> Each records that ("CH1 termination: open"). Behaviour traits, gains, hue
-> and clock are unaffected, so they compare with any rig. Only the output
-> jitter and noise below read lower than a terminated rig would. That makes
-> them a direct reference if your rig is unterminated too; on a terminated
-> rig, expect about ×1.5 the jitter and ×1.2 the noise. New entries will be
-> measured terminated, and will say so.
+> **The library is being re-measured on the calibrated rig** (from
+> 2026-10-24). The entries in the table below were measured on the **old
+> rig**: CH1 unterminated, and the generator at 82 % of nominal level. Each
+> records both ("CH1 termination: open", "generator sync into the TBC:
+> 0.236 V"). Their behaviour traits, hue and clock compare with any rig.
+> Their **luma gain reads about 18 % low** (the under-level input), and their
+> output jitter and noise read lower than a terminated rig would (about
+> ×1.5 and ×1.2), which makes them a direct reference for an unterminated,
+> uncalibrated rig. As each unit is re-measured, its old entry moves to
+> `fingerprints/old-rig/` and the table is updated.
 
 The **timing correction class** comes
 from how fast and how completely each one corrects line timing (see
@@ -484,19 +521,27 @@ from how fast and how completely each one corrects line timing (see
 
 | Trait | Datavideo TBC-1000 | Datavideo TBC-3000 (input A / B) | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
 |---|---|---|---|---|---|
+| Measured on | old rig | **calibrated rig** (2026-10-24) | old rig | old rig | old rig |
 | Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | 0.4 kHz | 0.45 / 0.42 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 107 ns | 85 / 77 ns | 98 ns | 11 ns | 3 ns |
+| Correction bandwidth | 0.4 kHz | 0.53 / 0.52 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 107 ns | 66 / 58 ns | 98 ns | 11 ns | 3 ns |
 | At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.3 µs | 1 line jolted 1.4 µs | no jolt |
 | With no input at all | black | black | its own colour bars | black | no output |
 | Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
 | Colour killer | yes | yes | no | no | no |
-| Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−18 to +1.6 ppm) |
-| Luma gain | ×0.63 | ×0.82 / ×0.79 (hue −1° / +3°) | ×0.99 | ×1.00 | ×1.02 |
-| Output noise / jitter (CH1 unterminated) | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
-| Field-trial score (provisional) | 51–53 | 49–51 / 51–52 | 38–44 | 31–32 | 62–64 |
-| Captions / VBI lines 10–20 (B1, B2) | not yet tested | captions intact (one field damaged after each signal loss) / blanked | not yet tested | not yet tested | not yet tested |
+| Output vs input | free-running, +22 ppm | free-running, +2.1 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−18 to +1.6 ppm) |
+| Luma gain (old rig reads ~18 % low) | ×0.63 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.00 | ×1.02 |
+| Output noise / jitter (rig-dependent) | 0.53 IRE / 0.87 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
+| Field-trial score (provisional) | 51–53 | 62 / 49–54 | 38–44 | 31–32 | 62–64 |
+| Captions / VBI lines 10–20 (B1, B2) | not yet tested | intact; after a signal loss A damages 1–2 fields, B none / blanked | not yet tested | not yet tested | not yet tested |
 | Copy protection: AGC pulses / colour stripe (B3) | not yet tested | removed, not blinded / removed | not yet tested | not yet tested | not yet tested |
+
+On the calibrated rig the TBC-3000's two inputs show their different front
+ends more clearly: input A passes the picture at ×0.99 with less noise than
+it receives (0.20 IRE out for 0.22 in), and input B at ×0.94 adding noise
+(0.42 IRE). With full-size sync both correct more timing than the old rig
+showed (bandwidth ~0.53 kHz, skew left 58–66 ns), and input A now passes
+V0 outright, which lifts its score from about 50 to 62.
 
 The TBC-3000 was identified **blind** (2026-10-23). Its timing and
 behaviour matched the TBC-1000 (16–17 of 18 model traits), but its clock
@@ -506,8 +551,8 @@ with two inputs: the same crystal (+1.75 / +1.85 ppm) and timing core, but
 different front ends. The TBC-3000 figures above are with its controls at
 baseline. With input B's picture controls moved off baseline, it gained a
 2-line 1.2 µs jolt at timing steps, failed L4 and scored 42–44. That run is
-kept as `datavideo-tbc-3000-input-b-adjusted.json`, an example of settings
-showing up in a fingerprint.
+kept as `old-rig/datavideo-tbc-3000-input-b-adjusted.json`, an example of
+settings showing up in a fingerprint.
 
 The fingerprints were built from 2 to 7 trials each. The ES-10's come
 from lid-off trials: with the lid on, an overheating fault spoils its colour
@@ -625,6 +670,7 @@ It found the DMR-ES10's overheating colour fault (see
 | `tools/colour_watch.py` | logs colour, clock and picture class over time while only listening (finds warm-up faults) |
 | `tools/verify_timing.py`, `tools/check_lines.py` | firmware verification over serial |
 | `tools/analyze_capture.py` | levels, line rate and bar colours from a capture |
+| `tools/calibrate_levels.py` | measures the generator's levels on CH2 and suggests `levels` codes |
 | `tools/gen_cmd.py` | serial helpers (`BAUD`, `request`, `dump_line`) and a command-line sender |
 | `tools/dwf_list.py`, `tools/dwf_capture.py` | scope utilities |
 | `docs/tests.md` | every test in plain words, with all its rungs |

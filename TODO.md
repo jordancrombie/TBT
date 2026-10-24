@@ -61,9 +61,24 @@ Scored for value against what the suite already covers.
   - [ ] After the levels calibration: terminated baselines, starting with
         the reference unit (TBC-3000 input A), then the others as they come
         back on the bench. Keep the unterminated entries as references.
-- [ ] Calibrate `levels` on CH2 to 286 mV sync / 714 mV white (now about
-      236 mV sync, 82 %). Leave headroom below the sync tip (sync at code
-      ~15–20), so S1 can go deeper than 40 IRE and L2 noise isn't clipped.
+- [x] Calibrate `levels` on CH2 (2026-10-24): `5 92`, sync 283 mV, white
+      718 mV. `tools/calibrate_levels.py` measures and suggests codes.
+- [ ] A video buffer amplifier between the DAC and the 75 Ω resistor
+      (a THS7314-class part, or a transistor follower): the DAC distorts
+      colour slightly at full amplitude into 150 Ω (hue −2.6°, chroma −7 %).
+- [ ] Measure the DAC's staircase (all 256 codes on CH2) for its linearity;
+      a one-code step at code 64 is known.
+- [ ] **Rebaseline every unit on the calibrated rig** (CH1 terminated,
+      levels 5/92), 3 field trials each, moving old entries to
+      `fingerprints/old-rig/`:
+  - [x] Datavideo TBC-3000 input B (Source B), 2026-10-24
+  - [x] Datavideo TBC-3000 input A (the reference unit), 2026-10-24
+  - [ ] Datavideo TBC-1000
+  - [ ] AVT-8710 (green)
+  - [ ] Pioneer DVR-220
+  - [ ] Panasonic DMR-ES10 (lid off)
+- [ ] Checksum the other serial replies (`lens`, `pdump`, `manifest`), as
+      `dump` now is.
 - [x] Generator chroma: it read about 0.68× nominal on CH2 until 2026-10-14,
       and 0.92–0.97× from 2026-10-15 on (a rig change overnight, not
       recorded). The ~5 % left fits the DAC's sinc roll-off.

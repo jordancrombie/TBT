@@ -350,8 +350,8 @@ Rules:
   it handled its own fault.
 - **Single-channel runs** use the nominal picture (adjusted for what the test
   changes) where two-channel runs use CH2. That matters because the
-  generator's real output differs from nominal (sync 82 %, chroma within
-  about 5 %, relative to sync).
+  generator's real output differs from nominal (hue about 2.6° and chroma
+  7 % low on yellow at the calibrated levels).
   When CH2's picture can't be measured for a test (S1's shallow sync, L3's
   hum, L2's heaviest noise), the input is worked out from V0's input
   instead.
@@ -466,9 +466,10 @@ model the firmware renders from.
 
 ### Phases
 
-1. **Phase 0, rig calibration (in progress):** CH2 wired 2026-10-14; the
-   chroma shortfall (0.68×) went away on 2026-10-15. Still to do: terminate
-   CH1, set `levels` to 286 / 714 mV, trim `ppm`.
+1. **Phase 0, rig calibration (done 2026-10-24):** CH2 wired 2026-10-14;
+   the chroma shortfall (0.68×) went away on 2026-10-15; CH1 terminated and
+   `levels` calibrated (283 / 718 mV) on 2026-10-24. Every unit is being
+   re-measured on the calibrated rig. Optional: trim `ppm`.
 2. **Phase 1, timing (done 2026-10-13):** descriptor-length control, frame
    task, frame marker, manifest, host capture runner. V0, H1–H5, F1.
 3. **Phase 2, structure and colour (done 2026-10-13):** S1–S9, C1–C4, F2,

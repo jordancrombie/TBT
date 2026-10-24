@@ -9,10 +9,12 @@
 #include "ntsc_timing.h"
 #include "patterns.h"
 
-// Default levels assume GPIO25 drives the 75-ohm monitor input directly:
-// ~0.95 V for sync tip..white unloaded. Recalibrate with "levels" once the
-// output has been measured on the scope.
-static const gen::Levels DEFAULT_LEVELS = {0.0f, 73.0f};
+// DAC codes for -40 and 100 IRE, calibrated 2026-10-24 on CH2 (GPIO25 ->
+// 75-ohm series resistor -> a TBC's 75-ohm input): sync 283 mV, white 718 mV
+// (nominal 286 / 714). The tip sits at code 5, leaving room below it for
+// noise. A different board, resistor or load needs its own calibration with
+// "levels"; see the README ("Calibrating the levels").
+static const gen::Levels DEFAULT_LEVELS = {5.0f, 92.0f};
 
 static void print_info() {
     gen::Levels lv = gen::levels();
@@ -92,8 +94,14 @@ static void handle(String line) {
         static uint8_t codes[ntsc::SAMPLES_PER_LINE + ntsc::MAX_EXT];
         int n = gen::read_line(arg.toInt(), codes, sizeof(codes));
         Serial.printf("line %d n=%d\n", (int)arg.toInt(), n);
-        for (int k = 0; k < n; k++) Serial.printf("%02x%s", codes[k], (k % 64 == 63 || k == n - 1) ? "\n" : "");
-        Serial.println("end");
+        uint32_t sum = 0;
+        for (int k = 0; k < n; k++) {
+            Serial.printf("%02x%s", codes[k], (k % 64 == 63 || k == n - 1) ? "\n" : "");
+            sum += codes[k];
+        }
+        // The host checks n and the sum: a byte lost on the serial link would
+        // otherwise shift every sample after it (seen ~1 % of dumps).
+        Serial.printf("end sum=%u\n", (unsigned)sum);
     } else if (cmd == "diag") {
         for (int i = 0; i < 5; i++) { Serial.printf("dscr %08x\n", (unsigned)i2s_dac::current_descriptor()); delayMicroseconds(37); }
     } else if (cmd == "dc") {

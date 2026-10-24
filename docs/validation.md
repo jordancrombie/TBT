@@ -26,11 +26,11 @@ unit, with 6 trials, no heat fault, and it's normally on the bench. If it's
 unavailable, use another unit whose fingerprint has 3 or more trials, and
 say which in the PR.
 
-Its fingerprint was measured with CH1 unterminated; the rig is terminated
-since 2026-10-24. Rig-dependent traits (CH1 termination, sync depth, output
-jitter and noise) are never compared. Everything else is, as below. Once
-the generator's levels are calibrated, a terminated baseline for the
-reference unit replaces it.
+Its baseline was re-measured on the calibrated rig on 2026-10-24 (3 trials,
+scores 61.7–62.4); the old-rig entry is in `fingerprints/old-rig/`.
+Rig-dependent traits (CH1 termination, the input level, sync depth, output
+jitter and noise) are never compared; luma gain only between trials at the
+same input level.
 
 ## A regression field trial passes when
 

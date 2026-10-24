@@ -50,14 +50,38 @@ def request(s, cmd, until=None, timeout=10.0, quiet=0.3):
     return buf.decode(errors="replace")
 
 
-def dump_line(s, idx):
-    """DAC codes of ring line `idx` as played (numpy float array)."""
+class TransferError(RuntimeError):
+    pass
+
+
+DUMP_RETRIES = 0   # dumps re-read because their count or sum didn't match
+
+
+def dump_line(s, idx, tries=4):
+    """DAC codes of ring line `idx` as played (numpy float array).
+
+    The serial link occasionally drops a byte, which would shift every sample
+    after it. The firmware sends the sample count and their sum: anything that
+    doesn't match is read again, and never used."""
+    global DUMP_RETRIES
     import numpy as np
-    lines = request(s, f"dump {idx}", until="end").splitlines()
-    i = next(k for k, l in enumerate(lines) if l.startswith(f"line {idx} "))
-    n = int(lines[i].split("n=")[1])
-    hexs = "".join(l.strip() for l in lines[i + 1:] if l.strip() != "end")[: 2 * n]
-    return np.array([int(hexs[j:j + 2], 16) for j in range(0, len(hexs), 2)], float)
+    for attempt in range(tries):
+        DUMP_RETRIES += attempt > 0
+        lines = request(s, f"dump {idx}", until="sum=", timeout=5).splitlines()
+        try:
+            i = next(k for k, l in enumerate(lines) if l.startswith(f"line {idx} "))
+            n = int(lines[i].split("n=")[1])
+            end = next(l for l in lines[i + 1:] if l.startswith("end"))
+            want = int(end.split("sum=")[1]) if "sum=" in end else None
+            hexs = "".join(l.strip() for l in lines[i + 1:] if l.strip() and not l.startswith("end"))
+            if len(hexs) != 2 * n:
+                continue
+            codes = np.array([int(hexs[j:j + 2], 16) for j in range(0, 2 * n, 2)], float)
+        except (StopIteration, ValueError, IndexError):
+            continue
+        if want is None or int(codes.sum()) == want:
+            return codes
+    raise TransferError(f"dump {idx}: no intact copy in {tries} tries")
 
 
 if __name__ == "__main__":

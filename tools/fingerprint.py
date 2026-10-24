@@ -53,6 +53,9 @@ TRAITS = [
     ("no_vsync_position", "model", "Picture with no V-sync (S4 r6)", ""),
     ("hum_clamp", "model", "Hum clamped (L3, 20 IRE)", ""),
     ("level_control", "model", "Level control (L4, 120 %)", ""),
+    ("captions", "model", "Line 21 captions (B1)", ""),
+    ("captions_after_loss", "model", "Captions around lost fields (B1 r3)", ""),
+    ("vbi_lines", "model", "VBI lines 10-20 (B2)", ""),
     ("rate_ppm", "unit", "Output line rate vs input", "ppm"),
     ("latency_ms", "unit", "Latency, range seen", "ms"),
     ("luma_gain", "unit", "Luma gain (V0, gray out / in)", "×"),
@@ -68,6 +71,7 @@ TRAITS = [
     ("h4_residual_ns", "unit", "Head-switch skew left (H4 r5, over V0)", "ns rms"),
     ("h6_passed_1k", "unit", "Jitter passed at 1 kHz (H6 r3)", "%"),
     ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
+    ("caption_gain", "unit", "Caption data level (B1, out ÷ in)", "×"),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
 ]
 INFO = {k: (kind, label, unit) for k, kind, label, unit in TRAITS}
@@ -214,6 +218,22 @@ def traits_of(runs):
         k_out = pic(l4)["gray_ire"] / pic(v0)["gray_ire"]
         t["level_control"] = ("AGC restores the level" if abs(k_out - 1) < 0.3 * abs(k_in - 1)
                               else "passes the level" if abs(k_out - k_in) < 0.3 * abs(k_in - 1) else "partial")
+
+    b1 = find(runs, "B1", 1)
+    c = ((b1 or {}).get("vbi") or {}).get("captions")
+    if c and c["fields"]:
+        t["captions"] = {"intact": "passed intact", "stripped": "stripped", "damaged": "damaged"}.get(c["state"], c["state"])
+        ci = (((b1.get("input") or {}).get("vbi") or {}).get("captions") or {})
+        if c["data_ire"] and ci.get("data_ire"):
+            t["caption_gain"] = round(c["data_ire"] / ci["data_ire"], 3)
+    c3 = ((find(runs, "B1", 3) or {}).get("vbi") or {}).get("captions")
+    if c3 and c3["fields"] and c3["found"]:
+        t["captions_after_loss"] = "intact" if c3["intact"] == c3["fields"] else "first fields damaged"
+    m = ((find(runs, "B2", 1) or {}).get("vbi") or {}).get("line_map")
+    if m and m["checked"]:
+        n = m["checked"]
+        t["vbi_lines"] = ("passed" if m["in_place"] / n > 0.95 else "blanked" if m["blank"] / n > 0.95 else
+                          "corrupted" if (m["moved"] + m["damaged"]) / n > 0.05 else "mixed")
 
     if pic(v0):
         p0, i0 = pic(v0), inpic(v0)

@@ -94,6 +94,10 @@ const Def DEFS[] = {
     {"X1", 0x61, "fault hunt (stress, recovery)", FAULT_HUNT, "stress", "", 5, {1, 2, 3, 4, 5}, {0}, BOTH,
      "recovers fully after each stress burst",
      "no stuck or blended fields; clean again within a few frames of each stress burst"},
+    {"B1", 0x71, "captions (line 21)", CAPTIONS, "disruption", "", 3, {0, 1, 2}, {0}, BOTH,
+     "captions passed intact", "captions passed intact (or blanked by design)"},
+    {"B2", 0x72, "VBI line map", VBI_MAP, "", "", 1, {0}, {0}, BOTH,
+     "lines 10-21 passed in place, levels unchanged", "lines 10-21 passed in place, or blanked by design"},
 };
 const int NUM_DEFS = sizeof(DEFS) / sizeof(DEFS[0]);
 
@@ -227,6 +231,9 @@ uint32_t frame_start_mod4(const Test &t, uint32_t frame) {
             uint32_t every = (uint32_t)t.p1;
             return (2 * (frame - frame / every)) & 3;
         }
+        case CAPTIONS:
+            if ((int)t.p1 == 1) return (2 * (frame - frame / CC_DROP_EVERY)) & 3;
+            return (2 * frame) & 3;
         default: return (2 * frame) & 3;
     }
 }
@@ -264,9 +271,17 @@ int frame_slots(const Test &t, uint32_t frame, Slot *out, int max) {
             for (int f = 0; f < 2; f++)
                 for (int L = 1; L <= 262; L++) add(L, 0);
             break;
-        case FIELD_DROP: {
-            uint32_t every = (uint32_t)t.p1;
-            if (frame % every == every - 1) {  // field 1 only: ends half-way along line 263
+        case FIELD_DROP:
+        case CAPTIONS: {
+            if (t.def->kind == CAPTIONS && (int)t.p1 == 2) {  // as S10: CC_LOST fields of no signal
+                for (int L = 1; L <= LINES_PER_FRAME; L++) {
+                    uint32_t field = 2 * frame + (L >= 264 ? 1 : 0);
+                    add(L, (int)(field % LOSS_PERIOD) < CC_LOST ? SLOT_DEAD : 0);
+                }
+                break;
+            }
+            uint32_t every = t.def->kind == CAPTIONS ? ((int)t.p1 == 1 ? CC_DROP_EVERY : 0) : (uint32_t)t.p1;
+            if (every && frame % every == every - 1) {  // field 1 only: ends half-way along line 263
                 for (int L = 1; L <= 262; L++) add(L, 0);
                 add(263, SLOT_HALF);
             } else {
@@ -354,8 +369,10 @@ bool uses_snow(const Test &t) {
            (t.def->kind == FAULT_HUNT && ((int)t.p1 == 4 || (int)t.p1 == 5));
 }
 
+bool uses_captions(const Test &t) { return t.def->kind == CAPTIONS || t.def->kind == VBI_MAP; }
+
 bool uses_dead(const Test &t) {
-    return t.def->kind == LOSS_DEAD || t.def->kind == NO_SIGNAL ||
+    return t.def->kind == LOSS_DEAD || t.def->kind == NO_SIGNAL || (t.def->kind == CAPTIONS && (int)t.p1 == 2) ||
            (t.def->kind == FAULT_HUNT && ((int)t.p1 == 3 || (int)t.p1 == 5));
 }
 

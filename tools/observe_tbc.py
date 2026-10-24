@@ -42,6 +42,20 @@ def sync_pulses(x, us):
     return f + (x[f] - mid) / (x[f] - x[f + 1]), w
 
 
+def field_starts(ft, w, us):
+    """Field starts: the first broad (V-sync) pulse after a gap.
+
+    A capture that begins inside a vertical interval sees only its later
+    broad pulses, so its first "field" would measure 0.5-3 lines short (and
+    read as non-standard). That first start is used only if the capture
+    began at least 12 lines before it, i.e. the whole interval was captured."""
+    broad = ft[w > 20]
+    vs = broad[np.concatenate([[True], np.diff(broad) > 100 * us])] if len(broad) else broad
+    if len(vs) and vs[0] < 12 * 63.556 * us:
+        vs = vs[1:]
+    return vs
+
+
 def frame_events(frames):
     """Classify the frame-counter sequence: each frame should show up twice (two fields)."""
     if len(frames) < 3:
@@ -210,8 +224,7 @@ def jitter_transfer(run, out, inp, first=30, n=128):
         us = fs / 1e6
         ft, w = sync_pulses(x, us)
         hs = ft[(w > 3.5) & (w < 6)]
-        b = ft[w > 20]
-        vs = b[np.concatenate([[True], np.diff(b) > 100 * us])] if len(b) else b
+        vs = field_starts(ft, w, us)
         fields = {}
         for f in r.get("field_log", []):
             if f["class"] == "ours" and f["frame"] is not None and f["i"] + 1 < len(vs):
@@ -433,6 +446,164 @@ def hunt_summary(log):
             "stuck_or_ghost": sum(d["mismatch"] + d["ghost"] for d in win.values())}
 
 
+# ---- Vertical blanking data (B tests) ---------------------------------------
+CC_INDEX = 12          # line 21 (and 284) is the 12th H sync after V-sync (lines 10..20 come first)
+
+
+def cc_decode(prof, us):
+    """One line's caption data from its IRE profile (index 0 = sync edge).
+    None if there's no run-in; else run-in size, data level, bytes, parity."""
+    at = lambda t: prof[int(t * us)] if int(t * us) < len(prof) else 0.0
+    runin = prof[int(11.0 * us):int(23.5 * us)]
+    if len(runin) == 0 or np.percentile(runin, 98) - np.percentile(runin, 2) < 15:
+        return None
+    top = float(np.percentile(runin, 98))
+    thr = 0.5 * top
+    w = prof[int(24.9 * us):int(31.0 * us)]
+    up = np.where((w[:-1] < thr) & (w[1:] >= thr))[0]
+    if not len(up):
+        return {"runin_ire": float(top - np.percentile(runin, 2)), "pair": None, "parity_ok": False}
+    edge = 24.9 + (up[0] + (thr - w[up[0]]) / (w[up[0] + 1] - w[up[0]])) / us
+    T = pm.CC_BIT_US
+    vals = np.array([prof[int((edge + (k + 0.5) * T - 0.3) * us):int((edge + (k + 0.5) * T + 0.3) * us)].mean()
+                     for k in range(17)])
+    bits = (vals > thr).astype(int)
+    b0 = int(sum(int(b) << k for k, b in enumerate(bits[1:9])))
+    b1 = int(sum(int(b) << k for k, b in enumerate(bits[9:17])))
+    odd = lambda b: bin(b).count("1") % 2 == 1
+    return {"runin_ire": float(top - np.percentile(runin, 2)), "start_us": float(edge),
+            "data_ire": float(vals[bits == 1].mean()) if bits.any() else None,
+            "pair": (b0, b1), "parity_ok": odd(b0) and odd(b1), "start_bit": bool(bits[0])}
+
+
+def id_decode(prof, us):
+    """A B2 line-map ID (k), its staircase levels, or None if the line has no ID."""
+    at = lambda t: prof[int((t - 0.4) * us):int((t + 0.4) * us)].mean()
+    c = np.array([at(pm.ID_START_US + (i + 0.5) * pm.ID_CELL_US) for i in range(pm.ID_CELLS)])
+    hi, lo = (c[0] + c[8]) / 2, (c[1] + c[7]) / 2
+    if hi - lo < 15:
+        return None
+    k = pm.decode_id((c - lo) / (hi - lo) > 0.5)
+    stair = [float(at((a + b) / 2) - lo) for a, b in zip(pm.STAIR_US, pm.STAIR_US[1:])]
+    return {"k": k, "stair_ire": stair, "hi_ire": float(hi - lo)}
+
+
+def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
+    """B1/B2: what the TBC did to line 21 (captions) and, for B2, lines 10-20.
+
+    Each of our marked fields is checked against what the generator sent
+    that frame: captions found, intact, damaged (parity) or carrying another
+    frame's data (the TBC passed its VBI out of step with its picture)."""
+    us = fs / 1e6
+    ire = lambda v: (v - blank) * 40.0 / (blank - tip)
+    k = max(1, int(0.2 * us))
+    box = np.ones(k, np.float32) / k
+    n_pre = int(2 * us)
+
+    def prof(s):
+        i0 = int(s) - n_pre
+        seg = x[max(i0, 0):int(s + 63 * us)]
+        return ire(np.convolve(seg, box, mode="same"))[n_pre:] if i0 >= 0 else None
+
+    cap = {"fields": 0, "found": 0, "intact": 0, "parity_errors": 0, "wrong_data": 0, "missing": 0,
+           "other_frame": Counter(), "line_index": Counter(), "runin_ire": [], "data_ire": []}
+    f1_frames, f2_frames = [], []
+    lmap = {"in_place": 0, "moved": 0, "blank": 0, "damaged": 0, "per_line": {}, "stair": []}
+    for f in log:
+        if f["class"] != "ours" or f["frame"] is None or f["i"] + 1 >= len(vs):
+            continue
+        field = hs[(hs > vs[f["i"]]) & (hs < vs[f["i"] + 1])]
+        if len(field) < 20:
+            continue
+        cap["fields"] += 1
+        # Captions: expected on index 12; look a few lines either side in case it moved.
+        # A clean decode anywhere nearby wins over a damaged one on line 21 itself.
+        best = None
+        for idx in (CC_INDEX, CC_INDEX - 1, CC_INDEX + 1, CC_INDEX - 2, CC_INDEX + 2):
+            p_ = prof(field[idx - 1])
+            d = cc_decode(p_, us) if p_ is not None else None
+            if d and d["pair"] is not None and d["parity_ok"] and d["start_bit"]:
+                best = (idx, d)
+                break
+            if d and d["pair"] is not None and best is None and idx == CC_INDEX:
+                best = (idx, d)
+        if best is None:
+            cap["missing"] += 1
+        else:
+            idx, d = best
+            cap["found"] += 1
+            cap["line_index"][idx] += 1
+            cap["runin_ire"].append(d["runin_ire"])
+            if d["data_ire"] is not None:
+                cap["data_ire"].append(d["data_ire"])
+            # Which field's data this is comes from the data itself: after a
+            # dropped field the next field arrives with the other timing parity.
+            pair, fr = tuple(d["pair"]), f["frame"]
+            which = next((fld for fld in (f["parity"], 3 - f["parity"]) if pm.cc_pair(fld, fr) == pair), None)
+            if not d["parity_ok"] or not d["start_bit"]:
+                cap["parity_errors"] += 1
+            elif which:
+                cap["intact"] += 1
+                (f1_frames if which == 1 else f2_frames).append(fr)
+            else:
+                off = next((o for o in (-1, 1, -2, 2, -3, 3) for fld in (1, 2) if pm.cc_pair(fld, fr + o) == pair), None)
+                if off is not None:
+                    cap["other_frame"][off] += 1
+                else:
+                    cap["wrong_data"] += 1
+        if test["id"] == "B2":
+            n_ids = pm.MAP_F1[1] - pm.MAP_F1[0] + 1 if f["parity"] == 1 else pm.MAP_F2[1] - pm.MAP_F2[0] + 1
+            for idx in range(1, n_ids + 1):
+                p_ = prof(field[idx - 1])
+                d = id_decode(p_, us) if p_ is not None else None
+                key = f"{f['parity']}:{idx}"
+                if d and d["k"] == idx:
+                    st = "in_place"
+                    lmap["stair"].append(d["stair_ire"])
+                elif d and d["k"]:
+                    st = "moved"
+                elif p_ is not None and np.std(p_[int(10 * us):int(56 * us)]) < 2.5:
+                    st = "blank"
+                else:
+                    st = "damaged"
+                lmap[st] += 1
+                lmap["per_line"].setdefault(key, Counter())[st] += 1
+
+    def seq(frames):
+        """Consecutive same-field caption data: repeated (a held frame) or skipped frames."""
+        d = np.diff(frames)
+        return {"repeated": int(np.sum(d == 0)), "skipped": int(np.sum(np.clip(d - 1, 0, None))),
+                "backward": int(np.sum(d < 0))}
+
+    med = lambda v: float(np.median(v)) if v else None
+    out = {"captions": {"fields": cap["fields"], "found": cap["found"], "intact": cap["intact"],
+                        "parity_errors": cap["parity_errors"], "wrong_data": cap["wrong_data"],
+                        "missing": cap["missing"],
+                        "other_frame": {str(k_): v for k_, v in sorted(cap["other_frame"].items())},
+                        "line_index": {str(k_): v for k_, v in sorted(cap["line_index"].items())},
+                        "runin_ire": med(cap["runin_ire"]), "data_ire": med(cap["data_ire"]),
+                        "field1_stream": seq(f1_frames), "field2_stream": seq(f2_frames)}}
+    c = out["captions"]
+    c["intact_fraction"] = c["intact"] / c["fields"] if c["fields"] else None
+    c["state"] = ("no fields" if not c["fields"] else "stripped" if not c["found"] else
+                  "intact" if c["intact"] == c["fields"] else "damaged")
+    if test["id"] == "B2":
+        n = lmap["in_place"] + lmap["moved"] + lmap["blank"] + lmap["damaged"]
+        out["line_map"] = {k_: lmap[k_] for k_ in ("in_place", "moved", "blank", "damaged")}
+        out["line_map"]["checked"] = n
+        out["line_map"]["passed_fraction"] = lmap["in_place"] / n if n else None
+        out["line_map"]["stair_ire"] = [float(v) for v in np.median(lmap["stair"], axis=0)] if lmap["stair"] else None
+        # Lines (field:index -> NTSC line) mostly not passed in place.
+        bad = []
+        for key, cnt in sorted(lmap["per_line"].items(), key=lambda kv: (kv[0][0], int(kv[0][2:]))):
+            st, _ = cnt.most_common(1)[0]
+            if st != "in_place":
+                fld, idx = int(key[0]), int(key[2:])
+                bad.append({"line": (pm.MAP_F1[0] if fld == 1 else pm.MAP_F2[0]) + idx - 1, "state": st})
+        out["line_map"]["not_passed"] = bad
+    return out
+
+
 def excerpt(x, hs, us, start_line, n_bins=220):
     """Min/max envelope of one line (2 us before sync to 64 us after) for plotting.
 
@@ -469,8 +640,7 @@ def analyze(run, ch=1):
                 "irregular_intervals": int(np.sum(np.abs(per - 63.556) >= 1.0))}
 
     # Vertical sync: first broad pulse (> 20 us) after a gap marks a field start.
-    broad = ft[w > 20]
-    vs = broad[np.concatenate([[True], np.diff(broad) > 100 * us])] if len(broad) else broad
+    vs = field_starts(ft, w, us)
     line = np.median(full) * us if len(full) else 63.556 * us
     fields = np.round(np.diff(vs) / line * 2) / 2
     out["fields"] = {"count": int(len(vs)), "lengths": {f"{k:g}": int(v) for k, v in Counter(fields.tolist()).items()},
@@ -544,6 +714,8 @@ def analyze(run, ch=1):
             out["loss"] = loss_summary(man["test"], fl)
         if tid == "X1":
             out["hunt"] = hunt_summary(fl)
+        if tid in ("B1", "B2"):
+            out["vbi"] = vbi_summary(x, fs, hs, vs, fl, tip, blank, man["test"])
     else:
         out["field_log"], out["field_summary"], out["picture"] = [], None, None
     frames = [int(m[1][2]) for m in marks]
@@ -611,6 +783,8 @@ def print_report(r):
                 print(f"  {w:8s}: {d['fields']} fields, not ours {d['not_ours']}, ghosted {d['ghost']}, "
                       f"stuck/torn {d['mismatch']}, back {d['back']}, repeated {d['repeat']}")
         print(f"  after stress: {'clean' if H['after_clean'] else 'NOT clean' if H['after_clean'] is False else 'not captured'}")
+    if r.get("vbi"):
+        print_vbi(r["vbi"])
     m = r["markers"]
     if not m["decoded"]:
         print("  markers: none decoded")
@@ -625,6 +799,26 @@ def print_report(r):
           f"{ev['skipped_frames']} skipped frames, {ev['repeats']} repeated, {ev['single_field_frames']} single-field")
     seq = " ".join(str(f) for f in m["frames"][:40])
     print(f"  sequence: {seq}{' ...' if len(m['frames']) > 40 else ''}")
+
+
+def print_vbi(v, label="captions"):
+    c = v["captions"]
+    other = sum(c["other_frame"].values())
+    f = lambda x: f"{x:.0f}" if x is not None else "—"
+    print(f"  {label} (line 21): {c['state'].upper()}: {c['intact']}/{c['fields']} fields intact, "
+          f"{c['missing']} missing, {c['parity_errors']} damaged (parity), {c['wrong_data']} wrong, "
+          f"{other} from another frame {c['other_frame'] or ''}; run-in {f(c['runin_ire'])} IRE, "
+          f"data {f(c['data_ire'])} IRE (50 sent), on line index {c['line_index']}")
+    s1, s2 = c["field1_stream"], c["field2_stream"]
+    print(f"  caption stream: field 1 {s1['repeated']} repeated, {s1['skipped']} skipped; "
+          f"field 2 {s2['repeated']} repeated, {s2['skipped']} skipped, {s2['backward']} backward")
+    m = v.get("line_map")
+    if m:
+        st = m["stair_ire"]
+        print(f"  VBI line map: {m['in_place']}/{m['checked']} passed in place, {m['moved']} moved, {m['blank']} blanked, "
+              f"{m['damaged']} damaged; staircase {'/'.join(f'{s_:.0f}' for s_ in st) if st else '—'} IRE (25/50/75 sent)")
+        if m["not_passed"]:
+            print("  lines not passed: " + ", ".join(f"{b['line']} {b['state']}" for b in m["not_passed"]))
 
 
 def compare_input(out, inp):
@@ -684,6 +878,8 @@ def compare_input(out, inp):
     po_ns, pi_ns = out["h"]["period_ns"], inp["h"]["period_ns"]
     if po_ns and pi_ns:
         res["rate_ppm"] = (pi_ns / po_ns - 1) * 1e6
+    if inp.get("vbi"):
+        res["vbi"] = inp["vbi"]
     lo, li = out.get("level", {}).get("sync_depth_v"), inp["level"].get("sync_depth_v")
     if lo and li:
         res["sync_ratio"] = lo / li     # depends on how each run is terminated
@@ -718,6 +914,8 @@ def print_input(r):
               "passes it even at the lowest frequencies" if not jt["bandwidth_hz"] else
               f"correction bandwidth about {jt['bandwidth_hz'] / 1000:.1f} kHz")
         print(f"  jitter passed through: {bands}; {bw}")
+    if i.get("vbi"):
+        print_vbi(i["vbi"], "input captions")
     v = i.get("vs_input")
     if v:
         f = lambda x: f"x{x:.2f}" if x is not None else "—"

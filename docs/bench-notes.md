@@ -77,7 +77,25 @@ so runs are now deleted after their report unless `--keep` is given.
 - **DMA stop signature, more data:** also about once per verifier run at
   X1 stress 5 (no signal, snow and a 5 µs skew mixed). Never during a capture
   so far.
-- **Open issue: the I2S DMA occasionally stops.** Seen as the frame counter
+- **Test-switch race, found and fixed 2026-10-24 (likely the DMA-stop
+  cause).** The setters (`set_test`, `set_pattern`, `set_levels`,
+  `set_chroma_follows`) changed the state before `rebuild()` took the lock.
+  A frame written in that gap used the *new* test with the *old* buffers.
+  With captions that wrote to a null buffer and crashed (StoreProhibited);
+  for S10, S11, X1 and L1 it handed the DMA a null no-signal, snow or dropout
+  buffer, which fits the DMA stops below (the last one logged was X1 r5,
+  which uses both). Now each setter stages its change under the lock and the
+  frame task writes nothing until the rebuild finishes. Three full verifier
+  passes afterwards (55 configurations each) had **no DMA restarts**, against
+  about one per pass before. Keep watching `dma_restarts`.
+- **Verifier flake, fixed 2026-10-24:** about once per full
+  `verify_timing.py` run, one test showed a 180° burst-phase error (S1 r5,
+  S2 r3, S4 r5; never the same one, and never in isolation). The previous
+  firmware did it too. Cause: `hold 1` didn't take the lock, so a frame write
+  already in progress finished after `hold` reported the frame numbers, and
+  the half held the next frame (the other colour phase). `hold` now takes the
+  lock and the frame task checks it under the lock.
+- **Open issue (probably fixed, see above): the I2S DMA occasionally stops.** Seen as the frame counter
   freezing, with `diag` showing the same descriptor every time. It happens
   about once per full `verify_timing.py` run, always on the switch from S8
   (variable-length frames) to S9, after the freeze/dump/unfreeze and two
@@ -344,6 +362,22 @@ rms line jitter.
     +1.85 ppm.
 - **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
   output jitter 0.57–0.58 ns.
+- **Output H jitter drifts with the session:** 0.57–0.58 ns in the
+  2026-10-23 trials, 0.59 the next morning, 0.62–0.67 that afternoon. An A/B
+  test (V0 five times each, old and new firmware, interleaved twice) read
+  0.62–0.67 on both, so it's the unit or the rig on the day, not the
+  generator.
+- **Vertical blanking (input A, 2026-10-24, first B-test unit):**
+  - **Captions (line 21) pass intact** in both fields, clean (77 of 77) and
+    through a dropped field every 30 frames (76 of 76), at ×0.84 of the
+    input's level (42 IRE for 50 sent). That matches its luma gain (×0.82),
+    so line 21 goes through the same level processing as the picture.
+  - **After lost fields, the first field 2 after each gap has a damaged line
+    21** (68 IRE of picture-like swing, bad parity): 2 of 74 fields, the
+    same in two trials. Its field 1, and everything after, is intact.
+  - **Lines 10–20 and 273–282 are blanked,** all 21 of them, in every field
+    (305 of 305). It keeps line 21 only: a deliberate choice, presumably to
+    keep captions while stripping other VBI data.
 
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
@@ -407,6 +441,24 @@ rms line jitter.
   frame). `tools/colour_watch.py` therefore starts V0 once and only
   listens.
 
+## Generator: vertical blanking data (B tests)
+
+- **Caption lines are rendered every frame,** like the frame markers: their
+  bytes change each frame. Two caption lines (about 90 segments each, the
+  run-in drawn as 8 ramps per cycle) take the frame rewrite from ~8.5 ms to
+  ~16 ms of the 33 ms budget.
+- **The segment arrays are static:** two 80-entry arrays (~3.8 KB) on the
+  frame task's 4 KB stack overflowed it (stack canary).
+- **B2's line map lives in the line pool:** IDs are the same in both fields,
+  so 11 lines × 2 burst phases. B2 runs with 37 distinct lines, one copy
+  each (no timing shifts), and 170 KB of heap free.
+- **Caption timing** comes from zvbi's service table (run-in 10.5 µs after
+  sync, 32 × fH) and the FCC figure's 27.382 µs start bit. The 608 standard
+  itself (CTA-608-E) wasn't read; its free download needs a CTA account.
+- **After a dropped field the next field arrives with the other timing
+  parity,** so the analysis tells field 1 from field 2 by the caption bytes,
+  not by the half-line timing.
+
 ## Generator: text cards
 
 - **A text card needs up to ~85 distinct lines.** That's each font row of
@@ -422,6 +474,18 @@ rms line jitter.
   second.
 
 ## Measurement pitfalls
+
+- **A capture that starts inside a vertical interval** (fixed 2026-10-24,
+  found by the PR #29 regression trial). It sees only that interval's later
+  broad pulses, so its first "field" measured 0.5–3 lines short and read as
+  non-standard. That failed whatever structure check it landed on, at
+  random, about once per field trial on every unit. In the 39 saved trials
+  that record field times, 160 runs began this way. All 36 non-standard first
+  fields were among them, and none was a real field. Correcting them changes 23
+  past verdicts, all fail to pass or marginal (H1 r2, S10 r8/r9 and others):
+  some of the "variable" behaviours in the fingerprints came from this. The
+  first field start now counts only if the capture began 12 or more lines
+  before it (`observe_tbc.field_starts`).
 
 - **"Locked" means within ±0.5 ppm.** Genuinely locked devices read
   0.0 ± 0.1 ppm against their input. A blind-tested unit (2026-10-23) held a

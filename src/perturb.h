@@ -43,7 +43,13 @@ enum Kind : uint8_t {
     LOSS_SNOW,       // S11: p1 = consecutive fields of snow (no sync), once a second
     NO_SIGNAL,       // V1: no signal at all (to see a TBC's own fallback output)
     FAULT_HUNT,      // X1: p1 = stress type; 3 s cycle: 1 s clean, 1 s stress, 1 s clean
+    CAPTIONS,        // B1: captions on line 21; p1 = disruption: 0 none, 1 a field dropped every
+                     //     CC_DROP_EVERY frames, 2 CC_LOST fields of no signal every LOSS_PERIOD fields
+    VBI_MAP,         // B2: line IDs on lines 10-20 / 273-282, plus captions
 };
+
+// B1 disruptions (as S7 rung 2 and S10 rung 2).
+constexpr int CC_DROP_EVERY = 30, CC_LOST = 2;
 
 // X1 cycle: frames [0, 30) clean, [30, 60) stress, [60, 90) clean (recovery).
 constexpr int HUNT_CYCLE = 90, HUNT_STRESS_START = 30, HUNT_STRESS_END = 60;
@@ -128,6 +134,8 @@ inline int noise_variant(uint32_t frame, int slot) { return (int)((frame * 7 + (
 // Whether the test needs snow lines / a no-signal line rendered.
 bool uses_snow(const Test &t);
 bool uses_dead(const Test &t);
+// Whether lines 21 and 284 carry captions (rendered per frame).
+bool uses_captions(const Test &t);
 
 // Static rendering style for the whole test (S1, S2, C1, C2, C4, L2, L4).
 render::Style base_style(const Test &t);

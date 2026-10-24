@@ -250,6 +250,19 @@ def fault_html(r):
         parts.append(f'<p><span class="badge {cls}">{esc(L["fields_lost"])} lost field(s): {esc(verdict)}</span> '
                      f'blank {L["blank_fields"]} · garbled {L["garbled_fields"]} · own pattern {L["fallback_fields"]} · '
                      f'non-standard {L["nonstandard_fields"]}</p>')
+    V = r.get("vbi")
+    if V:
+        c = V["captions"]
+        cls = {"intact": "b-ok", "damaged": "b-warn"}.get(c["state"], "b-bad")
+        other = sum(c["other_frame"].values())
+        parts.append(f'<p><span class="badge {cls}">captions {esc(c["state"])}: {c["intact"]}/{c["fields"]} fields</span> '
+                     f'damaged {c["parity_errors"]} · missing {c["missing"]} · wrong {c["wrong_data"]} · '
+                     f'another frame\'s {other} · data {c["data_ire"] or 0:.0f} IRE (50 sent)</p>')
+        m = V.get("line_map")
+        if m:
+            cls = "b-ok" if m["in_place"] == m["checked"] else "b-bad" if m["moved"] + m["damaged"] else "b-warn"
+            parts.append(f'<p><span class="badge {cls}">VBI lines 10–20: {m["in_place"]}/{m["checked"]} passed</span> '
+                         f'blanked {m["blank"]} · moved {m["moved"]} · damaged {m["damaged"]}</p>')
     H = r.get("hunt")
     if H:
         rows = "".join(

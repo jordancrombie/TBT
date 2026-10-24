@@ -60,7 +60,7 @@ perturbation is stated as a change from that.
 
 ## Test catalog
 
-The catalog has 31 tests in 7 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
+The catalog has 33 tests in 8 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
 targets: line TBC, frame TBC/synchroniser, or both. Its manifest gives the
 ideal output per class, so a line TBC that rightly passes a dropped field
 through is not marked down. Each test sweeps one parameter up a severity
@@ -170,6 +170,21 @@ The manifest records each variant's value.
 | V0 | Clean baseline | none | 1 rung | Identical to the input; sets the floor for every other figure |
 | V1 | No signal | none | 1 rung | Captures the TBC's own fallback output, proving the analysis never mistakes it for ours |
 
+### B — Vertical blanking interval
+
+| ID | Test | Parameter | Ladder | Ideal TBC output |
+|---|---|---|---|---|
+| B1 | Captions (EIA/CTA-608) on line 21 of both fields: field 1 a pop-on caption, field 2 a frame counter | disruption | 1 none · 2 a field dropped every 30 frames · 3 2 fields of no signal once a second | Captions passed intact |
+| B2 | VBI line map: an ID and a 25/50/75 IRE staircase on lines 10–20 and 273–282, captions on line 21 | none | 1 rung | Lines passed in place, levels unchanged (blanked by design: minor) |
+
+Caption timing follows 608 as decoders read it (zvbi: run-in from 10.5 µs,
+32 × fH bit rate): a 7-cycle run-in at 503 kHz from 10.5 µs after the sync
+edge, the start bit at 27.382 µs, then two bytes NRZ, LSB first, 7 bits plus
+odd parity; 0 is blanking, 1 is 50 IRE. Field 1 repeats a 32-frame cycle:
+RCL, ENM, PAC row 14, "Brought to you by the", PAC row 15, "Media Archive
+Project", EOC, control codes sent twice. Field 2 carries the frame number,
+6 bits per byte plus 0x20. `src/vbi.*` and `tools/perturb_model.py` hold both.
+
 ### X — Fault hunt
 
 | ID | Test | Parameter | Ladder | Ideal TBC output |
@@ -208,6 +223,14 @@ in the "after" window.
 - **Output dead:** no vertical sync on CH1. Such runs are flagged and left out
   of tolerance figures. `tools/dropout_watch.py` samples the output once a
   second over minutes to catch these episodes.
+- **VBI data (B1, B2):** on each of our fields, line 21's caption is
+  decoded (run-in, start bit, 16 bits, parity) and checked against what the
+  generator sent for that frame: intact, damaged, missing, wrong, or another
+  frame's data (VBI passed out of step with the picture). Which field's data
+  it is comes from the bytes, since after a dropped field the next field
+  arrives with the other timing parity. The caption streams of each field
+  show repeated or skipped data. B2 also decodes each line's ID: passed in
+  place, moved, blank or damaged, with the staircase levels.
 - **Loss and hunt summaries:** per S10/S11 rung, whether the gap was handled
   (no fallback, no sync loss), clean, and how (held, blanked, garbled on
   recovery). A suite gives the lost-field tolerance. Per X1 rung, the four
@@ -247,7 +270,7 @@ checked against a known-good TBC, so every grade is labelled provisional.
 - *Unordered ladders* (S4 variants, S6 ±, C1 with its 60 IRE rung, X1
   stress types): k of n rungs passed.
 - *Overall:* a weighted mean of the group scores, out of 100. Pass counts
-  1, marginal 0.5, fail 0. Weights: H 3, S 2, F 1.5, C 1.5, L 1, X 1, V 1.
+  1, marginal 0.5, fail 0. Weights: H 3, S 2, F 1.5, C 1.5, L 1, B 1, X 1, V 1.
 
 **Checks:**
 
@@ -271,6 +294,8 @@ checked against a known-good TBC, so every grade is labelled provisional.
 | Hum clamped | L3 | blanking wander | < 1 IRE rms |
 | Rides through the gap; clean recovery (minor) | S10, S11 | loss summary | handled; no garbled fields |
 | Clean after stress; no stuck or ghosted fields (minor) | X1 | hunt windows | after window clean |
+| Captions intact; every caption intact (minor); caption stream as sent (minor) | B1, B2 | line 21 decoded on every one of our fields, against what was sent; repeated or skipped caption data, against the input's | ≥ 98 % of fields (B1 r2/r3: ≥ 90 %, since a field damaged as the TBC recovers is minor, as in S10); 0; ≤ the input's |
+| VBI lines not corrupted; lines 10–20 passed (minor) | B2 | line IDs | 0 moved or damaged; 0 blanked |
 
 **Not yet graded:**
 - *Recovery time* for S4 and S6 (H3's is graded, above).
@@ -424,9 +449,11 @@ model the firmware renders from.
    jitter transfer and H3 step recovery, calibrated on four devices; the
    timing class in fingerprints; the colour watch. A blind test identified a
    Datavideo TBC-3000, and both its inputs, against the library.
-8. **Next:** an automatic identification tool (the blind test's comparison,
-   formalised).
-9. **Later:** H7 velocity error, and a tape program mode
+8. **Phase 7, vertical blanking data (2026-10-24):** B1 captions and the B2
+   VBI line map (issue #25).
+9. **Next:** an automatic identification tool (the blind test's comparison,
+   formalised); AGC pulses in the vertical interval (issue #27).
+10. **Later:** H7 velocity error, and a tape program mode
    that steps through rungs on a timed schedule for recording test tapes,
    for tape-based TBCs with no passthrough.
 

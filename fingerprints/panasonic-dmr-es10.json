@@ -2,7 +2,7 @@
  "schema": "tbt-fingerprint/1",
  "name": "Panasonic DMR-ES10",
  "notes": "Lid-off back-to-back series, trial 1 of 4: does the colour fault trip without the cover?",
- "created": "2026-10-24 13:43",
+ "created": "2026-10-24 16:24",
  "trials": [
   {
    "trial": "20261021-224221",
@@ -260,30 +260,6 @@
    ],
    "agree": null
   },
-  "output_jitter_ns": {
-   "kind": "unit",
-   "label": "Output H jitter (V0)",
-   "unit": "ns rms",
-   "n": 4,
-   "value": 0.65,
-   "range": [
-    0.64,
-    0.66
-   ],
-   "agree": null
-  },
-  "noise_out_ire": {
-   "kind": "unit",
-   "label": "Output noise on gray (V0)",
-   "unit": "IRE rms",
-   "n": 4,
-   "value": 0.45,
-   "range": [
-    0.44,
-    0.47
-   ],
-   "agree": null
-  },
   "acc_fraction": {
    "kind": "unit",
    "label": "ACC fraction (0 none, 1 full)",
@@ -368,6 +344,14 @@
    ],
    "agree": null
   },
+  "ch1_termination": {
+   "kind": "rig",
+   "label": "CH1 (TBC output) termination, from its sync depth",
+   "unit": "",
+   "n": 4,
+   "value": "open (unterminated)",
+   "agree": 1.0
+  },
   "sync_depth_v": {
    "kind": "rig",
    "label": "Output sync depth (V0; depends on termination)",
@@ -377,6 +361,30 @@
    "range": [
     0.561,
     0.562
+   ],
+   "agree": null
+  },
+  "output_jitter_ns": {
+   "kind": "rig",
+   "label": "Output H jitter (V0; scope floor, depends on termination)",
+   "unit": "ns rms",
+   "n": 4,
+   "value": 0.65,
+   "range": [
+    0.64,
+    0.66
+   ],
+   "agree": null
+  },
+  "noise_out_ire": {
+   "kind": "rig",
+   "label": "Output noise on gray (V0; scope floor, depends on termination)",
+   "unit": "IRE rms",
+   "n": 4,
+   "value": 0.45,
+   "range": [
+    0.44,
+    0.47
    ],
    "agree": null
   }

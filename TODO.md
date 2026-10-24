@@ -52,23 +52,30 @@ Scored for value against what the suite already covers.
 - [x] CH2 wired, teed at the TBC input (2026-10-14): input check, latency,
       output lock and gain against the input on every two-channel run.
 - [x] Single-channel option (`--channels 1`).
-- [ ] Terminate CH1. Its sync reads about 0.55 V against CH2's 0.23 V, so
-      the end of the TBC's output run is still open.
+- [x] Terminate CH1 (2026-10-24): sync 0.56 → 0.281 V. Output jitter and
+      noise floors rose (half the volts against the same scope noise); see
+      the bench notes.
+  - [x] Output jitter and noise are rig-dependent fingerprint traits, and
+        fingerprints record CH1's termination; the library (all
+        unterminated) was rebuilt with it.
+  - [ ] After the levels calibration: terminated baselines, starting with
+        the reference unit (TBC-3000 input A), then the others as they come
+        back on the bench. Keep the unterminated entries as references.
 - [ ] Calibrate `levels` on CH2 to 286 mV sync / 714 mV white (now about
-      230 mV sync, 80 %). Leave headroom below the sync tip (sync at code
+      236 mV sync, 82 %). Leave headroom below the sync tip (sync at code
       ~15–20), so S1 can go deeper than 40 IRE and L2 noise isn't clipped.
-- [ ] Generator chroma reads about 0.68× nominal on CH2 (burst 27 IRE p-p
-      instead of 40). Find out where: DAC hold (sinc, 0.90 at fs/4), the
-      DAC's output impedance into the cable, or the measurement. Then
-      pre-emphasise chroma in the renderer, so single-channel rigs get a
-      nominal input too.
+- [x] Generator chroma: it read about 0.68× nominal on CH2 until 2026-10-14,
+      and 0.92–0.97× from 2026-10-15 on (a rig change overnight, not
+      recorded). The ~5 % left fits the DAC's sinc roll-off.
+  - [ ] Optional: pre-emphasise chroma ~5 % in the renderer, so
+        single-channel rigs get a nominal input.
 - [ ] Check each test's input on CH2 against the model across the whole
       catalog, not just the field trial's rungs.
 - [ ] F1: confirm on the scope that the sample clock moves by the commanded
       ppm (CH2's line period makes it measurable).
-- [ ] Lower the displacement floor (~11 ns on CH1, ~20 ns on CH2: scope
-      noise). Terminate CH1 and recheck; average over more of the line; try
-      a smaller scope range.
+- [ ] Lower the displacement floor (~11 ns on CH1, ~15 ns on CH2: scope
+      noise). Terminating CH1 didn't change it, and nor does the scope's
+      range; averaging over more of the line is what's left.
 
 ## Grader and fingerprints
 - [x] `tools/grade.py` with provisional thresholds (2026-10-14).

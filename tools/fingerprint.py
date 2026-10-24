@@ -65,8 +65,7 @@ TRAITS = [
     ("saturation_ratio", "unit", "Saturation (V0, chroma/burst out ÷ in)", "×"),
     ("hue_offset_deg", "unit", "Hue offset (V0, out − in)", "°"),
     ("burst_out_ire", "unit", "Output burst (V0)", "IRE p-p"),
-    ("output_jitter_ns", "unit", "Output H jitter (V0)", "ns rms"),
-    ("noise_out_ire", "unit", "Output noise on gray (V0)", "IRE rms"),
+
     ("acc_fraction", "unit", "ACC fraction (0 none, 1 full)", ""),
     ("jitter_correction_db", "unit", "H1 r4 correction (input ÷ residual)", "dB"),
     ("correction_bandwidth_hz", "unit", "Timing-correction bandwidth (H1, CH2)", "Hz"),
@@ -75,7 +74,13 @@ TRAITS = [
     ("h6_passed_1k", "unit", "Jitter passed at 1 kHz (H6 r3)", "%"),
     ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
     ("caption_gain", "unit", "Caption data level (B1, out ÷ in)", "×"),
+    ("ch1_termination", "rig", "CH1 (TBC output) termination, from its sync depth", ""),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
+    # The scope's noise floor shows through these: an unterminated CH1 has
+    # twice the volts, so they read lower (0.66 vs 0.97 ns, 0.33 vs 0.39 IRE
+    # on the same TBC-3000). Recorded, not matched.
+    ("output_jitter_ns", "rig", "Output H jitter (V0; scope floor, depends on termination)", "ns rms"),
+    ("noise_out_ire", "rig", "Output noise on gray (V0; scope floor, depends on termination)", "IRE rms"),
 ]
 INFO = {k: (kind, label, unit) for k, kind, label, unit in TRAITS}
 
@@ -263,9 +268,12 @@ def traits_of(runs):
         sd = (v0.get("level") or {}).get("sync_depth_v")
         if sd:
             t["sync_depth_v"] = round(sd, 3)
+            # A TBC's regenerated sync is ~0.29 V into 75 ohms, twice that open.
+            t["ch1_termination"] = "75 ohm (terminated)" if sd < TERMINATED_BELOW_V else "open (unterminated)"
     return t, G
 
 
+TERMINATED_BELOW_V = 0.40   # CH1 sync depth: ~0.25-0.29 V terminated, ~0.49-0.58 V open (library, 2026-10)
 STEP_JOLT_NS = 300   # a real disturbance at a 5 us H3 step; below this it's the noise floor
 
 

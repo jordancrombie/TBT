@@ -85,6 +85,7 @@ def prepare(s, title=None):
     generator is on the test pattern (the title card is never tested)."""
     pattern = ask_json(s, "info", "}\n").get("pattern")
     if title:
+        request(s, "test V0", until="\n", timeout=10)   # a clean title, whatever test was left running
         if "ok" not in request(s, "p title", until="\n", timeout=10):
             raise RuntimeError("generator refused 'p title' (firmware without the title card?)")
         print(f"title card for {title:g} s")

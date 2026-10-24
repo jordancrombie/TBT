@@ -127,7 +127,12 @@ def last_result(results, tid, tbc_class):
 
 
 def show_card(s, spec, seconds):
-    """Show a text card for `seconds`, then put the test pattern back."""
+    """Show a text card for `seconds`, then put the test pattern back.
+
+    The generator's picture (pattern) and its injected faults (test) are
+    separate settings, so the clean test goes on first: otherwise the card
+    would carry the previous test's jitter, gaps or snow."""
+    request(s, "test V0", until="\n", timeout=10)
     if "ok" not in request(s, f"card {spec}", until="\n", timeout=10):
         print("note: the generator refused a card (firmware without cards?); carrying on without")
         return

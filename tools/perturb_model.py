@@ -45,6 +45,10 @@ def cycle(test, n):
 
 LINE_NS = 1e9 / FH_HZ
 FIELD_MS = 262.5 * 1e3 / FH_HZ                                  # 16.683 ms
+# An output locked to its input reads 0.0 +- 0.1 ppm against it (Pioneer
+# DVR-220, Panasonic DMR-ES10). A free-running clock can sit close to the
+# input's: a blind-tested Datavideo-family unit held a steady +1.75 ppm.
+LOCKED_PPM = 0.5
 
 
 HUNT_CYCLE, HUNT_STRESS_START, HUNT_STRESS_END = 90, 30, 60   # X1: clean, stress, clean (frames)

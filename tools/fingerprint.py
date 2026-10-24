@@ -27,6 +27,7 @@ import argparse, json, math, os, re, statistics, time
 from collections import Counter, OrderedDict
 
 import grade
+import perturb_model as pm
 from run_suite import loss_tolerance
 
 LIBRARY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fingerprints")
@@ -102,7 +103,7 @@ def traits_of(runs):
     rates = [r["input"]["rate_ppm"] for r in runs if (r.get("input") or {}).get("rate_ppm") is not None]
     if rates:
         m = statistics.median(rates)
-        t["output_lock"] = "locked" if abs(m) < 2 else "free-running"
+        t["output_lock"] = "locked" if abs(m) < pm.LOCKED_PPM else "free-running"
         t["rate_ppm"] = round(m, 2)
     lat = [r["input"]["latency"]["median_ms"] for r in runs if (r.get("input") or {}).get("latency")]
     if lat:

@@ -263,6 +263,50 @@ so runs are now deleted after their report unless `--keep` is given.
 - **Ghost detection** first flagged every field because of the lower output
   level. Marker cells are now judged against each field's own framing cells.
 
+## Datavideo TBC-3000 (two inputs)
+
+- **Blind test, 2026-10-23:** three field trials per input, each input
+  presented as an unknown device. `fingerprints/datavideo-tbc-3000-input-a.json`
+  and `-input-b.json`.
+- **Frame synchroniser,** the same timing core as the TBC-1000:
+  - bandwidth 0.42–0.47 kHz;
+  - 110–113 % of the jitter passed at 4–8 kHz;
+  - 92 % at 1 kHz (H6);
+  - 79–87 ns of head-switch skew left.
+
+  It shares 16–17 of 18 model traits with the TBC-1000: black with no
+  input, ∞ lost fields, a colour killer, partial ACC, 240p converted.
+- **One unit, recognisable by its crystal:** the output clock sits at
+  +1.75 ppm (input A) and +1.85 ppm (input B). The TBC-1000 sits at
+  +22.1 ppm, steady to ±0.04 over 9 days.
+- **Controls matter; the timing core doesn't change.** Each configuration
+  was run 3 times, and every reading was steady within its own trials:
+
+  | | Input A, baseline | Input B, baseline | Input B, controls adjusted |
+  |---|---|---|---|
+  | Luma gain | ×0.82–0.83 | ×0.79 | ×1.02 |
+  | Saturation | ×1.03 | ×1.00 | ×1.12 |
+  | Hue offset | −1.1° | +3.1° | −2.6° |
+  | H3 5 µs step | no jolt | no jolt | 2 lines jolted 1.2 µs |
+  | L4 | passes | passes | fails |
+  | Score | 48–50 (6 trials) | 51–52 | 40–43 |
+
+  - **Input A's controls were already at baseline in the blind test;** a
+    second session at baseline matched it.
+  - **The adjusted controls on input B caused its step jolt and L4
+    failure.** At baseline it behaves like input A and the TBC-1000 (18 of
+    18 traits). My first reading, that the jolt came from input B's
+    hardware, was wrong. A raised level changing how the input slices sync
+    is a guess at the mechanism.
+  - **At baseline the inputs still differ slightly:** hue 4° apart, luma
+    and saturation about 3 % apart. Per-input front-end calibration. Input
+    B's +3.1° hue is worth trimming if you capture through it.
+  - **Unchanged across all four configurations:** bandwidth 424–460 Hz,
+    head-switch skew 77–86 ns left, H6 91–92 % at 1 kHz, clock +1.75 to
+    +1.85 ppm.
+- **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
+  output jitter 0.57–0.58 ns.
+
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
 - **First field trial, 2026-10-20** (CH2 at its input, single termination;
@@ -326,6 +370,12 @@ so runs are now deleted after their report unless `--keep` is given.
   listens.
 
 ## Measurement pitfalls
+
+- **"Locked" means within ±0.5 ppm.** Genuinely locked devices read
+  0.0 ± 0.1 ppm against their input. A blind-tested unit (2026-10-23) held a
+  steady +1.75 ppm. Its latency swept the full 0–2 fields within a trial, so
+  it was free-running with a crystal close to ours. The old 2 ppm threshold
+  called it locked.
 
 - **Bar lines must look like bars.** A line qualifies for picture figures
   only if gray is high, blue low, *and* yellow at least 0.7× gray. The

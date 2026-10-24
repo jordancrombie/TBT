@@ -259,7 +259,7 @@ python3 tools/check_lines.py                    # check colour bars as rendered
 
 Every run prints `observe_tbc`'s report on the TBC output. With two channels
 it adds the input check from CH2, the latency, the output's line rate against
-the input (0 ppm means locked; otherwise latency drifts and the TBC drops or
+the input (0 ppm, within ±0.5, means locked; otherwise latency drifts and the TBC drops or
 repeats a frame when it wraps), and burst, chroma, gray and hue against the
 real input. Every run also records the
 device under test (`--dut`, or `$TBC_DUT`) and its settings (`--note`, or
@@ -398,25 +398,34 @@ same unit.
 the library that identification will match unknown TBCs against.
 `--html` writes a readable trait card to `reports/`.
 
-The library holds four devices so far. The **timing correction class** comes
+The library holds five devices so far (the TBC-3000 once per input). The **timing correction class** comes
 from how fast and how completely each one corrects line timing (see
 [docs/design.md](docs/design.md)).
 
-| Trait | Datavideo TBC-1000 | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
-|---|---|---|---|---|
-| Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | 0.4 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 107 ns | 98 ns | 11 ns | 3 ns |
-| With no input at all | black | its own colour bars | black | no output |
-| Lost fields ridden through | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
-| Colour killer | yes | no | no | no |
-| Output vs input | free-running, +22 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
-| Luma gain | ×0.63 | ×0.99 | ×1.00 | ×1.02 |
-| Field-trial score (provisional) | 50–53 | 36–44 | 22–31 | 59–62 |
+| Trait | Datavideo TBC-1000 | Datavideo TBC-3000 (input A / B) | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
+|---|---|---|---|---|---|
+| Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
+| Correction bandwidth | 0.4 kHz | 0.45 / 0.42 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 107 ns | 85 / 77 ns | 98 ns | 11 ns | 3 ns |
+| At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.3 µs | 1 line jolted 1.4 µs | no jolt |
+| With no input at all | black | black | its own colour bars | black | no output |
+| Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
+| Colour killer | yes | yes | no | no | no |
+| Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
+| Luma gain | ×0.63 | ×0.82 / ×0.79 (hue −1° / +3°) | ×0.99 | ×1.00 | ×1.02 |
+| Output noise / jitter | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
+| Field-trial score (provisional) | 50–53 | 48–50 / 51–52 | 36–44 | 22–31 | 59–62 |
 
-The two frame synchronisers differ in one timing detail: at a 5 µs timing
-step the AVT-8710 jolts one line by 1.3 µs, while the TBC-1000's slower lock
-glides through with no jolt.
+The TBC-3000 was identified **blind** (2026-10-23). Its timing and
+behaviour matched the TBC-1000 (16–17 of 18 model traits), but its clock
+offset didn't, so it was called a different unit from the same family. Its
+two inputs were tested as separate "unknowns" and recognised as one unit
+with two inputs: the same crystal (+1.75 / +1.85 ppm) and timing core, but
+different front ends. The TBC-3000 figures above are with its controls at
+baseline. With input B's picture controls moved off baseline, it gained a
+2-line 1.2 µs jolt at timing steps, failed L4 and scored 40–43. That run is
+kept as `datavideo-tbc-3000-input-b-adjusted.json`, an example of settings
+showing up in a fingerprint.
 
 The fingerprints were built from 2 to 7 trials each. The ES-10's come
 from lid-off trials: with the lid on, an overheating fault spoils its colour

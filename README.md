@@ -42,7 +42,7 @@ Open work is in [TODO.md](TODO.md).
 | Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | In progress | CH2 wired. Still to do: terminate CH1 (its sync reads 0.56 V, twice a terminated line) and calibrate the generator's levels (sync 82 % of nominal). Chroma is within ~5 % of nominal since 2026-10-15 |
+| Rig calibration | In progress | CH2 wired; CH1 terminated 2026-10-24 (its sync now 0.281 V); chroma within ~5 % of nominal since 2026-10-15. Still to do: calibrate the generator's levels (sync 82 % of nominal) |
 
 Open work is in [TODO.md](TODO.md).
 

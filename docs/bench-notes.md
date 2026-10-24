@@ -540,8 +540,18 @@ rms line jitter.
   sync 0.231–0.237 V (82 %), burst 36–39 IRE and yellow chroma 57–61 IRE
   (0.92–0.97× nominal), on every unit, the TBC-1000 included. The rig
   changed between the evening of 10-14 and the morning of 10-15 (the AVT
-  went on the bench); what fixed the chroma isn't recorded. CH1's sync reads
-  0.56 V throughout: its run is still unterminated. Line jitter floor 3.1 ns rms
+  went on the bench); what fixed the chroma isn't recorded. CH1's sync read
+  0.56 V throughout: its run was unterminated until 2026-10-24.
+- **CH1 terminated (2026-10-24):** a tee on the CH1 BNC with a 75 Ω
+  terminator. CH1 sync went from 0.56 V to 0.281 V (nominal 0.286), and the
+  TBC-3000's gains, hue, chroma and burst didn't move (input B: gray ×0.79,
+  hue +3.2°). The displacement floor didn't move either (11.6 ns), so it was
+  never reflections from the open end: it is scope noise. **The output
+  jitter and noise floors rose** (0.66 → 0.97 ns, 0.33 → 0.39 IRE): the
+  scope's input noise is fixed in volts and the signal is now half the
+  volts, so its sync edges are half as steep. The scope's range doesn't
+  matter (2 V and 5 V read the same, A/B twice). Every fingerprint before
+  this date was measured unterminated. Line jitter floor 3.1 ns rms
   (CH2's line-period jitter for H1 r4, 50 ns rms injected, reads 77 ns: a
   period spans two independently jittered syncs, so expect √2 × 50 = 71 ns).
 - **Picture lines are picked relatively.** `picture_metrics` used to accept

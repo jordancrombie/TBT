@@ -347,7 +347,8 @@ Rules:
   it handled its own fault.
 - **Single-channel runs** use the nominal picture (adjusted for what the test
   changes) where two-channel runs use CH2. That matters because the
-  generator's real output differs from nominal (chroma about 0.68× today).
+  generator's real output differs from nominal (sync 82 %, chroma within
+  about 5 %, relative to sync).
   When CH2's picture can't be measured for a test (S1's shallow sync, L3's
   hum, L2's heaviest noise), the input is worked out from V0's input
   instead.
@@ -462,9 +463,9 @@ model the firmware renders from.
 
 ### Phases
 
-1. **Phase 0, rig calibration (in progress):** CH2 wired 2026-10-14. Still to
-   do: terminate CH1, set `levels` to 286 / 714 mV, find and correct the
-   chroma roll-off, trim `ppm`.
+1. **Phase 0, rig calibration (in progress):** CH2 wired 2026-10-14; the
+   chroma shortfall (0.68×) went away on 2026-10-15. Still to do: terminate
+   CH1, set `levels` to 286 / 714 mV, trim `ppm`.
 2. **Phase 1, timing (done 2026-10-13):** descriptor-length control, frame
    task, frame marker, manifest, host capture runner. V0, H1–H5, F1.
 3. **Phase 2, structure and colour (done 2026-10-13):** S1–S9, C1–C4, F2,
@@ -497,9 +498,11 @@ model the firmware renders from.
       +22 ppm against its input.
 - [ ] **Pass thresholds and group weights** in Scoring are first proposals.
       They need checking against a known-good TBC.
-- [ ] **Generator chroma level.** CH2 reads chroma and burst at about 0.68× of
-      nominal. Is it the DAC, the cable or the measurement? Pre-emphasis in
-      the renderer would give single-channel rigs a nominal input.
+- [x] **Generator chroma level.** CH2 read chroma and burst at about 0.68× of
+      nominal until 2026-10-14; from 2026-10-15 on, 0.92–0.97×, on every
+      unit (the TBC-1000 included, so it wasn't that unit's input). Some
+      change on the rig overnight; which one isn't recorded. The ~5 % left
+      fits the DAC's own roll-off (sinc, 0.90 at fs/4).
 - [ ] **TBC-1000 dead output.** Its output intermittently dies, the swing
       sagging first. A power-cycle cleared it. Trigger and cause are open
       (bench notes).

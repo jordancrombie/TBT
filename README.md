@@ -42,7 +42,7 @@ Open work is in [TODO.md](TODO.md).
 | Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | In progress | CH2 wired; generator levels and chroma roll-off still to calibrate, CH1 to terminate |
+| Rig calibration | In progress | CH2 wired. Still to do: terminate CH1 (its sync reads 0.56 V, twice a terminated line) and calibrate the generator's levels (sync 82 % of nominal). Chroma is within ~5 % of nominal since 2026-10-15 |
 
 Open work is in [TODO.md](TODO.md).
 
@@ -67,8 +67,11 @@ picture goes dark and rolls.
 
 The default levels (`levels 0 73`) still need calibrating. The target is
 286 mV of sync and 714 mV of white above blanking. Measured on CH2 into the
-TBC's 75 Ω input: 226 mV of sync (79 %), with chroma and burst about 0.68× of
-nominal at 3.58 MHz.
+TBC's 75 Ω input: 236 mV of sync (82 %). Relative to that sync, burst reads
+36–39 IRE p-p and yellow chroma 57–61 IRE (nominal 40 and 62), so chroma is
+within about 5 % since 2026-10-15. Before then it read about 0.68× (27 IRE
+burst); something on the rig changed overnight, and it is no longer
+reproduced.
 
 ### Minimal rig: one scope channel
 

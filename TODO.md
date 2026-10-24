@@ -55,13 +55,13 @@ Scored for value against what the suite already covers.
 - [ ] Terminate CH1. Its sync reads about 0.55 V against CH2's 0.23 V, so
       the end of the TBC's output run is still open.
 - [ ] Calibrate `levels` on CH2 to 286 mV sync / 714 mV white (now about
-      230 mV sync, 80 %). Leave headroom below the sync tip (sync at code
+      236 mV sync, 82 %). Leave headroom below the sync tip (sync at code
       ~15–20), so S1 can go deeper than 40 IRE and L2 noise isn't clipped.
-- [ ] Generator chroma reads about 0.68× nominal on CH2 (burst 27 IRE p-p
-      instead of 40). Find out where: DAC hold (sinc, 0.90 at fs/4), the
-      DAC's output impedance into the cable, or the measurement. Then
-      pre-emphasise chroma in the renderer, so single-channel rigs get a
-      nominal input too.
+- [x] Generator chroma: it read about 0.68× nominal on CH2 until 2026-10-14,
+      and 0.92–0.97× from 2026-10-15 on (a rig change overnight, not
+      recorded). The ~5 % left fits the DAC's sinc roll-off.
+  - [ ] Optional: pre-emphasise chroma ~5 % in the renderer, so
+        single-channel rigs get a nominal input.
 - [ ] Check each test's input on CH2 against the model across the whole
       catalog, not just the field trial's rungs.
 - [ ] F1: confirm on the scope that the sample clock moves by the commanded

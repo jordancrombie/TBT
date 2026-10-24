@@ -534,9 +534,14 @@ rms line jitter.
   displacement floor read 76 ns instead of 11, and the hue jitter ±7°
   instead of ±0.5°. Frame-marker lines themselves are also excluded.
 
-- **Generator output on CH2** (tee at the TBC's 75 Ω input): sync 0.226 V
-  (79 % of 286 mV), burst 27 IRE p-p and yellow chroma 44 IRE p-p (both
-  about 0.68× nominal), gray bar 82 IRE. Line jitter floor 3.1 ns rms
+- **Generator output on CH2** (tee at the TBC's 75 Ω input): on 2026-10-14,
+  sync 0.226 V (79 % of 286 mV), burst 27 IRE p-p and yellow chroma 44 IRE
+  p-p (both about 0.68× nominal), gray bar 82 IRE. **From 2026-10-15 on:**
+  sync 0.231–0.237 V (82 %), burst 36–39 IRE and yellow chroma 57–61 IRE
+  (0.92–0.97× nominal), on every unit, the TBC-1000 included. The rig
+  changed between the evening of 10-14 and the morning of 10-15 (the AVT
+  went on the bench); what fixed the chroma isn't recorded. CH1's sync reads
+  0.56 V throughout: its run is still unterminated. Line jitter floor 3.1 ns rms
   (CH2's line-period jitter for H1 r4, 50 ns rms injected, reads 77 ns: a
   period spans two independently jittered syncs, so expect √2 × 50 = 71 ns).
 - **Picture lines are picked relatively.** `picture_metrics` used to accept

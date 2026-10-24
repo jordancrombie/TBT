@@ -61,7 +61,7 @@ def frame_events(frames):
 FSC = 315e6 / 88
 
 
-def picture_metrics(x, hs, fs, tip, blank):
+def picture_metrics(x, hs, fs, tip, blank, recovery=False):
     """Burst, hue, saturation, levels and noise on the output's colour-bar lines (IRE).
 
     For the C and L tests: what the TBC did to colour and level. IRE are
@@ -90,6 +90,12 @@ def picture_metrics(x, hs, fs, tip, blank):
             continue
         _, burst = demod(s, 5.8, 7.6)
         y_y, yel = demod(s, *bar(1))
+        # ...and yellow almost as bright as gray (69 vs 77 IRE). A Pioneer
+        # DVR-220 outputs a stray copy of our marker 4 lines above it, whose
+        # start cell lands on the gray bar; this keeps it (and any other odd
+        # line a device inserts) out.
+        if y_y < 0.7 * g_y:
+            continue
         i0, i1 = int(s + bar(0, 0.15, 0.85)[0] * us), int(s + bar(0, 0.15, 0.85)[1] * us)
         sel.append(s)
         rows.append((abs(burst) * 2, np.degrees(np.angle(yel) - np.angle(burst)) + 180, abs(yel) * 2, g_y,
@@ -106,12 +112,13 @@ def picture_metrics(x, hs, fs, tip, blank):
             "gray_ire": float(np.median(a[:, 3])),
             "blanking_wander_ire": float(np.std(a[:, 4])),
             "gray_noise_ire_rms": float(np.median(a[:, 5])),
-            "displacement": displacement(x, np.array(sel), fs)}
+            "displacement": displacement(x, np.array(sel), fs),
+            **({"step_recovery": step_recovery(x, np.array(sel), fs)} if recovery else {})}
 
 
-def displacement(x, starts, fs, iters=3):
-    """Residual horizontal displacement of the picture against each line's own
-    sync: how far each colour-bar line's luma sits from the median line, in ns.
+def line_shifts(x, starts, fs, iters=3):
+    """Per-line horizontal shift of the picture against each line's own sync,
+    in ns, relative to the median line (None if it can't be measured).
 
     Each line is sampled every 50 ns from 12 to 60 us after its sync, then
     low-passed with a Gaussian (sigma 0.2 us, which takes the 3.58 MHz
@@ -119,8 +126,7 @@ def displacement(x, starts, fs, iters=3):
     reads as a shift). Each line's shift against the median template is then
     found by Gauss-Newton, fitted together with the line's own offset, gain
     and tilt: the bars step down from gray to blue, so a level change alone
-    would otherwise read as tens of ns. A TBC that corrects timing leaves a
-    few ns; one that doesn't shows the input's jitter here."""
+    would otherwise read as tens of ns."""
     if len(starts) < 10:
         return None
     step_us = 0.05
@@ -146,9 +152,117 @@ def displacement(x, starts, fs, iters=3):
         coef, *_ = np.linalg.lstsq(A, (P - ref).T, rcond=None)  # per line: shift, offset, gain, tilt
         shift -= coef[0] * step_us * fs / 1e6
     ns = shift / fs * 1e9
-    ns -= np.median(ns)                                          # a fixed offset doesn't count
+    return ns - np.median(ns)                                    # a fixed offset doesn't count
+
+
+def displacement(x, starts, fs):
+    """Residual horizontal displacement of the picture (see line_shifts): rms
+    and 99th percentile, ns. A TBC that corrects timing leaves a few ns; one
+    that doesn't shows the input's jitter here."""
+    ns = line_shifts(x, starts, fs)
+    if ns is None:
+        return None
     return {"lines": int(len(ns)), "rms_ns": float(np.sqrt(np.mean(ns ** 2))),
             "peak_ns": float(np.percentile(np.abs(ns), 99))}
+
+
+def step_recovery(x, starts, fs, floor_ns=30.0):
+    """H3: after each timing step, how many lines until the picture is back in
+    place. A line TBC re-times the very next line; a frame synchroniser's
+    slower lock lets the picture jump and settle over many lines.
+
+    Lines displaced by more than max(floor_ns, 4 x the median spread) belong
+    to an event; events closer than 20 lines merge. Length is measured in
+    time (lines of 63.6 us), so the non-bar bottom of a field doesn't hide it."""
+    ns = line_shifts(x, starts, fs)
+    if ns is None:
+        return None
+    spread = 1.4826 * float(np.median(np.abs(ns)))
+    thr = max(floor_ns, 4 * spread)
+    line = 63.556e-6 * fs
+    idx = np.where(np.abs(ns) > thr)[0]
+    events = []
+    for k in idx:
+        if events and (starts[k] - starts[events[-1][1]]) / line <= 20:
+            events[-1][1] = k
+        else:
+            events.append([k, k])
+    lens = [int(round((starts[b] - starts[a]) / line)) + 1 for a, b in events]
+    peaks = [float(np.max(np.abs(ns[a:b + 1]))) for a, b in events]
+    return {"events": len(events), "max_lines": max(lens) if lens else 0,
+            "median_lines": int(np.median(lens)) if lens else 0,
+            "peak_ns": max(peaks) if peaks else 0.0, "threshold_ns": thr}
+
+
+def jitter_transfer(run, out, inp, first=30, n=128):
+    """Two-channel runs: how much of the input's line jitter survives, by
+    frequency. For each field on both channels (matched by frame and parity),
+    the input's per-line timing error (CH2 syncs minus a straight line over
+    the field) is compared with the output's per-line picture shift (CH1,
+    against its own sync), over colour-bar lines first .. first+n-1.
+
+    passed = |sum Y X*| / sum |X|^2 per band: 0 = corrected, 1 = passed
+    straight through. bandwidth_hz is where passed crosses 0.5: the fastest
+    timing change it still mostly corrects. A line TBC corrects close to the
+    line rate (7.9 kHz); a frame synchroniser only slow changes."""
+    def per_field(r, ch):
+        x, fs, _ = load(run, ch)
+        us = fs / 1e6
+        ft, w = sync_pulses(x, us)
+        hs = ft[(w > 3.5) & (w < 6)]
+        b = ft[w > 20]
+        vs = b[np.concatenate([[True], np.diff(b) > 100 * us])] if len(b) else b
+        fields = {}
+        for f in r.get("field_log", []):
+            if f["class"] == "ours" and f["frame"] is not None and f["i"] + 1 < len(vs):
+                h = hs[(hs > vs[f["i"]]) & (hs < vs[f["i"] + 1])]
+                if len(h) >= first + n:
+                    fields.setdefault((f["frame"], f["parity"]), h[first:first + n])
+        return x, fs, fields
+
+    x1, fs1, f1 = per_field(out, 1)
+    x2, fs2, f2 = per_field(inp, 2)
+    keys = sorted(f1.keys() & f2.keys())
+    if len(keys) < 4:
+        return None
+    k = np.arange(n)
+    X = []
+    for key in keys:
+        s2 = f2[key]
+        X.append((s2 - np.polyval(np.polyfit(k, s2, 1), k)) / fs2 * 1e9)
+    ys = line_shifts(x1, np.concatenate([f1[key] for key in keys]), fs1)
+    if ys is None:
+        return None
+    X, Y = np.array(X), ys.reshape(len(keys), n)
+    X -= X.mean(axis=1, keepdims=True)
+    Y -= Y.mean(axis=1, keepdims=True)
+    FX, FY = np.fft.rfft(X, axis=1), np.fft.rfft(Y, axis=1)
+    fh = fs2 / (np.median(np.diff(f2[keys[0]])))
+    freq = np.fft.rfftfreq(n, 1 / fh)
+    cross, px, py = (FY * np.conj(FX)).sum(0), (np.abs(FX) ** 2).sum(0), (np.abs(FY) ** 2).sum(0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        H = np.abs(cross) / px
+        coh = np.abs(cross) ** 2 / (px * py)
+    bands = []
+    for lo, hi in ((150, 500), (500, 1000), (1000, 2000), (2000, 4000), (4000, 6000), (6000, 8000)):
+        m = (freq > lo) & (freq <= hi)
+        if m.any():
+            bands.append({"lo_hz": lo, "hi_hz": hi, "passed": float(np.nanmean(H[m])),
+                          "coherence": float(np.nanmean(coh[m]))})
+    # Bandwidth: first crossing of 0.5, on a lightly smoothed curve above 150 Hz.
+    m = freq > 150
+    f_, h_ = freq[m], np.convolve(np.nan_to_num(H[m]), np.ones(3) / 3, mode="same")
+    above = np.where(h_ >= 0.5)[0]
+    if not len(above):
+        bw = None                                                # corrects throughout
+    elif above[0] == 0:
+        bw = 0.0                                                 # passes it from the lowest band up
+    else:
+        i = above[0]
+        bw = float(f_[i - 1] + (0.5 - h_[i - 1]) * (f_[i] - f_[i - 1]) / (h_[i] - h_[i - 1]))
+    return {"fields": len(keys), "lines_per_field": n, "input_ns_rms": float(X.std()),
+            "output_ns_rms": float(Y.std()), "bands": bands, "bandwidth_hz": bw,
+            "corrects_all": bw is None}
 
 
 # ---- Per-field classification -----------------------------------------------
@@ -417,7 +531,14 @@ def analyze(run, ch=1):
         out["field_summary"] = summarize_fields(fl)
         ours = {f["i"] for f in fl if f["class"] == "ours" and not f["ghost"]}
         fidx = np.searchsorted(vs, hs) - 1
-        out["picture"] = picture_metrics(x, hs[np.isin(fidx, list(ours))], fs, tip, blank) if ours else None
+        # Our own frame-marker lines aren't colour bars, but on some devices
+        # (a Pioneer DVR-220) they pass the bar-line test and skew the figures:
+        # leave them out.
+        mark_at = np.array([m[0] * fs for m in marks])
+        not_marker = (np.min(np.abs(hs[:, None] - mark_at[None, :]), axis=1) > 2 * us
+                      if len(mark_at) else np.ones(len(hs), bool))
+        sel = hs[np.isin(fidx, list(ours)) & not_marker]
+        out["picture"] = picture_metrics(x, sel, fs, tip, blank, recovery=man["test"]["id"] == "H3") if ours else None
         tid = man["test"]["id"]
         if tid in ("S10", "S11"):
             out["loss"] = loss_summary(man["test"], fl)
@@ -463,6 +584,10 @@ def print_report(r):
               f"(±{pc['yellow_hue_jitter_deg']:.1f}), yellow chroma {pc['yellow_chroma_pp_ire']:.1f} IRE p-p, "
               f"gray {pc['gray_ire']:.1f} IRE, blanking wander {pc['blanking_wander_ire']:.2f} IRE rms, "
               f"noise {pc['gray_noise_ire_rms']:.2f} IRE rms")
+        sr = pc.get("step_recovery")
+        if sr:
+            print(f"  step recovery: {sr['events']} step(s) seen, back in place within {sr['max_lines']} lines "
+                  f"(peak {sr['peak_ns']:.0f} ns, threshold {sr['threshold_ns']:.0f} ns)")
         d = pc.get("displacement")
         if d:
             print(f"  picture displacement vs own sync: {d['rms_ns']:.1f} ns rms, {d['peak_ns']:.0f} ns peak "
@@ -586,6 +711,13 @@ def print_input(r):
     if L:
         print(f"  latency: {L['median_ms']:.3f} ms ({L['fields']:.2f} fields), {L['matched']} fields matched, "
               f"{100 * L['steady']:.0f} % within 0.05 ms{lock}")
+    jt = i.get("jitter_transfer")
+    if jt:
+        bands = ", ".join(f"{b['lo_hz'] / 1000:g}-{b['hi_hz'] / 1000:g} kHz {100 * b['passed']:.0f} %" for b in jt["bands"])
+        bw = ("corrects it at every frequency" if jt["corrects_all"] else
+              "passes it even at the lowest frequencies" if not jt["bandwidth_hz"] else
+              f"correction bandwidth about {jt['bandwidth_hz'] / 1000:.1f} kHz")
+        print(f"  jitter passed through: {bands}; {bw}")
     v = i.get("vs_input")
     if v:
         f = lambda x: f"x{x:.2f}" if x is not None else "—"
@@ -600,6 +732,8 @@ def report(run, ch=1):
     if ch == 1 and has_channel(run, 2):
         inp = analyze(run, 2)
         r["input"] = compare_input(r, inp)
+        if r["test"]["id"] == "H1" and r["test"]["rung"] >= 4 and r["input"]["present"]:
+            r["input"]["jitter_transfer"] = jitter_transfer(run, r, inp)
     print_report(r)
     if ch == 1:
         print_input(r)

@@ -263,7 +263,76 @@ so runs are now deleted after their report unless `--keep` is given.
 - **Ghost detection** first flagged every field because of the lower output
   level. Marker cells are now judged against each field's own framing cells.
 
+## Pioneer DVR-220 (DVD recorder, line-in to line-out)
+
+- **First field trial, 2026-10-20** (CH2 at its input, single termination;
+  `reports/20261020-164815_*`): 31 / 100, provisional.
+- **Locked to its input** (+0.1 ppm), the first device that is. Latency is
+  fixed within a run (steady to 0.05 ms), but varies from 2.0 to 3.5 fields
+  between runs as it relocks: a frame store of about two frames.
+- **Lost fields: ∞ / ∞, cleanly.** No garbled fields on recovery, the best
+  of the three devices so far.
+- **Picture:** luma, chroma and burst within 2 % of its input on V0, and
+  hue +0.7°. But saturation varies by up to ±8 % from run to run, so most
+  C and L tests miss the 5 % saturation check against V0. No colour killer
+  (C2 passes chroma through).
+- **Timing:** doesn't correct random line jitter (40 ns rms left at 50 ns
+  in). Slow timing errors (H3, F1) and head-switch skew (H4) leave
+  11–13 ns: just over the 10 ns threshold, where the TBCs passed. Missing
+  syncs (S3, 20 lines) leave 179 ns: it doesn't flywheel well.
+- **Rejects some inputs outright.** It outputs plain black, as with no input,
+  for S4 r6 (no V-sync) and S6 r5 (10 lines short per field). It outputs
+  garbled video for S1 r5 (10 IRE sync) and S4 r3 (malformed vertical
+  interval).
+- **To look at on the monitor:** L3 (20 IRE hum) reads the gray bar 37 IRE
+  low. X1 r4 (noise bar + jitter) wasn't clean after the stress.
+- **Stray marker copy.** It outputs a partial copy of our frame marker
+  4 lines above the real one. That fooled the bar-line test until
+  2026-10-20 (see below).
+
+## Panasonic DMR-ES10 (DVD recorder, line-in to line-out)
+
+- **A line TBC, by measurement** (2026-10-20 to 10-23): it corrects jitter
+  up to the line rate (38–73 % left near 8 kHz, against 99–116 % for the
+  others), removes head-switch skew (2.4–3.5 ns left) and shows nothing at a
+  5 µs timing step. Lid-off field trials score 59–62.
+- **Lost fields:** ∞ with no signal. With snow it shows its own picture from
+  rung 2 (S11 tolerance 1).
+- **Latency:** 4–7 fields, through its encoder path. Output clock: wanders
+  between −43 and +12 ppm against its input, and often pulls in to 0.
+- **Intermittent colour fault: overheating.** The bad state looks the same
+  every time:
+  - hue about −16° against its input (read as +164° after a frame drop,
+    a 180° ambiguity);
+  - chroma about ×0.94, instead of ×1.12 when healthy;
+  - noise about 2 IRE, 4× normal, in slow 2-minute waves;
+  - **the output clock pinned at −19.4 ppm**, which looks like a fallback
+    mode.
+
+  Once in it, the unit stays there until it cools. A channel change cleared
+  it once; a quick power cycle didn't.
+  - Cover on: it failed after long warm running and load. Once it failed
+    spontaneously, with the generator idle. Once it failed 10 runs into a
+    field trial, on H4 r5 (10 µs head-switch skew), and stayed bad.
+  - Cover off: 4 back-to-back field trials (44 minutes, 216 clean-signal
+    runs) with no fault. Neither our test restarts (75 per trial) nor heat
+    without load triggered it.
+  - The main processing chips were very hot. Pressing a finger on them,
+    which both cools and presses, then power-cycling, cleared it. Suspects:
+    cooling (fan, heatsink, thermal pad), or cracked BGA solder joints
+    that open when hot.
+- **Our test restarts flash the output black for ~0.1 s** (the parking
+  frame). `tools/colour_watch.py` therefore starts V0 once and only
+  listens.
+
 ## Measurement pitfalls
+
+- **Bar lines must look like bars.** A line qualifies for picture figures
+  only if gray is high, blue low, *and* yellow at least 0.7× gray. The
+  DVR-220's stray marker copy (black, with the marker's start cell on the
+  gray bar) passed the old test. One such line per field made the
+  displacement floor read 76 ns instead of 11, and the hue jitter ±7°
+  instead of ±0.5°. Frame-marker lines themselves are also excluded.
 
 - **Generator output on CH2** (tee at the TBC's 75 Ω input): sync 0.226 V
   (79 % of 286 mV), burst 27 IRE p-p and yellow chroma 44 IRE p-p (both

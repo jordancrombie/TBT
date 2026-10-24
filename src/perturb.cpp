@@ -30,6 +30,12 @@ const Def DEFS[] = {
      TIMING_FIXED "; no bend at the head switch"},
     {"H5", 0x15, "displaced single line", DISPLACED_LINE, "samples", "", 8,
      {2, -2, 4, -4, 10, -10, 20, -20}, {0}, BOTH, TIMING_FIXED, TIMING_FIXED},
+    // H6: how fast a timing error can change and still be corrected. A line
+    // TBC follows nearly to the line rate; a frame synchroniser only follows
+    // slow changes. (7 kHz, not 7.87: a sine sampled once a line at exactly
+    // half the line rate is all zeros.)
+    {"H6", 0x16, "jitter frequency sweep", JITTER_SINE, "peak_ns", "hz", 5,
+     {200, 200, 200, 200, 200}, {50, 250, 1000, 3000, 7000}, BOTH, TIMING_FIXED, TIMING_FIXED},
     {"F1", 0x21, "clock offset", FREQ_OFFSET, "ppm", "", 10,
      {10, -10, 30, -30, 100, -100, 300, -300, 1000, -1000}, {0}, BOTH,
      "locks and follows the input rate; picture steady",

@@ -19,6 +19,7 @@ US = pm.SAMPLE_HZ / 1e6
 ORIGIN = 16.0  # LINE_ORIGIN in src/ntsc_timing.h; main() reads it from the generator
 # (test, rung, seed, chroma mode, ring half to inspect)
 TESTS = [("V0", 1, 1, "under", 0), ("H1", 4, 7, "under", 0), ("H1", 6, 3, "under", 0), ("H2", 6, 1, "under", 0),
+         ("H6", 1, 1, "under", 0), ("H6", 5, 1, "under", 0),
          ("H3", 3, 1, "under", 0), ("H4", 3, 1, "under", 0), ("H5", 1, 1, "under", 0), ("H5", 8, 1, "under", 0),
          ("H1", 6, 3, "follows", 0),
          ("S3", 3, 1, "under", 0), ("S5", 1, 1, "under", 0), ("S6", 1, 1, "under", 0), ("S6", 4, 1, "under", 1),

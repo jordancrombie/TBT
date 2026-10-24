@@ -34,7 +34,7 @@ def phase_inc(test):
     if "phase_inc" in test:
         return test["phase_inc"]
     tid, p = test["id"], test["params"]
-    hz = p["hz"] if tid == "H2" else 1.0 / p["period_s"] if tid == "F3" else 60.0 if tid == "L3" else 0.0
+    hz = p["hz"] if tid in ("H2", "H6") else 1.0 / p["period_s"] if tid == "F3" else 60.0 if tid == "L3" else 0.0
     return lround(4294967296.0 * hz / FH_HZ)
 
 
@@ -78,7 +78,7 @@ def shift_ns(test, n):
         return ns
     if tid == "H1":
         return p["rms_ns"] * gauss(test["seed"], n)
-    if tid == "H2":
+    if tid in ("H2", "H6"):
         return p["peak_ns"] * math.sin(2 * math.pi * cycle(test, n))
     if tid == "F2":  # H runs p ppm fast against a fixed subcarrier
         return -n * LINE_NS * p["ppm"] * 1e-6

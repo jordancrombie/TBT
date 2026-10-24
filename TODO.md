@@ -77,10 +77,15 @@ order. Measured facts and open issues live in
       that the output is alive before each test. Today's tolerances varied
       between runs (8 vs 11).
 
+## Pioneer DVR-220
+- [ ] More field trials (3+) for a fingerprint.
+- [ ] Look at L3 (hum) and X1 r4 on the monitor. Check whether its
+      saturation swings (±8 % between runs) are real.
+
 ## Generator
 - [ ] Root-cause the intermittent DMA stop (watchdog recovers it; see
       bench notes).
-- [ ] H6 velocity error: timing that drifts *within* a line (needs
+- [ ] H7 velocity error: timing that drifts *within* a line (needs
       pre-stretched line copies). For line TBCs and the tape-deck phase.
 - [ ] Tape program mode: step through test rungs on a timed schedule while
       recording a test tape, logging each segment's manifest; a V0 segment

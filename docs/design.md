@@ -60,7 +60,7 @@ perturbation is stated as a change from that.
 
 ## Test catalog
 
-The catalog has 30 tests in 7 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
+The catalog has 31 tests in 7 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
 targets: line TBC, frame TBC/synchroniser, or both. Its manifest gives the
 ideal output per class, so a line TBC that rightly passes a dropped field
 through is not marked down. Each test sweeps one parameter up a severity
@@ -77,9 +77,43 @@ live catalog. If this table and the firmware ever disagree, the firmware
 | H3 | Timing step | µs, toggling every 0.5 s | 0.25, 0.5, 1, 2, 5 | Picture stays put; recovers within N lines (measured) |
 | H4 | Head-switch skew | µs, lines 520–256 shifted until V-sync | 0.5, 1, 2, 5, 10 | No bend at the bottom of the picture |
 | H5 | Displaced single line | samples, at lines 100 and 362 | +2, −2, +4, −4, +10, −10, +20, −20 (8 rungs) | No tear; following lines unaffected |
+| H6 | Jitter frequency sweep | sine jitter, 200 ns peak @ Hz | 50, 250, 1000, 3000, 7000 | Corrected at every rate (a line TBC); a frame synchroniser only corrects the slow rungs |
 
-H6, velocity error (timing that drifts *within* a line), is deferred to the
+H7, velocity error (timing that drifts *within* a line), is deferred to the
 tape-deck phase. It needs pre-stretched line copies.
+
+**Line TBC or frame synchroniser?** The deciding property is *correction
+bandwidth*: how fast a timing error can change and still be corrected. A
+line TBC re-times every line, so it corrects close to the line rate. A frame
+synchroniser's lock follows only slow changes. TBT measures it two ways:
+- **H6** gives the share of jitter passed at five rates. It works on any rig.
+- **Jitter transfer** (two-channel rigs, from H1 rung 4 and up) compares
+  each line's input timing error (CH2) with its output picture shift (CH1).
+  It reports the share passed in six bands from 150 Hz to 8 kHz, and the
+  bandwidth where half gets through.
+
+Bandwidth alone isn't enough: any digital decoder with a line-locked clock
+follows sync quickly. Calibrated on four devices (2026-10-20 to 10-23):
+
+| | AVT-8710 (frame sync) | Datavideo TBC-1000 (frame sync) | Pioneer DVR-220 (no TBC) | Panasonic DMR-ES10 (line TBC) |
+|---|---|---|---|---|
+| Correction bandwidth (H1, CH2) | 0.4–0.5 kHz | 0.4 kHz | 2.8–3.8 kHz | 2.6 kHz to over 8 kHz |
+| Jitter passed at 4–8 kHz | 110–116 % (amplified) | 108–111 % (amplified) | 99–112 % (amplified) | 38–73 % |
+| H6 at 1 kHz | 87 % | 95 % | 13 % | 21–23 % |
+| H4 head-switch skew left | 75–101 ns | 85–109 ns | 10.6–12.5 ns | 2.4–3.5 ns |
+| H3 5 µs step | one line jolted 1.3 µs | no jolt (glides through) | one line jolted 1.4 µs | nothing above the 50 ns floor |
+
+So `fingerprint.py` sorts devices into three timing classes:
+- **Frame synchroniser (slow lock):** bandwidth under 1 kHz, or more than
+  half the 1 kHz H6 jitter passed.
+- **Line TBC:** fast lock, *and* jitter near the line rate still reduced
+  (under 90 % passed), head-switch skew gone (under 5 ns), and no jolt at a
+  step (under 300 ns).
+- **Fast lock, no per-line correction:** everything else. That's the
+  decoder of a DVD recorder without a TBC.
+
+Single-channel rigs use H6 instead of the bandwidth. The thresholds come
+from one or two units of each class, so more devices may move them.
 
 ### F — Frequency
 
@@ -224,7 +258,9 @@ checked against a known-good TBC, so every grade is labelled provisional.
 | Frame sequence | continuous-input tests | markers: back-steps, skips (main); repeats, single-field frames (minor) | 0 |
 | No garbled, ghosted or torn fields | all but S10/S11/X1 | field classes; frames whose fields disagree | 0 |
 | Picture steady vertically | marker tests | marker line after V-sync: spread (main); offset from V0 (minor) | ±1 line |
-| Residual horizontal displacement | H, F, S1–S3, S9 (the timing tests) | each colour-bar line's luma against the median line, relative to the line's own sync (Gaussian low-pass removes chroma; offset, gain and tilt fitted alongside the shift); excess over V0's floor | < 10 ns rms (main), < 35 ns at the 99th percentile (minor) |
+| Jitter corrected | H6 | share of the 200 ns peak sine jitter (141 ns rms) left on the output, excess over V0 | < 30 % at ≤ 1 kHz (main); < 50 % above (minor) |
+| Back in place after a step | H3 | lines from the first visibly displaced line until the picture is back (displaced = more than 4× the median spread, at least 30 ns) | ≤ 3 lines |
+| Residual horizontal displacement | H1–H5, F, S1–S3, S9 (the timing tests; S3 minor under `--class line`, since a line TBC needs each line's sync) | each colour-bar line's luma against the median line, relative to the line's own sync (Gaussian low-pass removes chroma; offset, gain and tilt fitted alongside the shift); excess over V0's floor | < 10 ns rms (main), < 35 ns at the 99th percentile (minor) |
 | Hue | picture tests | yellow vs burst. V0: against the input (CH2) or nominal 167.1°. Other tests: against the TBC's own V0 transfer applied to this test's input | < 3° |
 | Saturation | picture tests | yellow chroma ÷ burst, judged the same way | < 5 % |
 | Luma | picture tests | gray bar, judged the same way (L4: unchanged or AGC-restored both pass) | < 2 IRE |
@@ -237,9 +273,9 @@ checked against a known-good TBC, so every grade is labelled provisional.
 | Clean after stress; no stuck or ghosted fields (minor) | X1 | hunt windows | after window clean |
 
 **Not yet graded:**
-- *Recovery time* (H3, S4, S6): lines from a step until displacement is
-  back under the threshold.
-- *Correction ratio:* input displacement ÷ output displacement, in dB.
+- *Recovery time* for S4 and S6 (H3's is graded, above).
+- *Correction ratio:* input displacement ÷ output displacement, in dB
+  (H6 and the jitter transfer now give it per frequency).
 - *Burst phase stability.*
 - *Lost-field tolerance:* reported, not thresholded.
 - *Latency and lock:* reported, not graded.
@@ -386,7 +422,7 @@ model the firmware renders from.
    `fingerprints/` library (Datavideo TBC-1000 first). Next: identifying an
    unknown TBC against the library, which needs a second model in it (the
    AVT-8710, re-run with CH2).
-7. **Later:** H6 velocity error, and a tape program mode
+7. **Later:** H7 velocity error, and a tape program mode
    that steps through rungs on a timed schedule for recording test tapes,
    for tape-based TBCs with no passthrough.
 

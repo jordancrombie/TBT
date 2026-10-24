@@ -4,10 +4,20 @@ Open work for TBT, roughly in priority order. Measured facts and open issues
 live in [docs/bench-notes.md](docs/bench-notes.md).
 
 ## Next
-- [ ] **Automatic identification:** `tools/identify.py` matches a new
-      fingerprint against `fingerprints/`, model traits first and then unit
-      traits (the clock offset tells units apart), and reports the closest
-      match and how close it is. The 2026-10-23 blind test did this by hand.
+- [ ] **Timing resolution (found 2026-10-24):** every test gets 2 sub-sample
+      copies (70 ns steps) since 2026-10-13, so H1 rungs 1–2 (5, 10 ns rms)
+      deliver no jitter and rung 3 is coarse. Options: find the memory for 4
+      or 8 copies on timing tests, dither the low rungs, or redefine them.
+      To discuss.
+- [ ] **Identification and regression tool:** `tools/identify.py` matches a
+      new fingerprint against `fingerprints/`, model traits first and then
+      unit traits (the clock offset tells units apart), and reports the
+      closest match and how close it is. The same comparison, run on one
+      trial against a known unit's fingerprint, is the regression check in
+      [docs/validation.md](docs/validation.md). The 2026-10-23 blind test and
+      the 2026-10-24 regression trials did it by hand. Match clock offsets
+      within about ±0.5 ppm: a unit's crystal drifts by 0.2–0.3 ppm over a
+      day (bench notes).
 - [ ] **Regenerate the sample report** (`docs/sample-report.html` and
       `docs/sample-report.jpg`). The current one predates CH2, grading and
       H6. Run `run_suite.py full --grade --html`, copy the report from
@@ -105,13 +115,14 @@ Scored for value against what the suite already covers.
 
 ## Generator
 - [ ] Confirm the intermittent DMA stop is gone. A likely cause, a race on
-      test switches, was fixed 2026-10-24 and three full verifier passes
-      since showed no restarts; keep watching `dma_restarts` over a few
-      field trials before closing it (see the bench notes).
+      test switches, was fixed 2026-10-24. Since then: four full verifier
+      passes and three full field trials, no restarts. Keep watching
+      `dma_restarts` for a few more before closing it (see the bench notes).
 - [ ] H7 velocity error: timing that drifts *within* a line (needs
       pre-stretched line copies). For line TBCs and the tape-deck phase.
 - [ ] Tape program mode: step through test rungs on a timed schedule while
       recording a test tape, logging each segment's manifest; a V0 segment
       per tape.
 - [ ] More variant levels for C3/L2/L3 when memory allows (now
-      `subsample_steps`, 4 with SMPTE bars).
+      `subsample_steps`, 2 for every test). Goes with the timing resolution
+      item above.

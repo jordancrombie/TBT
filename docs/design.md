@@ -72,12 +72,21 @@ live catalog. If this table and the firmware ever disagree, the firmware
 
 | ID | Test | Parameter | Ladder | Ideal TBC output |
 |---|---|---|---|---|
-| H1 | Random line-to-line jitter | rms ns (Gaussian, seeded) | 5, 10, 20, 50, 100, 200 | Straight vertical edges; output H jitter < 5 ns rms |
+| H1 | Random line-to-line jitter | rms ns (Gaussian, seeded) | 5, 10, 20, 50, 100, 200 (see the resolution note below) | Straight vertical edges; output H jitter < 5 ns rms |
 | H2 | Sinusoidal jitter (wow/flutter) | peak ns @ Hz | 50 ns @ 1 Hz … 2 µs @ 30 Hz, 6 rungs | As H1 at every rate |
 | H3 | Timing step | µs, toggling every 0.5 s | 0.25, 0.5, 1, 2, 5 | Picture stays put; recovers within N lines (measured) |
 | H4 | Head-switch skew | µs, lines 520–256 shifted until V-sync | 0.5, 1, 2, 5, 10 | No bend at the bottom of the picture |
 | H5 | Displaced single line | samples, at lines 100 and 362 | +2, −2, +4, −4, +10, −10, +20, −20 (8 rungs) | No tear; following lines unaffected |
 | H6 | Jitter frequency sweep | sine jitter, 200 ns peak @ Hz | 50, 250, 1000, 3000, 7000 | Corrected at every rate (a line TBC); a frame synchroniser only corrects the slow rungs |
+
+**Timing resolution.** Shifts are quantized to 2/`subsample_steps` samples:
+70 ns with the 2 copies every test gets today (since 2026-10-13; 35 ns with
+4). H1's random jitter is bounded at ±3.46 σ, so its 5 and 10 ns rms rungs
+never reach half a step and deliver no jitter at all; the 20 ns rung arrives
+as 70 ns steps on about 8 % of lines (its rms is right). From 50 ns rms up,
+and for H2–H6, the delivered timing is within a few percent of the ladder
+(the reference model computes it exactly). Raising the copy count is open
+work (TODO).
 
 H7, velocity error (timing that drifts *within* a line), is deferred to the
 tape-deck phase. It needs pre-stretched line copies.
@@ -160,7 +169,7 @@ F2 and F3 are done in the timing model, not by retuning the clock.
 | L4 | Video level | white level, % | 80, 90, 110, 120 | Passes, or corrected if the TBC has AGC |
 
 C3, L2 and L3 reuse each line's pre-rendered copies as phase, noise or DC
-versions, so their resolution is `subsample_steps` levels (4 with SMPTE bars).
+versions, so their resolution is `subsample_steps` levels (2 today).
 The manifest records each variant's value.
 
 ### V — Verification
@@ -382,8 +391,9 @@ uses a seeded hash (lowbias32) summed Irwin-Hall style, which is
 integer-exact. Periodic tests use an integer phase increment. F2's
 quantization uses exact integer arithmetic. `tools/perturb_model.py` is the
 reference implementation for the grader. `tools/verify_timing.py` checks the
-firmware against it in 49 configurations: shifts agree to 0.002 ns, and every
-line length matches.
+firmware against it in 60 configurations (about 90 s): shifts agree to
+0.002 ns, every line length matches, and the B tests' caption bytes, line
+IDs and AGC pulse levels decode as sent.
 
 **Manifest example**, trimmed from a real run (H1, rung 4):
 
@@ -431,18 +441,24 @@ model the firmware renders from.
   frame of any length, so frames can drop fields or change line count.
 - **Frame task:** an end-of-frame interrupt wakes it to rewrite the half that
   just finished, as "the other half's frame + 1", while the other half
-  plays. That takes 6–9 ms of a 33 ms frame. A watchdog restarts the DMA if no
-  end-of-frame arrives for 200 ms; restarts are counted, and runs that see one
-  are flagged.
+  plays. That takes 6–9 ms of a 33 ms frame (about 16 ms with B1/B2's
+  per-frame caption lines). A watchdog restarts the DMA if no end-of-frame
+  arrives for 200 ms; restarts are counted, and runs that see one are
+  flagged. None has been seen since the test-switch race fix (2026-10-24).
 - **Timing faults are in the ring, not the picture.** A descriptor's length
   sets where the next line's sync falls, in 2-sample (140 ns) steps.
   Pre-rendered sub-sample-shifted copies of each line fill in the fine steps.
-- **Pools:** variant copies (timing, carrier, noise and DC), snow, dropout and
-  dead (0 V) lines. Memory is the binding constraint, about 189 KB free with
-  everything allocated.
+- **Pools:** variant copies (timing, carrier, noise and DC), snow, dropout,
+  dead (0 V) and caption lines. Memory is the binding constraint: after the
+  pool, about 170–190 KB is free, and the copy count is whatever the
+  remaining budget allows (2 for every test today; 1 for B2).
 - **Test switches** park the ring on a standard 525-line black frame with full
   vertical sync while the new test is built. An earlier version parked on
   sync-only lines with no V-sync, which could provoke the TBC under test.
+  Each setter stages its change under the frame lock, and the frame task
+  writes nothing until the rebuild finishes, so no frame is ever built from
+  the new test with the old buffers. `hold` takes the lock too, so the frame
+  numbers it reports match the halves' contents.
 
 ### Phases
 
@@ -487,13 +503,14 @@ model the firmware renders from.
 - [ ] **TBC-1000 dead output.** Its output intermittently dies, the swing
       sagging first. A power-cycle cleared it. Trigger and cause are open
       (bench notes).
-- [x] **Vertical interval:** TBCs blank it (the AVT-8710 blanks lines 10–21),
-      so the marker moved to picture lines 24/287.
+- [x] **Vertical interval:** TBCs blank it (the AVT-8710 blanks lines 10–21,
+      the TBC-3000 lines 10–20), so the marker moved to picture lines 24/287.
 - [x] **Jitter model:** colour-under is the default (VHS/Betamax). Direct
       colour stays as an option.
 - [x] **Grader language:** Python with NumPy, reading `capture.npz` and
       `manifest.json`, as the existing tools do.
 - [x] **Capture length per rung:** slow tests capture longer automatically
-      (S10/S11 1.3 s at 25 MS/s, X1 3.3 s at 12.5 MS/s; `CAPTURE_HINTS` in
-      `tools/run_test.py`).
+      (S10/S11 and B1 1.3 s at 25 MS/s, B3 2.2 s and X1 3.3 s at 12.5 MS/s;
+      `CAPTURE_HINTS` in `tools/run_test.py`). Output H jitter reads higher
+      at lower rates (2.5 ns at 12.5 MS/s against 0.6 at 50).
 - [x] **One-channel rigs:** supported with `--channels 1`.

@@ -39,7 +39,8 @@ Open work is in [TODO.md](TODO.md).
 | Grader | Provisional | `tools/grade.py` (or `run_suite.py --grade`) grades every run, each test and the whole field trial. Thresholds not yet checked against a known-good TBC |
 | Line TBC or frame synchroniser | Done | H6 jitter sweep, jitter transfer and H3 step recovery, calibrated on four devices (see [docs/design.md](docs/design.md)) |
 | Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 7 entries for 5 devices |
-| Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; an automatic `identify` tool is next |
+| Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
+| Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
 | Rig calibration | In progress | CH2 wired; generator levels and chroma roll-off still to calibrate, CH1 to terminate |
 
@@ -118,7 +119,7 @@ classic ESP32 has a rare combination:
   re-rendering anything.
 - **Enough RAM** for two frames of DMA descriptors and a pool of
   pre-rendered lines (each line is 1,820 bytes). With everything allocated,
-  about 189 KB of heap is left. A second core rewrites one frame while the
+  about 170–190 KB of heap is left, depending on the test. A second core rewrites one frame while the
   other plays.
 
 **Porting to something else.** The host tools don't care what makes the
@@ -154,15 +155,20 @@ over. The parts that are ESP32-specific are the DMA ring and the clock
   14.318182 MHz, clocked from the APLL.
 - **Two-frame DMA ring.** The ring has two halves, one frame each. An
   end-of-frame interrupt wakes a task that rewrites the half that just finished
-  while the other plays (6–9 ms of a 33 ms frame). Sequences never repeat, and
+  while the other plays (6–9 ms of a 33 ms frame; about 16 ms when it also
+  renders B1/B2's caption lines). Sequences never repeat, and
   a half can hold any number of lines (up to 600), so frames can drop fields or
   change line count.
 - **Pre-rendered lines.** Each distinct line is rendered once from a model
-  (sync, burst, Y/U/V segments with band-limited edges) in up to 8 sub-sample
-  shifted copies.
+  (sync, burst, Y/U/V segments with band-limited edges) in as many sub-sample
+  shifted copies (up to 8) as memory allows: **2 for every test today**
+  (B2: 1), since 2026-10-13.
 - **Timing faults live in the ring, not the picture.** A descriptor's length
   sets where the next line's sync falls, in 2-sample (140 ns) steps; the
-  shifted copies fill in the fine steps (35 ns with 4 copies).
+  shifted copies fill in the fine steps: **70 ns** with today's 2 copies
+  (35 ns with 4). A shift smaller than half a step rounds to none, so H1's
+  5 and 10 ns rms rungs currently deliver no jitter at all, and its 20 ns
+  rung arrives as occasional 70 ns steps (see [TODO](TODO.md)).
 - **Colour-under by default.** Sync, luma and the colour envelopes jitter while
   the 3.58 MHz carrier stays on a continuous reference, as a VHS/Betamax deck
   delivers it.
@@ -170,8 +176,8 @@ over. The parts that are ESP32-specific are the DMA ring and the clock
   number (`src/perturb.cpp`, mirrored by `tools/perturb_model.py`), so the
   grader can rebuild exactly what was sent from the manifest.
 - **Frame marker** on lines 24 and 287, the top picture rows. TBCs commonly
-  blank the vertical interval, and the TBC under test blanks lines 10–21. The
-  marker is 36 cells of 1.4 µs encoding test code, rung, a 16-bit frame counter
+  blank the vertical interval (the AVT-8710 blanks lines 10–21; the TBC-3000
+  lines 10–20, keeping the captions on 21). The marker is 36 cells of 1.4 µs encoding test code, rung, a 16-bit frame counter
   and a CRC-4.
 - **Standards.** Timing follows SMPTE 170M: 4.7 µs H-sync, 2.3 µs equalizing
   pulses, serrated broad pulses, 9-cycle burst at 5.3 µs, 7.5 IRE setup,
@@ -190,13 +196,18 @@ through.
 | ID | Test | Aimed at | Rungs (mild → severe) |
 |---|---|---|---|
 | V0 | clean baseline | both | 1 |
-| H1 | random line jitter, rms ns | both | 5, 10, 20, 50, 100, 200 |
+| V1 | no signal at all, to capture the TBC's own fallback output | both | 1 |
+| H1 | random line jitter, rms ns | both | 5, 10, 20, 50, 100, 200 (rungs 1–2 below today's 70 ns step: see note) |
 | H2 | sinusoidal jitter, peak ns @ Hz | both | 50@1 … 2000@30 |
 | H3 | timing step, µs, toggles every 0.5 s | both | 0.25, 0.5, 1, 2, 5 |
 | H4 | head-switch skew, µs (lines 520–256) | both | 0.5, 1, 2, 5, 10 |
 | H5 | displaced single line (100 and 362), samples | both | +2, −2, +4, −4, +10, −10, +20, −20 (8 rungs) |
 | H6 | jitter frequency sweep: 200 ns peak sine at Hz (line TBC or frame sync?) | both | 50, 250, 1000, 3000, 7000 |
 | F1 | sample-clock offset, ppm | both | +10, −10, +30, −30 … +1000, −1000 (10 rungs) |
+| F2 | H rate against a fixed subcarrier, ppm (SCH drifts) | both | +10, −10, +50, −50 … +1000, −1000 (8 rungs) |
+| F3 | slow H-rate drift, peak ppm over a 10 s period | both | 50, 300, 1000 |
+| S1 | sync amplitude, IRE (40 nominal) | both | 30, 25, 20, 15, 10 |
+| S2 | slow sync edges, 10–90 % rise, ns | both | 250, 500, 1000 |
 | S3 | missing H syncs from line 100, lines | both | 1, 2, 5, 10, 20 |
 | S4 | malformed vertical interval, variant | frame | 1 EQ pulses → H sync · 2 unserrated V-sync · 3 both · 4/5 V-sync missing in field 1 every 30/6 frames · 6 V-sync missing in every field |
 | S5 | progressive 240p (two 262-line fields per frame) | frame | 1 |
@@ -204,10 +215,8 @@ through.
 | S7 | dropped field: every N frames field 2 is missing | frame | 60, 30, 15, 6, 2 |
 | S8 | field-length wow: lines added/removed per field, peak @ Hz | frame | 1@0.5, 2@1, 5@1, 10@2, 20@2 |
 | S9 | search noise bar: a band of sync-less snow moving 23 lines a frame, lines | both | 2, 5, 10, 20, 40 |
-| S1 | sync amplitude, IRE (40 nominal) | both | 30, 25, 20, 15, 10 |
-| S2 | slow sync edges, 10–90 % rise, ns | both | 250, 500, 1000 |
-| F2 | H rate against a fixed subcarrier, ppm (SCH drifts) | both | +10, −10, +50, −50 … +1000, −1000 (8 rungs) |
-| F3 | slow H-rate drift, peak ppm over a 10 s period | both | 50, 300, 1000 |
+| S10 | N consecutive fields of no signal (0 V), once a second | both | 1 … 11 (11 = "∞, more than 10") |
+| S11 | N consecutive fields of snow, once a second | both | 1 … 11 |
 | C1 | burst amplitude, IRE p-p (40 nominal) | both | 30, 20, 10, 60 |
 | C2 | no burst | both | 1 |
 | C3 | burst + chroma phase jitter, line to line, rms degrees | both | 2, 5, 10, 20 |
@@ -216,9 +225,6 @@ through.
 | L2 | additive noise, SNR dB (100 IRE / rms) | both | 40, 34, 28, 22, 16 |
 | L3 | 60 Hz hum, IRE p-p | both | 5, 10, 20, 40 |
 | L4 | video level, % | both | 80, 90, 110, 120 |
-| S10 | N consecutive fields of no signal (0 V), once a second | both | 1 … 11 (11 = "∞, more than 10") |
-| S11 | N consecutive fields of snow, once a second | both | 1 … 11 |
-| V1 | no signal at all, to capture the TBC's own fallback output | both | 1 |
 | B1 | captions (EIA/CTA-608) on line 21: "Brought to you by the Media Archive Project" (CC1), a frame counter in field 2 | both | 1 clean · 2 a field dropped every 30 frames · 3 2 lost fields once a second |
 | B2 | VBI line map: an ID and a 25/50/75 IRE staircase on lines 10–20 / 273–282, plus captions | both | 1 |
 | B3 | AGC pulses (Macrovision-like copy protection): pseudo-sync + 110 IRE AGC pulse pairs on lines 12–19 / 275–282 | both | 1 steady · 2 cycling 1 s on / 1 s off · 3 cycling + colour stripe |
@@ -226,7 +232,7 @@ through.
 
 C3, L2 and L3 reuse each line's pre-rendered copies (normally sub-sample
 timing shifts) as phase, noise or DC versions. The resolution is therefore
-`subsample_steps` levels (4 for SMPTE bars), and the manifest records the
+`subsample_steps` levels (2 today), and the manifest records the
 value of each. F2 and F3 are done in the timing model, not by retuning the
 clock. The 8-bit DAC's own quantization noise is about 0.55 IRE rms (~45 dB),
 the floor for L2.
@@ -240,7 +246,7 @@ patents, not the licensed spec): does a TBC remove it, pass it, or get
 fooled by it (picture level pumping, lost lock)?
 
 A dropped field leaves a lone half-line. It plays as 456 samples rather than
-455, because the DAC consumes samples in pairs (+35 ns at the drop).
+455, because the DAC consumes samples in pairs (one extra sample, +70 ns, at the drop).
 
 ## Running
 
@@ -258,13 +264,14 @@ The host tools need `numpy` and `pyserial`.
 export TBC_DUT="AVT-8710"                         # name the device under test once per session
 export TBC_NOTE="composite in/out, controls at default"
 export TBC_CHANNELS=1                             # only if your rig has CH1 alone (see "Minimal rig")
-python3 tools/run_suite.py full --grade --html   # the standard field trial: 76 runs, ~11 min, graded
-python3 tools/run_suite.py                      # the quick smoke set: one rung of every test (~3 s each)
+python3 tools/run_suite.py full --grade --html   # the standard field trial: 83 runs, ~12 min, graded
+python3 tools/run_suite.py                      # the quick smoke set: one rung of each test but S10/S11/X1/V1 (~3 s each; B1/B3 longer)
 python3 tools/run_suite.py H1:all S7:4-5        # chosen tests and rungs on one scope session
 python3 tools/run_test.py H1 4                  # a single rung
 python3 tools/run_test.py H1 4 --keep           # ...and keep its capture for debugging
+python3 tools/run_test.py H1 4 --leave          # ...and leave the test playing afterwards (default: back to V0)
 python3 tools/observe_tbc.py runs/<run>         # what the TBC passed, dropped or repeated
-python3 tools/verify_timing.py                  # check the firmware against the reference model (~75 s)
+python3 tools/verify_timing.py                  # check the firmware against the reference model (60 configurations, ~90 s)
 python3 tools/check_lines.py                    # check colour bars as rendered
 ```
 
@@ -587,9 +594,9 @@ It found the DMR-ES10's overheating colour fault (see
 | `fingerprints/` | the fingerprint library, one JSON per unit or model |
 | `tools/cards.py` | the text cards shown between tests (`--cards`): layout and "watch" hints |
 | `tools/grade.py` | grades a field trial: per run, per test and overall (provisional thresholds) |
-| `tools/colour_watch.py`, `tools/dropout_watch.py` | long-running watches: colour and clock over time; dead output |
 | `tools/compare_suites.py` | lines up several suites' results test by test; dead-output episodes, level and latency |
 | `tools/dropout_watch.py` | samples the TBC output once a second through clean / input-loss / clean phases; dead-output episodes |
+| `tools/colour_watch.py` | logs colour, clock and picture class over time while only listening (finds warm-up faults) |
 | `tools/verify_timing.py`, `tools/check_lines.py` | firmware verification over serial |
 | `tools/analyze_capture.py` | levels, line rate and bar colours from a capture |
 | `tools/gen_cmd.py` | serial helpers (`BAUD`, `request`, `dump_line`) and a command-line sender |
@@ -609,10 +616,13 @@ feeds the TBC under test signals a healthy source never would:
 - levels outside the normal range;
 - hours of continuous stress, if you run it that long.
 
-**You use TBT entirely at your own risk.** We've run it against our own TBCs
-(an AVT-8710 and a Datavideo TBC-1000) without damaging them. But during
-testing the TBC-1000's output did intermittently stop until it was
-power-cycled, and old equipment can fail in ways nobody can predict. Your
+**You use TBT entirely at your own risk.** We've run it against our own units (an
+AVT-8710, Datavideo TBC-1000 and TBC-3000, Pioneer DVR-220 and Panasonic
+DMR-ES10) without damaging them. But during testing the TBC-1000's output
+did intermittently stop until it was power-cycled, and the DMR-ES10 showed
+a colour fault when it ran hot with its cover on (a fault of the unit that
+long field trials brought out). Old equipment can fail in ways nobody can
+predict. Your
 units may be older, more fragile or differently built than ours.
 
 By using TBT you accept that:

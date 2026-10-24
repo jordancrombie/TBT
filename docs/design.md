@@ -60,7 +60,7 @@ perturbation is stated as a change from that.
 
 ## Test catalog
 
-The catalog has 33 tests in 8 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
+The catalog has 34 tests in 8 groups. [tests.md](tests.md) describes each one in plain words, with every rung. Each test is tagged with the TBC class it
 targets: line TBC, frame TBC/synchroniser, or both. Its manifest gives the
 ideal output per class, so a line TBC that rightly passes a dropped field
 through is not marked down. Each test sweeps one parameter up a severity
@@ -176,6 +176,7 @@ The manifest records each variant's value.
 |---|---|---|---|---|
 | B1 | Captions (EIA/CTA-608) on line 21 of both fields: field 1 a pop-on caption, field 2 a frame counter | disruption | 1 none · 2 a field dropped every 30 frames · 3 2 fields of no signal once a second | Captions passed intact |
 | B2 | VBI line map: an ID and a 25/50/75 IRE staircase on lines 10–20 and 273–282, captions on line 21 | none | 1 rung | Lines passed in place, levels unchanged (blanked by design: minor) |
+| B3 | AGC pulses (Macrovision-like): 6 pseudo-sync (−40 IRE, 2 µs) + AGC (110 IRE, 3 µs) pairs per line, every 8 µs from 12 µs, on lines 12–19 and 275–282 | mode | 1 steady · 2 cycling 1 s on / 1 s off · 3 cycling + colour stripe (burst inverted on 4 lines in 20) | Locks, picture level steady (not blinded); pulses and stripe removed (minor) |
 
 Caption timing follows 608 as decoders read it (zvbi: run-in from 10.5 µs,
 32 × fH bit rate): a 7-cycle run-in at 503 kHz from 10.5 µs after the sync
@@ -184,6 +185,14 @@ odd parity; 0 is blanking, 1 is 50 IRE. Field 1 repeats a 32-frame cycle:
 RCL, ENM, PAC row 14, "Brought to you by the", PAC row 15, "Media Archive
 Project", EOC, control codes sent twice. Field 2 carries the frame number,
 6 bits per byte plus 0x20. `src/vbi.*` and `tools/perturb_model.py` hold both.
+
+B3 follows the Ryan patents' ranges (pseudo-sync at least 0.5–1 µs to sync
+tip, 6 µs or more apart; AGC pulse at least 3 µs at 100–125 % of peak white;
+20–30 or more pairs a field): 48 pairs a field here. The slow cycle follows
+the published descriptions of the brightness pumping ("a couple of seconds"
+on, then reduced); 1 s each way fits one 2.2 s capture. Colour stripe uses
+the bands the patents describe (4 lines inverted in every 20), outside the
+VBI. It is a model of the mechanism, not the licensed signal.
 
 ### X — Fault hunt
 
@@ -231,6 +240,12 @@ in the "after" window.
   arrives with the other timing parity. The caption streams of each field
   show repeated or skipped data. B2 also decodes each line's ID: passed in
   place, moved, blank or damaged, with the staircase levels.
+- **AGC pulses (B3):** on our fields' lines 12–19 and 275–282, the
+  pseudo-sync and AGC pulse levels: each line passed, stripped (flat) or
+  altered. The gray bar's level in the cycle's on half against its off half
+  (pumping: the TBC's own AGC fooled). On rung 3, chroma against each line's
+  own burst on striped and unstriped lines: 180° apart means the stripe is
+  still on the output.
 - **Loss and hunt summaries:** per S10/S11 rung, whether the gap was handled
   (no fallback, no sync loss), clean, and how (held, blanked, garbled on
   recovery). A suite gives the lost-field tolerance. Per X1 rung, the four
@@ -296,6 +311,7 @@ checked against a known-good TBC, so every grade is labelled provisional.
 | Clean after stress; no stuck or ghosted fields (minor) | X1 | hunt windows | after window clean |
 | Captions intact; every caption intact (minor); caption stream as sent (minor) | B1, B2 | line 21 decoded on every one of our fields, against what was sent; repeated or skipped caption data, against the input's | ≥ 98 % of fields (B1 r2/r3: ≥ 90 %, since a field damaged as the TBC recovers is minor, as in S10); 0; ≤ the input's |
 | VBI lines not corrupted; lines 10–20 passed (minor) | B2 | line IDs | 0 moved or damaged; 0 blanked |
+| Not blinded; AGC pulses removed (minor); colour stripe removed (minor) | B3 | gray level, cycle's on half against off half, beyond the input's; pulse lines flat; hue on striped lines | ± 2 IRE; all lines flat; < 90° |
 
 **Not yet graded:**
 - *Recovery time* for S4 and S6 (H3's is graded, above).
@@ -450,9 +466,9 @@ model the firmware renders from.
    timing class in fingerprints; the colour watch. A blind test identified a
    Datavideo TBC-3000, and both its inputs, against the library.
 8. **Phase 7, vertical blanking data (2026-10-24):** B1 captions and the B2
-   VBI line map (issue #25).
-9. **Next:** an automatic identification tool (the blind test's comparison,
-   formalised); AGC pulses in the vertical interval (issue #27).
+   VBI line map (issue #25); B3 AGC pulses and colour stripe (issue #27).
+9. **Next:** an automatic identification and regression tool (the blind
+   test's comparison, formalised).
 10. **Later:** H7 velocity error, and a tape program mode
    that steps through rungs on a timed schedule for recording test tapes,
    for tape-based TBCs with no passthrough.

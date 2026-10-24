@@ -291,6 +291,30 @@ def vbi_checks(r, ctx, tid):
     return out
 
 
+def agc_checks(r, ctx, tid):
+    """B3: not blinded by the pulses (main); pulses and colour stripe removed (minor).
+
+    Blinded = the picture level follows the pulses' on/off cycle (the TBC's own
+    AGC is fooled), or lost lock / garbled fields (the sequence checks).
+    Removing the pulses helps whatever captures the output, so it counts as
+    minor; passing them unchanged is not a fault."""
+    a = r.get("agc")
+    if not a:
+        return [check("AGC pulses analysed", False, "no result", "")]
+    out = []
+    p = a.get("pumping_ire")
+    if p is not None:
+        pi = ((r.get("input") or {}).get("agc") or {}).get("pumping_ire") or 0.0
+        out.append(check("not blinded: picture level steady", abs(p - pi) <= LIMITS["luma_ire"],
+                         f"{p - pi:+.1f} IRE between the cycle's halves", f"± {LIMITS['luma_ire']:g} IRE"))
+    out.append(check("AGC pulses removed", a["state"] == "stripped",
+                     f"{a['state']} ({a['lines']['stripped']}/{a['checked']} lines flat)", "stripped", minor=True))
+    if "stripe_on_output" in a:
+        out.append(check("colour stripe removed", not a["stripe_on_output"],
+                         f"{a['stripe_hue_diff_deg']:+.0f}° on striped lines", "0°", minor=True))
+    return out
+
+
 def grade_run(r, ctx):
     t = r["test"]
     tid = t["id"]
@@ -338,6 +362,9 @@ def grade_run(r, ctx):
                                 "clean within 3 frames"))
             checks.append(check("no stuck or ghosted fields", H["stuck_or_ghost"] == 0, H["stuck_or_ghost"], "0",
                                 minor=True))
+        elif tid == "B3":
+            checks += sequence_checks(r, ctx, tid)
+            checks += agc_checks(r, ctx, tid)
         elif tid in ("B1", "B2"):
             if tid == "B1" and t["rung"] > 1:      # disrupted input: the S7/S10 tests judge the picture
                 checks = [c for c in checks if c["name"] != "standard output fields"]

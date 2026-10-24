@@ -37,7 +37,9 @@ TESTS = [("V0", 1, 1, "under", 0), ("H1", 4, 7, "under", 0), ("H1", 6, 3, "under
          ("X1", 2, 1, "under", 0, 35), ("X1", 2, 1, "under", 1, 35), ("X1", 3, 1, "under", 0, 35),
          ("X1", 5, 1, "under", 0, 35),
          ("B1", 1, 1, "under", 0), ("B1", 1, 1, "under", 1), ("B1", 2, 1, "under", 0, 28), ("B1", 2, 1, "under", 1, 28),
-         ("B1", 3, 1, "under", 0, 26), ("B2", 1, 1, "under", 0)]
+         ("B1", 3, 1, "under", 0, 26), ("B2", 1, 1, "under", 0),
+         ("B3", 1, 1, "under", 0), ("B3", 2, 1, "under", 0), ("B3", 2, 1, "under", 0, 28),
+         ("B3", 3, 1, "under", 0, 28), ("B3", 3, 1, "under", 1)]
 
 # S4: expected sync pulses (start us, width us) on a vertical-interval line, by variant,
 # when the frame alters it; "low" = low for the whole line (unserrated, continuing).
@@ -156,6 +158,24 @@ def content_check(g, tid, test, man, slots, plan, cum, half, frame, ire, sync_ti
         ks = np.arange(int(round(ORIGIN + t0 * US)) + 1, int(round(ORIGIN + t1 * US)) - 1)
         err = np.max(np.abs(xj[ks] - np.array([pm.snow_ire(100 + var, int(k)) for k in ks])))
         return err < 1.5, f" dropout on line {slots[j][0]}: snow vs model max err {err:.2f} IRE, {len(drop)} dropout lines"
+    if tid == "B3":
+        notes, ok = [], True
+        on = pm.agc_on(test, frame)
+        for L in (pm.AGC_F1[0], pm.AGC_F2[1]):
+            j = next(k for k, (l_, _) in enumerate(slots) if l_ == L)
+            xj = ire(g.dump(HALF_BASE * half + j))
+            lvl = lambda t0, t1: xj[int(round(ORIGIN + (t0 + 0.3) * US)):int(round(ORIGIN + (t1 - 0.3) * US))].mean()
+            ps = [lvl(a, b) for k_, a, b in pm.agc_windows() if k_ == "pseudo"]
+            ag = [lvl(a, b) for k_, a, b in pm.agc_windows() if k_ == "agc"]
+            want = pm.AGC_IRE if on else 0.0
+            ok &= max(abs(v - pm.PSEUDO_IRE) for v in ps) < 2.5 and max(abs(v - want) for v in ag) < 2.5
+            notes.append(f"line {L}: pseudo-sync {np.mean(ps):.0f}, AGC {np.mean(ag):.0f} IRE (want {want:.0f}, "
+                         f"{'on' if on else 'off'} half)")
+        n_stripe = sum(1 for L, f in slots if f & pm.SLOT_ALT and pm.stripe_line(L))
+        want_stripe = sum(1 for L, _ in slots if pm.stripe_line(L)) if int(test["params"]["mode"]) == 3 else 0
+        ok &= n_stripe == want_stripe
+        notes.append(f"{n_stripe} stripe lines (want {want_stripe})")
+        return ok, " " + "; ".join(notes)
     if tid in ("B1", "B2"):
         notes, ok = [], True
         for j, (L, f) in enumerate(slots):
@@ -270,6 +290,8 @@ def main():
                 exp_ph = (180.0 - pm.variant_value(test, v, nsub)) % 360
             else:
                 exp_ph = 180.0 if mode == "under" else (180.0 - 90.0 * (e + sub_v)) % 360
+            if slots[i][1] & pm.SLOT_ALT and pm.alt_mods(test, slots[i][0]) & pm.MOD_BURST_INV:
+                exp_ph = (exp_ph + 180.0) % 360                 # B3 colour stripe: burst inverted
             ph_err.append((burst_phase(c, sp, cum[i], e) - exp_ph + 180) % 360 - 180)
             checked.append(i)
         pos_err, ph_err = np.array(pos_err), np.array(ph_err)
@@ -297,7 +319,7 @@ def main():
                                                          for (a, w), (ea, ew) in zip(pl, exp))
                 struct_ok &= good_l
                 struct_note += f" line {L}{' (altered)' if altered else ''}: {got};"
-        if tid in ("S1", "S2", "C1", "C2", "C4", "L1", "L2", "L3", "L4", "B1", "B2"):
+        if tid in ("S1", "S2", "C1", "C2", "C4", "L1", "L2", "L3", "L4", "B1", "B2", "B3"):
             ok_c, note_c = content_check(g, tid, test, man, slots, plan, cum, half, frame, ire, tip_code, blank_code)
             struct_ok &= ok_c
             struct_note += note_c

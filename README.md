@@ -29,8 +29,8 @@ Open work is in [TODO.md](TODO.md).
 | Area | State | Details |
 |---|---|---|
 | Colour bars, first light | Done | SMPTE and EIA bars, staircase, flat, crosshatch, and a title card. Hue within 1.5° and luma within 0.5 IRE at the DAC |
-| Test catalog (33 tests, V/H/F/S/C/L/B/X) | Done | Verified against the reference model (`verify_timing.py`, 55 configurations). See [docs/tests.md](docs/tests.md) |
-| Vertical blanking data | Done | B1 captions on line 21 and the B2 VBI line map: passed, stripped, moved or damaged (first tested on the TBC-3000) |
+| Test catalog (34 tests, V/H/F/S/C/L/B/X) | Done | Verified against the reference model (`verify_timing.py`, 60 configurations). See [docs/tests.md](docs/tests.md) |
+| Vertical blanking data | Done | B1 captions on line 21 and the B2 VBI line map: passed, stripped, moved or damaged. B3 Macrovision-like AGC pulses and colour stripe: removed, passed, or blinding the TBC (first tested on the TBC-3000) |
 | Colour-under (VHS/Betamax) | Default | Direct colour (U-matic/1") available with `chroma follows` |
 | Frame marker, manifest, capture runner | Done | The marker decodes through every TBC tested, and on the CH2 reference |
 | CH2 reference | Done | Each two-channel run checks its input, and measures latency, output lock and gain against the real input |
@@ -221,6 +221,7 @@ through.
 | V1 | no signal at all, to capture the TBC's own fallback output | both | 1 |
 | B1 | captions (EIA/CTA-608) on line 21: "Brought to you by the Media Archive Project" (CC1), a frame counter in field 2 | both | 1 clean · 2 a field dropped every 30 frames · 3 2 lost fields once a second |
 | B2 | VBI line map: an ID and a 25/50/75 IRE staircase on lines 10–20 / 273–282, plus captions | both | 1 |
+| B3 | AGC pulses (Macrovision-like copy protection): pseudo-sync + 110 IRE AGC pulse pairs on lines 12–19 / 275–282 | both | 1 steady · 2 cycling 1 s on / 1 s off · 3 cycling + colour stripe |
 | X1 | fault hunt: 3 s cycle of 1 s clean, 1 s stress, 1 s clean | both | stress 1 jitter 200 ns · 2 dropped fields · 3 lost fields · 4 noise bar + jitter · 5 "bad tape" mix |
 
 C3, L2 and L3 reuse each line's pre-rendered copies (normally sub-sample
@@ -234,6 +235,9 @@ The B tests put data in the vertical blanking interval, which a TBC may
 pass, blank or damage. B1's captions are real ones: a TV with captions on
 (CC1) shows "Brought to you by the / Media Archive Project". The analysis
 checks every field's caption bytes against what was sent for that frame.
+B3 imitates copy protection (Macrovision-like, built from the published
+patents, not the licensed spec): does a TBC remove it, pass it, or get
+fooled by it (picture level pumping, lost lock)?
 
 A dropped field leaves a lone half-line. It plays as 456 samples rather than
 455, because the DAC consumes samples in pairs (+35 ns at the drop).
@@ -306,7 +310,7 @@ ends up in the results.
 monitor, or on video:
 
 ```
-H1 * TEST 2 OF 33
+H1 * TEST 2 OF 34
 RANDOM LINE JITTER
 6 RUNGS: 5 TO 200 NS RMS
 WATCH: EDGES SHOULD STAY STRAIGHT
@@ -324,7 +328,7 @@ A closing card shows the trial's score. Names and ladders come from the
 firmware's catalog, and the "watch" hints are in `tools/cards.py`.
 
 ```
-python3 tools/run_suite.py full --grade --html --cards   # adds ~2.7 min to a full trial (33 cards)
+python3 tools/run_suite.py full --grade --html --cards   # adds ~2.8 min to a full trial (34 cards)
 ```
 
 As with the title card, nothing is captured while a card shows, and the test
@@ -379,7 +383,7 @@ measured.
   back-steps and repeats. A unit that stays faulty after the stress
   ("ghost mode") shows up in the "after" window.
 
-Slow tests capture longer automatically: S10/S11 and B1 1.3 s at 25 MS/s, X1 3.3 s
+Slow tests capture longer automatically: S10/S11 and B1 1.3 s at 25 MS/s, B3 2.2 s at 12.5 MS/s, X1 3.3 s
 at 12.5 MS/s.
 
 ## Grading (provisional)
@@ -423,7 +427,9 @@ Its traits come in three kinds:
   it shows with no signal; how many lost fields it rides through; colour
   killer; ACC; whether it corrects random line jitter, head-switch skew or
   slow timing; what it does with 240p, with no V-sync, with hum, and with
-  level changes; whether it passes captions and the other VBI lines.
+  level changes; whether it passes captions and the other VBI lines;
+  whether it removes copy-protection pulses and colour stripe, or is fooled
+  by them.
 - **Unit traits** are measurements that may differ between units of one
   model: clock offset against the input, latency range, luma gain,
   saturation, hue offset, output burst, jitter floor, noise.
@@ -457,6 +463,7 @@ from how fast and how completely each one corrects line timing (see
 | Output noise / jitter | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
 | Field-trial score (provisional) | 51–53 | 49–51 / 51–52 | 38–44 | 31–32 | 62–64 |
 | Captions / VBI lines 10–20 (B1, B2) | not yet tested | captions intact (one field damaged after each signal loss) / blanked | not yet tested | not yet tested | not yet tested |
+| Copy protection: AGC pulses / colour stripe (B3) | not yet tested | removed, not blinded / removed | not yet tested | not yet tested | not yet tested |
 
 The TBC-3000 was identified **blind** (2026-10-23). Its timing and
 behaviour matched the TBC-1000 (16–17 of 18 model traits), but its clock
@@ -567,7 +574,7 @@ It found the DMR-ES10's overheating colour fault (see
 | `src/line_render.*` | renders one line from the signal model |
 | `src/perturb.*` | test catalog, timing model, frame structure |
 | `src/marker.*` | frame marker encoding |
-| `src/vbi.*` | vertical blanking data: line 21 captions and the B2 line map |
+| `src/vbi.*` | vertical blanking data: line 21 captions, the B2 line map, B3's AGC pulses and colour stripe |
 | `src/manifest.*` | JSON manifest for the grader |
 | `src/i2s_dac.*` | I2S/DAC/APLL hardware setup and EOF interrupt |
 | `src/patterns.*` | test patterns as Y/U/V segments |

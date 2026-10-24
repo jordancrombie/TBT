@@ -46,6 +46,7 @@ enum Kind : uint8_t {
     CAPTIONS,        // B1: captions on line 21; p1 = disruption: 0 none, 1 a field dropped every
                      //     CC_DROP_EVERY frames, 2 CC_LOST fields of no signal every LOSS_PERIOD fields
     VBI_MAP,         // B2: line IDs on lines 10-20 / 273-282, plus captions
+    AGC_PULSES,      // B3: p1 = 1 steady AGC pulses, 2 cycling, 3 cycling + colour stripe
 };
 
 // B1 disruptions (as S7 rung 2 and S10 rung 2).
@@ -136,6 +137,8 @@ bool uses_snow(const Test &t);
 bool uses_dead(const Test &t);
 // Whether lines 21 and 284 carry captions (rendered per frame).
 bool uses_captions(const Test &t);
+// B3: whether frame `frame` is in the AGC cycle's on half.
+bool agc_on(const Test &t, uint32_t frame);
 
 // Static rendering style for the whole test (S1, S2, C1, C2, C4, L2, L4).
 render::Style base_style(const Test &t);

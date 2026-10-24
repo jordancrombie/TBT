@@ -4,6 +4,7 @@
 #include <string.h>
 #include "line_render.h"
 #include "ntsc_timing.h"
+#include "vbi.h"
 
 using namespace ntsc;
 
@@ -98,6 +99,9 @@ const Def DEFS[] = {
      "captions passed intact", "captions passed intact (or blanked by design)"},
     {"B2", 0x72, "VBI line map", VBI_MAP, "", "", 1, {0}, {0}, BOTH,
      "lines 10-21 passed in place, levels unchanged", "lines 10-21 passed in place, or blanked by design"},
+    {"B3", 0x73, "AGC pulses (copy protection)", AGC_PULSES, "mode", "", 3, {1, 2, 3}, {0}, BOTH,
+     "locks and keeps its level; pulses passed or removed",
+     "locks and keeps its level (not blinded); pulses removed"},
 };
 const int NUM_DEFS = sizeof(DEFS) / sizeof(DEFS[0]);
 
@@ -238,8 +242,16 @@ uint32_t frame_start_mod4(const Test &t, uint32_t frame) {
     }
 }
 
+bool agc_on(const Test &t, uint32_t frame) {
+    return t.def->kind != AGC_PULSES || (int)t.p1 < 2 || (frame % (2 * vbi::AGC_CYCLE)) < (uint32_t)vbi::AGC_CYCLE;
+}
+
 uint8_t alt_mods(const Test &t, int line) {
     using namespace render;
+    if (t.def->kind == AGC_PULSES) {
+        if (vbi::agc_line(line)) return (int)t.p1 >= 2 ? MOD_AGC_OFF : 0;
+        return ((int)t.p1 == 3 && vbi::stripe_line(line)) ? MOD_BURST_INV : 0;
+    }
     if (t.def->kind == MISSING_SYNC) return (line >= 100 && line < 100 + (int)t.p1) ? MOD_NO_HSYNC : 0;
     if (t.def->kind != BAD_VBI) return 0;
     LineSpec ls = line_spec(line);
@@ -348,6 +360,15 @@ int frame_slots(const Test &t, uint32_t frame, Slot *out, int max) {
                 uint8_t f = SLOT_DROPOUT | (uint8_t)((j % DROPOUT_VARIANTS) << 4);
                 if (L - 1 < n) out[L - 1].flags = f;
                 if (L + 261 < n) out[L + 261].flags = f;  // same place in field 2 (line L + 262)
+            }
+            break;
+        }
+        case AGC_PULSES: {  // AGC lines take their off rendering in the cycle's off half; stripes always
+            bool off = !agc_on(t, frame);
+            for (int L = 1; L <= LINES_PER_FRAME; L++) {
+                uint8_t m = alt_mods(t, L);
+                bool alt = m && (vbi::agc_line(L) ? off : true);
+                add(L, alt ? SLOT_ALT : 0);
             }
             break;
         }

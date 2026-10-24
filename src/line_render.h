@@ -28,6 +28,8 @@ enum RenderMods : uint8_t {
     MOD_VS_UNSERRATED = 4,   // broad pulses without serrations
     MOD_VS_AS_EQ      = 8,   // vertical sync missing: broad pulses become EQ pulses
     MOD_LOW_START     = 16,  // (internal) unserrated V-sync carried over from the previous line
+    MOD_AGC_OFF       = 32,  // B3: the line's AGC pulses at blanking (the cycle's off half); segments only
+    MOD_BURST_INV     = 64,  // B3: colour burst inverted (colour stripe)
 };
 
 // How a line is drawn, beyond its structure: everything the S1/S2, C and L

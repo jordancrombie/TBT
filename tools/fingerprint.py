@@ -56,6 +56,9 @@ TRAITS = [
     ("captions", "model", "Line 21 captions (B1)", ""),
     ("captions_after_loss", "model", "Captions around lost fields (B1 r3)", ""),
     ("vbi_lines", "model", "VBI lines 10-20 (B2)", ""),
+    ("agc_pulses", "model", "AGC copy-protection pulses (B3)", ""),
+    ("agc_blinded", "model", "Blinded by AGC pulses (B3 r2)", ""),
+    ("colour_stripe", "model", "Colour stripe (B3 r3)", ""),
     ("rate_ppm", "unit", "Output line rate vs input", "ppm"),
     ("latency_ms", "unit", "Latency, range seen", "ms"),
     ("luma_gain", "unit", "Luma gain (V0, gray out / in)", "×"),
@@ -234,6 +237,17 @@ def traits_of(runs):
         n = m["checked"]
         t["vbi_lines"] = ("passed" if m["in_place"] / n > 0.95 else "blanked" if m["blank"] / n > 0.95 else
                           "corrupted" if (m["moved"] + m["damaged"]) / n > 0.05 else "mixed")
+
+    b3 = [r for r in runs if r["test"]["id"] == "B3" and r.get("agc") and not r.get("dead")]
+    if b3:
+        states = Counter(r["agc"]["state"] for r in b3)
+        t["agc_pulses"] = states.most_common(1)[0][0]
+        a2 = next((r for r in b3 if r["test"]["rung"] == 2), None)
+        if a2 and a2["agc"]["pumping_ire"] is not None:
+            t["agc_blinded"] = "yes" if abs(a2["agc"]["pumping_ire"]) > grade.LIMITS["luma_ire"] else "no"
+        a3 = next((r for r in b3 if r["test"]["rung"] == 3 and "stripe_on_output" in r["agc"]), None)
+        if a3:
+            t["colour_stripe"] = "passed" if a3["agc"]["stripe_on_output"] else "removed"
 
     if pic(v0):
         p0, i0 = pic(v0), inpic(v0)

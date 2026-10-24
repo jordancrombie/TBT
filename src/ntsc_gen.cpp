@@ -29,6 +29,7 @@ static constexpr int HALF_CAP = 600;
 static constexpr int MAX_BASES = 96;   // 64 was enough for test patterns; text cards need ~85 (each text row x 2 burst phases)
 static constexpr int MAX_MARKERS = 4;    // marker lines per frame (240p shows each marker line twice)
 static constexpr int MAP_KEY = 1000;    // row keys from here on are B2 line-map IDs, not pattern rows
+static constexpr int AGC_KEY = 2000;    // ... and this one a B3 AGC-pulse line
 static constexpr int HEAP_RESERVE = 48 * 1024;
 static constexpr int SAFE_CAP = SAMPLES_PER_LINE + MAX_EXT;
 
@@ -115,6 +116,7 @@ static render::Style style_of(int v, uint8_t mods) {
     st.mods = mods;
     if (perturb::variant_mode(s_test) == perturb::VM_DC) st.dc_ire = perturb::variant_value(s_test, v, s_nsub);
     if (perturb::variant_mode(s_test) == perturb::VM_NOISE) st.noise_seed = (uint32_t)perturb::variant_value(s_test, v, s_nsub);
+    if (mods & MOD_BURST_INV) st.burst_amp = -st.burst_amp;
     return st;
 }
 
@@ -308,6 +310,7 @@ static bool rebuild() {
         bool colour = ls.a == H_BLANK || ls.a == H_ACTIVE;
         int16_t key = (int16_t)(ls.row >= 0 ? pat.row_key(ls.row) : -1);
         if (s_test.def->kind == perturb::VBI_MAP && vbi::map_id(L)) key = (int16_t)(MAP_KEY + vbi::map_id(L));
+        if (s_test.def->kind == perturb::AGC_PULSES && vbi::agc_line(L)) key = AGC_KEY;
         uint8_t alt_mods = perturb::alt_mods(s_test, L);
         // An unserrated V-sync that continues from the previous line must
         // start low, not at blanking.
@@ -344,7 +347,8 @@ static bool rebuild() {
         int nseg = 0;
         if (b.key >= 0) {
             Segment raw[64];
-            int n = b.key >= MAP_KEY ? vbi::id_segments(b.key - MAP_KEY, raw, 64) : pat.segments(b.key, raw, 64);
+            int n = b.key == AGC_KEY ? vbi::agc_segments((b.mods & MOD_AGC_OFF) ? 0.0f : vbi::AGC_IRE, raw, 64)
+                  : b.key >= MAP_KEY ? vbi::id_segments(b.key - MAP_KEY, raw, 64) : pat.segments(b.key, raw, 64);
             nseg = place_segments(raw, n, b.a, b.b, segs, 64);
         }
         for (int v = 0; v < s_nsub; v++) {

@@ -70,6 +70,13 @@ void print_manifest(Print &o) {
                  "\"map_lines\":[[%d,%d],[%d,%d]]%s},",
                  vbi::CC_LINE_F1, vbi::CC_LINE_F2, vbi::CC_IRE, vbi::CC_CYCLE, vbi::MAP_F1_FIRST, vbi::MAP_F1_LAST,
                  vbi::MAP_F2_FIRST, vbi::MAP_F2_LAST, t.def->kind == perturb::VBI_MAP ? ",\"map\":true" : "");
+    if (t.def->kind == perturb::AGC_PULSES)
+        o.printf("\"agc\":{\"lines\":[[%d,%d],[%d,%d]],\"pairs_per_line\":%d,\"start_us\":%.1f,\"pair_us\":%.1f,"
+                 "\"pseudo_sync_us\":%.1f,\"gap_us\":%.1f,\"agc_us\":%.1f,\"pseudo_ire\":%.1f,\"agc_ire\":%.1f,"
+                 "\"cycle_frames\":%d,\"stripe\":%s,\"basis\":\"Macrovision-like, from US4631603/US4819098\"},",
+                 vbi::AGC_F1_FIRST, vbi::AGC_F1_LAST, vbi::AGC_F2_FIRST, vbi::AGC_F2_LAST, vbi::AGC_PAIRS,
+                 vbi::AGC_START_US, vbi::AGC_PAIR_US, vbi::PSEUDO_US, vbi::AGC_GAP_US, vbi::AGC_US, vbi::PSEUDO_IRE,
+                 vbi::AGC_IRE, (int)t.p1 >= 2 ? vbi::AGC_CYCLE : 0, (int)t.p1 == 3 ? "true" : "false");
     print_pattern(o);
     o.printf(",\"ideal\":{\"pattern\":\"unperturbed\",\"line_tbc\":\"%s\",\"frame_tbc\":\"%s\"}}\n",
              t.def->ideal_line, t.def->ideal_frame);

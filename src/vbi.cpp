@@ -81,6 +81,27 @@ int cc_segments(uint16_t pair, Segment *out, int max) {
     return m;
 }
 
+bool agc_line(int L) { return (L >= AGC_F1_FIRST && L <= AGC_F1_LAST) || (L >= AGC_F2_FIRST && L <= AGC_F2_LAST); }
+
+bool stripe_line(int L) {
+    if (L >= STRIPE_F1_FIRST && L <= STRIPE_F1_LAST) return (L - STRIPE_F1_FIRST) % STRIPE_EVERY < STRIPE_LINES;
+    if (L >= STRIPE_F2_FIRST && L <= STRIPE_F2_LAST) return (L - STRIPE_F2_FIRST) % STRIPE_EVERY < STRIPE_LINES;
+    return false;
+}
+
+int agc_segments(float agc_ire, Segment *out, int max) {
+    int m = 0;
+    for (int k = 0; k < AGC_PAIRS && m + 1 < max; k++) {
+        float t = AGC_START_US + k * AGC_PAIR_US;
+        out[m++] = {xat(t), xat(t + PSEUDO_US), PSEUDO_IRE, PSEUDO_IRE, 0, 0};
+        if (agc_ire != 0.0f) {
+            float a = t + PSEUDO_US + AGC_GAP_US;
+            out[m++] = {xat(a), xat(a + AGC_US), agc_ire, agc_ire, 0, 0};
+        }
+    }
+    return m;
+}
+
 int map_id(int L) {
     if (L >= MAP_F1_FIRST && L <= MAP_F1_LAST) return L - MAP_F1_FIRST + 1;
     if (L >= MAP_F2_FIRST && L <= MAP_F2_LAST) return L - MAP_F2_FIRST + 1;

@@ -638,6 +638,80 @@ def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
     return out
 
 
+AGC_INDEX = (3, 10)    # lines 12-19 (and 275-282) are H syncs 3..10 after V-sync
+
+
+def agc_summary(x, fs, hs, vs, log, tip, blank, test):
+    """B3: what the TBC did with the AGC pulses, and whether they blinded it.
+
+    Pulses: on each of our fields' AGC lines, the pseudo-sync and AGC pulse
+    levels, so each line is passed (pulses there), stripped (flat), or
+    altered. Blinded: the picture's gray level in the cycle's on half against
+    its off half (a TBC whose own AGC is fooled darkens with the pulses), and
+    for rung 3 the hue on colour-stripe lines against the others."""
+    us = fs / 1e6
+    ire = lambda v: (v - blank) * 40.0 / (blank - tip)
+    k = max(1, int(0.3 * us))
+    box = np.ones(k, np.float32) / k
+    lvl = lambda s, t0, t1: float(ire(x[int(s + (t0 + 0.3) * us):int(s + (t1 - 0.3) * us)].mean()))
+    bar = lambda b, a=0.3, z=0.7: (9.4 + 52.6 * (b + a) / 7, 9.4 + 52.6 * (b + z) / 7)
+    mode = int(test["params"]["mode"])
+    lines = {"passed": 0, "stripped": 0, "altered": 0}
+    pseudo, agc_on_lv, agc_off_lv = [], [], []
+    gray = {True: [], False: []}
+    hue = {True: [], False: []}
+    for f in log:
+        if f["class"] != "ours" or f["frame"] is None or f["i"] + 1 >= len(vs):
+            continue
+        field = hs[(hs > vs[f["i"]]) & (hs < vs[f["i"] + 1])]
+        if len(field) < 200:
+            continue
+        on = pm.agc_on(test, f["frame"])
+        for idx in range(AGC_INDEX[0], AGC_INDEX[1] + 1):
+            s_ = field[idx - 1]
+            ps = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "pseudo"]
+            ag = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "agc"]
+            seg = ire(x[int(s_ + 11 * us):int(s_ + 60 * us)])
+            if np.std(seg) < 3 and abs(np.mean(seg)) < 5:
+                lines["stripped"] += 1
+            elif min(ps) < -25 and (not on or min(ag) > 0.6 * pm.AGC_IRE):
+                lines["passed"] += 1
+            else:
+                lines["altered"] += 1
+            pseudo.append(float(np.median(ps)))
+            (agc_on_lv if on else agc_off_lv).append(float(np.median(ag)))
+        # Picture level: gray bar on the colour-bar lines (20..120 after V-sync).
+        g = [lvl(s_, *bar(0)) for s_ in field[20:120]]
+        gray[on].append(float(np.median(g)))
+        if mode == 3:
+            first = vs[f["i"]]
+            for s_ in field[20:120]:
+                # NTSC line of this H sync: field 1 starts at line 10, field 2 at 273.
+                L = int(np.searchsorted(field, s_)) + 1 + (9 if f["parity"] == 1 else 272)
+                i0, i1 = int(s_ + 5.8 * us), int(s_ + 7.6 * us)
+                y0, y1 = bar(1)
+                j0, j1 = int(s_ + y0 * us), int(s_ + y1 * us)
+                ph = lambda a, b: np.angle(np.sum((x[a:b] - x[a:b].mean()) * np.exp(-2j * np.pi * FSC * (np.arange(a, b) - s_) / fs)))
+                d = np.degrees(ph(j0, j1) - ph(i0, i1))
+                hue[pm.stripe_line(L)].append(float((d + 180) % 360 - 180))
+    med = lambda v: float(np.median(v)) if v else None
+    n = sum(lines.values())
+    out = {"lines": lines, "checked": n,
+           "state": ("no fields" if not n else "stripped" if lines["stripped"] > 0.95 * n else
+                     "passed" if lines["passed"] > 0.95 * n else "altered"),
+           "pseudo_ire": med(pseudo), "agc_on_ire": med(agc_on_lv), "agc_off_ire": med(agc_off_lv),
+           "gray_on_ire": med(gray[True]), "gray_off_ire": med(gray[False]),
+           "fields_on": len(gray[True]), "fields_off": len(gray[False])}
+    out["pumping_ire"] = (out["gray_on_ire"] - out["gray_off_ire"]
+                          if out["gray_on_ire"] is not None and out["gray_off_ire"] is not None else None)
+    if mode == 3 and hue[True] and hue[False]:
+        # Chroma against its own line's burst: inverted bursts shift it by 180.
+        diff = (np.median(hue[True]) - np.median(hue[False]) + 180) % 360 - 180
+        out["stripe_hue_diff_deg"] = float(diff)
+        out["stripe_on_output"] = bool(abs(diff) > 90)
+    return out
+
+
 def excerpt(x, hs, us, start_line, n_bins=220):
     """Min/max envelope of one line (2 us before sync to 64 us after) for plotting.
 
@@ -751,6 +825,8 @@ def analyze(run, ch=1):
             out["hunt"] = hunt_summary(fl)
         if tid in ("B1", "B2"):
             out["vbi"] = vbi_summary(x, fs, hs, vs, fl, tip, blank, man["test"])
+        if tid == "B3":
+            out["agc"] = agc_summary(x, fs, hs, vs, fl, tip, blank, man["test"])
     else:
         out["field_log"], out["field_summary"], out["picture"] = [], None, None
     frames = [int(m[1][2]) for m in marks]
@@ -820,6 +896,8 @@ def print_report(r):
         print(f"  after stress: {'clean' if H['after_clean'] else 'NOT clean' if H['after_clean'] is False else 'not captured'}")
     if r.get("vbi"):
         print_vbi(r["vbi"])
+    if r.get("agc"):
+        print_agc(r["agc"])
     m = r["markers"]
     if not m["decoded"]:
         print("  markers: none decoded")
@@ -834,6 +912,20 @@ def print_report(r):
           f"{ev['skipped_frames']} skipped frames, {ev['repeats']} repeated, {ev['single_field_frames']} single-field")
     seq = " ".join(str(f) for f in m["frames"][:40])
     print(f"  sequence: {seq}{' ...' if len(m['frames']) > 40 else ''}")
+
+
+def print_agc(a, label="AGC pulses"):
+    f = lambda v: f"{v:.0f}" if v is not None else "—"
+    L = a["lines"]
+    print(f"  {label} (lines 12-19, 275-282): {a['state'].upper()}: {L['passed']}/{a['checked']} passed, "
+          f"{L['stripped']} stripped, {L['altered']} altered; pseudo-sync {f(a['pseudo_ire'])} IRE, "
+          f"AGC {f(a['agc_on_ire'])} IRE on / {f(a['agc_off_ire'])} off (sent -40, 110 / 0)")
+    p = a["pumping_ire"]
+    print(f"  picture level with the pulses: gray {f(a['gray_on_ire'])} IRE on, {f(a['gray_off_ire'])} off "
+          f"({a['fields_on']}/{a['fields_off']} fields)" + (f", pumping {p:+.1f} IRE" if p is not None else ""))
+    if "stripe_hue_diff_deg" in a:
+        print(f"  colour stripe: hue on striped lines {a['stripe_hue_diff_deg']:+.0f} deg from the rest "
+              f"({'stripe on output' if a['stripe_on_output'] else 'stripe removed'})")
 
 
 def print_vbi(v, label="captions"):
@@ -915,6 +1007,8 @@ def compare_input(out, inp):
         res["rate_ppm"] = (pi_ns / po_ns - 1) * 1e6
     if inp.get("vbi"):
         res["vbi"] = inp["vbi"]
+    if inp.get("agc"):
+        res["agc"] = inp["agc"]
     lo, li = out.get("level", {}).get("sync_depth_v"), inp["level"].get("sync_depth_v")
     if lo and li:
         res["sync_ratio"] = lo / li     # depends on how each run is terminated
@@ -951,6 +1045,8 @@ def print_input(r):
         print(f"  jitter passed through: {bands}; {bw}")
     if i.get("vbi"):
         print_vbi(i["vbi"], "input captions")
+    if i.get("agc"):
+        print_agc(i["agc"], "input AGC pulses")
     v = i.get("vs_input")
     if v:
         f = lambda x: f"x{x:.2f}" if x is not None else "—"

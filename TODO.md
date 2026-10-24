@@ -25,11 +25,11 @@ Scored for value against what the suite already covers.
   - [ ] Run B1/B2 on the other units (TBC-1000, AVT-8710, DVR-220, ES-10)
         and add the traits to their fingerprints.
   - [ ] Optional: VITC timecode on a line in 10–20, decoded the same way.
-- [ ] **#27 Macrovision-like AGC pulses (76).** Pseudo-sync and AGC pulse pairs
-      in the vertical blanking, with their level cycling slowly; optionally
-      colour stripe. Report whether the pulses reach the output, and whether
-      the picture level stays steady. Check the DAC headroom above peak white
-      first. Build it from public descriptions, and give it a neutral name.
+- [x] **#27 Macrovision-like AGC pulses (76).** Done 2026-10-24: B3 (steady,
+      cycling, cycling + colour stripe), first measured on the TBC-3000.
+  - [ ] Run B3 on the other units. None tested so far passes the pulses, so
+        the "passed" and "blinded" outcomes are checked only on the input
+        (CH2) and synthetically; a unit that passes them would confirm them.
 - [ ] **#26 Head-switching disruption (34).** H4 and H3 mostly cover it. Add
       a line-by-line recovery count after H4's switch point, check whether
       the marker line moves under H4 (vertical stretch in a frame TBC), and

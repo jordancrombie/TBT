@@ -1,6 +1,6 @@
 """A field trial: run several test rungs on one scope session and report on each.
 
-usage: run_suite.py [SPEC ...] [--channels 1|2] [--grade [--class frame|line]] [--dut NAME]
+usage: run_suite.py [SPEC ...] [--channels 1|2] [--grade [--class frame|line]] [--cards [SECONDS]] [--dut NAME]
                     [--note TEXT] [--keep] [--html [PATH]] [--title [SECONDS]] [--rate HZ] [--seconds S]
                     [--settle S]
 
@@ -14,12 +14,17 @@ The scope settles once for the whole suite; each rung then costs the TBC
 lock time plus the capture. Each run is reported and then deleted, as in
 run_test.py; --keep keeps them (about 2 bytes x rate x seconds per channel
 each, so mind the disk with long suites). --channels is as in run_test.py.
+--cards shows a text card before each test (5 s by default): which test,
+what it does, what to watch for on the monitor, and how the previous test
+did. For people watching, or filming. Nothing is captured while a card
+shows, and the test pattern is restored before each test.
 --grade grades the field trial (provisional; see grade.py) and adds the
 grades to the HTML report. A saved trial can be re-graded later with
 grade.py.
 """
 import argparse, json, os, re, time
 
+import cards
 import dwf_scope
 import perturb_model as pm
 from gen_cmd import open_gen, request
@@ -113,12 +118,36 @@ def input_lines(results):
     return out
 
 
+def last_result(results, tid, tbc_class):
+    """The previous test's grade, for its card."""
+    import grade
+    G = grade.grade([r for r in results if r], tbc_class)
+    t = G["tests"].get(tid)
+    return cards.short_summary(tid, t) if t else None
+
+
+def show_card(s, spec, seconds):
+    """Show a text card for `seconds`, then put the test pattern back.
+
+    The generator's picture (pattern) and its injected faults (test) are
+    separate settings, so the clean test goes on first: otherwise the card
+    would carry the previous test's jitter, gaps or snow."""
+    request(s, "test V0", until="\n", timeout=10)
+    if "ok" not in request(s, f"card {spec}", until="\n", timeout=10):
+        print("note: the generator refused a card (firmware without cards?); carrying on without")
+        return
+    time.sleep(seconds)
+    request(s, "p smpte_bars", until="\n", timeout=10)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("specs", nargs="*")
     ap.add_argument("--grade", action="store_true", help="grade the field trial (provisional thresholds)")
     ap.add_argument("--class", dest="tbc_class", choices=("frame", "line"), default="frame",
                     help="which ideal the structure tests are graded against (default frame)")
+    ap.add_argument("--cards", nargs="?", type=float, const=5.0, metavar="SECONDS",
+                    help="show a text card before each test (default 5 s); never part of a test")
     add_common_args(ap)
     a = ap.parse_args()
     dut = dut_of(a)
@@ -129,7 +158,8 @@ def main():
         prepare(s, a.title)
         # Rung counts from the firmware's catalog: "  H1  random line jitter  rms_ns: 5 10 20 ..."
         catalog = {}
-        for line in request(s, "tests").splitlines():
+        tests_text = request(s, "tests")
+        for line in tests_text.splitlines():
             f = line.split()
             if f and ":" in line and f[0][0].isalpha() and f[0][1:].isdigit():
                 catalog[f[0]] = len(line.rsplit(":", 1)[1].split())  # the ladder follows the last colon
@@ -138,11 +168,27 @@ def main():
         size = f", keeping about {2 * a.channels * a.rate * a.seconds * len(plan) / 1e9:.1f} GB of captures" if a.keep else ""
         print(f"{len(plan)} runs{size}")
         results = []
+        info = cards.parse_catalog(tests_text) if a.cards else {}
+        tests_in_plan = list(dict.fromkeys(t for t, _ in plan))
         for i, (test, rung) in enumerate(plan, 1):
+            if a.cards and (i == 1 or plan[i - 2][0] != test):
+                block = []
+                for t_, r_ in plan[i - 1:]:
+                    if t_ != test:
+                        break
+                    block.append(r_)
+                last = last_result(results, plan[i - 2][0], a.tbc_class) if i > 1 else None
+                show_card(s, cards.spec(test, tests_in_plan.index(test) + 1, len(tests_in_plan),
+                                        info.get(test.upper()), block, last), a.cards)
             t = time.time()
             run, _ = run_one(s, scope, test, rung, a.seed, a.settle, a.out, dut, (a.rate, a.seconds))
             print(f"[{i}/{len(plan)}] {test} r{rung}: {time.time() - t:.1f} s")
             results.append(finish(run, a.keep))
+        if a.cards:
+            import grade
+            G = grade.grade([r for r in results if r], a.tbc_class)
+            show_card(s, cards.final_spec(G["score"], len(results), last_result(results, plan[-1][0], a.tbc_class)),
+                      a.cards)
         request(s, "test V0", until="\n")
     print(f"field trial done in {time.time() - t0:.1f} s")
     path = save_results(results, dut)

@@ -366,6 +366,16 @@ rms line jitter.
     +1.85 ppm.
 - **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
   output jitter 0.57–0.58 ns.
+- **Clock offset drifts a little over a day, and it's the TBC's crystal.**
+  Input B read +1.80–1.83 ppm against the generator on the night of
+  2026-10-23 and +2.10 the next afternoon (input A: +1.75–1.90, then up to
+  +1.99). The scope's clock is an independent third reference: per-trial
+  medians over ~70 runs show the generator steady against it (−9.0 to −9.4
+  ppm both days) while the TBC-3000 moved (−7.7 to −7.2, then up to −7.15).
+  So the TBC's crystal warmed by about +0.2–0.3 ppm over a day of running.
+  One morning trial had both clocks about 1 ppm off against the scope: that
+  was the scope's own cold clock, not either unit. Identification should
+  match clock offsets within about ±0.5 ppm, not the tight overnight range.
 - **Output H jitter drifts with the session:** 0.57–0.58 ns in the
   2026-10-23 trials, 0.59 the next morning, 0.62–0.67 that afternoon. An A/B
   test (V0 five times each, old and new firmware, interleaved twice) read

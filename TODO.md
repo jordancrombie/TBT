@@ -15,7 +15,9 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
       closest match and how close it is. The same comparison, run on one
       trial against a known unit's fingerprint, is the regression check in
       [docs/validation.md](docs/validation.md). The 2026-10-23 blind test and
-      the 2026-10-24 regression trials did it by hand.
+      the 2026-10-24 regression trials did it by hand. Match clock offsets
+      within about ±0.5 ppm: a unit's crystal drifts by 0.2–0.3 ppm over a
+      day (bench notes).
 - [ ] **Regenerate the sample report** (`docs/sample-report.html` and
       `docs/sample-report.jpg`). The current one predates CH2, grading and
       H6. Run `run_suite.py full --grade --html`, copy the report from

@@ -407,6 +407,20 @@ rms line jitter.
   frame). `tools/colour_watch.py` therefore starts V0 once and only
   listens.
 
+## Generator: text cards
+
+- **A text card needs up to ~85 distinct lines.** That's each font row of
+  each text line, in both colour-burst phases, plus the frame structure.
+  Test patterns need at most about 40, so `MAX_BASES` went from 64 to 96.
+  A card uses one sub-sample copy per line, and leaves about 92 KB of heap.
+- **The serial receive buffer is 1024 bytes** (`Serial.setRxBufferSize`). A
+  ~250-byte `card` command at 921600 baud arrives in under 3 ms, faster
+  than `loop()` drains the default 256-byte buffer. Command lines may be
+  up to 320 characters.
+- **Right after flashing,** the first command can arrive before the ESP32
+  has finished booting (`verify_timing.py` failed once that way). Give it a
+  second.
+
 ## Measurement pitfalls
 
 - **"Locked" means within ±0.5 ppm.** Genuinely locked devices read

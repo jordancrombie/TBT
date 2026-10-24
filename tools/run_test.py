@@ -89,8 +89,8 @@ def prepare(s, title=None):
             raise RuntimeError("generator refused 'p title' (firmware without the title card?)")
         print(f"title card for {title:g} s")
         time.sleep(title)
-    if title or pattern == "title":
-        restore = pattern if pattern not in (None, "title") else "smpte_bars"
+    if title or pattern in ("title", "card"):
+        restore = pattern if pattern not in (None, "title", "card") else "smpte_bars"
         request(s, f"p {restore}", until="\n", timeout=10)
 
 

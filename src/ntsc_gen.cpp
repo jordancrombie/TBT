@@ -25,7 +25,7 @@ namespace gen {
 // pre-rendered "base" lines, each in `nsub` sub-sample shifted copies; the
 // descriptor length sets where the next line's sync falls.
 static constexpr int HALF_CAP = 600;
-static constexpr int MAX_BASES = 64;
+static constexpr int MAX_BASES = 96;   // 64 was enough for test patterns; text cards need ~85 (each text row x 2 burst phases)
 static constexpr int MAX_MARKERS = 4;    // marker lines per frame (240p shows each marker line twice)
 static constexpr int HEAP_RESERVE = 48 * 1024;
 static constexpr int SAFE_CAP = SAMPLES_PER_LINE + MAX_EXT;

@@ -35,6 +35,7 @@ static void print_help() {
     Serial.println("commands:");
     Serial.println("  list                     list patterns");
     Serial.println("  p <n|name>               select pattern");
+    Serial.println("  card px:text|px:text|... show a text card (up to 6 lines; not a test pattern)");
     Serial.println("  flat <ire>               set flat-field level (selects 'flat')");
     Serial.println("  levels <sync> <white>    DAC codes for -40 and 100 IRE");
     Serial.println("  ppm <x>                  trim sample clock in ppm");
@@ -72,6 +73,11 @@ static void handle(String line) {
             if (arg == PATTERNS[i].name) idx = i;
         if (idx < 0 && arg.length() && isDigit(arg[0])) idx = arg.toInt();
         ok(gen::set_pattern(idx));
+    } else if (cmd == "card") {          // text card between tests: card px:text|px:text|...
+        int idx = -1;
+        for (int i = 0; i < NUM_PATTERNS; i++)
+            if (!strcmp(PATTERNS[i].name, "card")) idx = i;
+        ok(idx >= 0 && set_card_text(arg.c_str()) && gen::set_pattern(idx));
     } else if (cmd == "flat") {
         g_flat_ire = arg.toFloat();
         for (int i = 0; i < NUM_PATTERNS; i++)
@@ -146,6 +152,7 @@ static void handle(String line) {
 }
 
 void setup() {
+    Serial.setRxBufferSize(1024);  // a "card" command can be ~250 bytes, faster than loop() reads
     Serial.begin(921600);  // keep in step with BAUD in tools/gen_cmd.py
     delay(200);
     Serial.println("starting NTSC generator...");
@@ -159,7 +166,7 @@ void loop() {
     while (Serial.available()) {
         char c = Serial.read();
         if (c == '\n' || c == '\r') { handle(buf); buf = ""; }
-        else if (buf.length() < 120) buf += c;
+        else if (buf.length() < 320) buf += c;   // a "card" command carries several lines of text
     }
     delay(5);
 }

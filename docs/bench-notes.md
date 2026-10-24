@@ -279,20 +279,31 @@ so runs are now deleted after their report unless `--keep` is given.
 - **One unit, recognisable by its crystal:** the output clock sits at
   +1.75 ppm (input A) and +1.85 ppm (input B). The TBC-1000 sits at
   +22.1 ppm, steady to ±0.04 over 9 days.
-- **The inputs differ.** Each reading was steady within each input's trials:
+- **Controls matter; the timing core doesn't change.** Each configuration
+  was run 3 times, and every reading was steady within its own trials:
 
-  | | Input A | Input B |
-  |---|---|---|
-  | Luma gain | ×0.83 | ×1.02 |
-  | Saturation | ×1.03 | ×1.12 |
-  | Hue offset | −1.2° | −2.6° |
-  | Noise | 0.35 IRE | 0.28 IRE |
-  | H3 5 µs step | no jolt (like the TBC-1000) | 2 lines jolted 1.2 µs |
-  | L4 | passes | fails |
-  | Score | 48–50 | 40–43 |
+  | | Input A, baseline | Input B, baseline | Input B, controls adjusted |
+  |---|---|---|---|
+  | Luma gain | ×0.82–0.83 | ×0.79 | ×1.02 |
+  | Saturation | ×1.03 | ×1.00 | ×1.12 |
+  | Hue offset | −1.1° | +3.1° | −2.6° |
+  | H3 5 µs step | no jolt | no jolt | 2 lines jolted 1.2 µs |
+  | L4 | passes | passes | fails |
+  | Score | 48–50 (6 trials) | 51–52 | 40–43 |
 
-  The level differences may be per-input settings. The step jolt looks like a
-  difference in the input hardware or sync handling.
+  - **Input A's controls were already at baseline in the blind test;** a
+    second session at baseline matched it.
+  - **The adjusted controls on input B caused its step jolt and L4
+    failure.** At baseline it behaves like input A and the TBC-1000 (18 of
+    18 traits). My first reading, that the jolt came from input B's
+    hardware, was wrong. A raised level changing how the input slices sync
+    is a guess at the mechanism.
+  - **At baseline the inputs still differ slightly:** hue 4° apart, luma
+    and saturation about 3 % apart. Per-input front-end calibration. Input
+    B's +3.1° hue is worth trimming if you capture through it.
+  - **Unchanged across all four configurations:** bandwidth 424–460 Hz,
+    head-switch skew 77–86 ns left, H6 91–92 % at 1 kHz, clock +1.75 to
+    +1.85 ppm.
 - **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
   output jitter 0.57–0.58 ns.
 

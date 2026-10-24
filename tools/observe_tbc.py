@@ -27,7 +27,7 @@ def load(run, ch):
     return x, float(z["rate"]), json.load(open(os.path.join(run, "manifest.json")))
 
 
-GLITCH_US = 0.25   # a pulse that pops back above the slicer for less than this is one pulse
+GLITCH_US = 0.25   # how far back to look for an earlier crossing of a bouncing sync edge
 
 
 def sync_pulses(x, us):
@@ -37,19 +37,13 @@ def sync_pulses(x, us):
     major code transition, and some loads make the bounce rise back above
     the slicer (seen with a DMR-ES10 on the line, 2026-10-24). Taken at face
     value that moves the edge to the second crossing, ~50 ns late, on ~10 %
-    of lines. So a gap above the slicer shorter than GLITCH_US inside a pulse
-    is closed, and the edge is the first crossing."""
+    of lines. Which pulses there are is decided as before; only each edge's
+    time looks back up to GLITCH_US for an earlier crossing, and uses the
+    first one. (Closing the gaps instead merged burst troughs into extra
+    pulses at full levels, and double-counted frame markers.)"""
     tip, top = np.percentile(x, 0.5), np.percentile(x, 99.5)
     mid = tip + 0.15 * (top - tip)
     b = x < mid
-    up = np.where(b[:-1] & ~b[1:])[0] + 1            # first sample back above
-    dn = np.where(~b[:-1] & b[1:])[0] + 1            # first sample below again
-    j = np.searchsorted(dn, up)
-    ok = j < len(dn)
-    gap_ok = ok.copy()
-    gap_ok[ok] = (dn[j[ok]] - up[ok]) < GLITCH_US * us
-    for u, d in zip(up[gap_ok], dn[j[gap_ok]]):
-        b[u:d] = True
     f = np.where(~b[:-1] & b[1:])[0]
     r = np.where(b[:-1] & ~b[1:])[0]
     ri = np.searchsorted(r, f)
@@ -57,6 +51,14 @@ def sync_pulses(x, us):
     f, w = f[ok], (r[ri[ok]] - f[ok]) / us
     keep = w > 1.5
     f, w = f[keep], w[keep]
+    # An earlier falling crossing within GLITCH_US before f is the true edge.
+    falls = np.where(~b[:-1] & b[1:])[0]
+    look = max(1, int(GLITCH_US * us))
+    j = np.searchsorted(falls, f - look)
+    first = np.where((j < len(falls)) & (falls[np.minimum(j, len(falls) - 1)] < f),
+                     falls[np.minimum(j, len(falls) - 1)], f)
+    w = w + (f - first) / us
+    f = first
     return f + (x[f] - mid) / (x[f] - x[f + 1]), w
 
 

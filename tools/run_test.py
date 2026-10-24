@@ -40,7 +40,7 @@ RUNS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "runs")
 # Tests whose events recur slowly need longer captures (rate, seconds):
 # S10/S11 lose fields once a second, X1's stress-recovery cycle is 3 s,
 # H3 steps every 0.5 s.
-CAPTURE_HINTS = {"S10": (25e6, 1.3), "S11": (25e6, 1.3), "X1": (12.5e6, 3.3),
+CAPTURE_HINTS = {"S10": (25e6, 1.3), "S11": (25e6, 1.3), "B1": (25e6, 1.3), "X1": (12.5e6, 3.3),
                  "H3": (25e6, 1.1)}   # H3 steps every 0.5 s: make sure one is in the capture
 
 

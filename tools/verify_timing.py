@@ -35,7 +35,9 @@ TESTS = [("V0", 1, 1, "under", 0), ("H1", 4, 7, "under", 0), ("H1", 6, 3, "under
          # (..., start frame): begin just before a loss or stress window
          ("V1", 1, 1, "under", 0, 0), ("S10", 11, 1, "under", 0, 26), ("S11", 11, 1, "under", 0, 26),
          ("X1", 2, 1, "under", 0, 35), ("X1", 2, 1, "under", 1, 35), ("X1", 3, 1, "under", 0, 35),
-         ("X1", 5, 1, "under", 0, 35)]
+         ("X1", 5, 1, "under", 0, 35),
+         ("B1", 1, 1, "under", 0), ("B1", 1, 1, "under", 1), ("B1", 2, 1, "under", 0, 28), ("B1", 2, 1, "under", 1, 28),
+         ("B1", 3, 1, "under", 0, 26), ("B2", 1, 1, "under", 0)]
 
 # S4: expected sync pulses (start us, width us) on a vertical-interval line, by variant,
 # when the frame alters it; "low" = low for the whole line (unserrated, continuing).
@@ -154,6 +156,34 @@ def content_check(g, tid, test, man, slots, plan, cum, half, frame, ire, sync_ti
         ks = np.arange(int(round(ORIGIN + t0 * US)) + 1, int(round(ORIGIN + t1 * US)) - 1)
         err = np.max(np.abs(xj[ks] - np.array([pm.snow_ire(100 + var, int(k)) for k in ks])))
         return err < 1.5, f" dropout on line {slots[j][0]}: snow vs model max err {err:.2f} IRE, {len(drop)} dropout lines"
+    if tid in ("B1", "B2"):
+        notes, ok = [], True
+        for j, (L, f) in enumerate(slots):
+            if L not in pm.CC_LINES or f & pm.SLOT_DEAD:
+                continue
+            xj = ire(g.dump(HALF_BASE * half + j))
+            at = lambda t: xj[int(round(ORIGIN + t * US)) - 2:int(round(ORIGIN + t * US)) + 3].mean()
+            bits = [at(pm.CC_START_US + (k + 0.5) * pm.CC_BIT_US) > pm.CC_IRE / 2 for k in range(17)]
+            got = (sum(b << k for k, b in enumerate(bits[1:9])), sum(b << k for k, b in enumerate(bits[9:17])))
+            want = pm.cc_pair(1 if L == 21 else 2, frame)
+            runin = np.ptp(xj[int(ORIGIN + 11 * US):int(ORIGIN + 23 * US)])
+            ok &= bits[0] and got == want and abs(runin - pm.CC_IRE) < 3
+            notes.append(f"line {L}: {got[0]:02x} {got[1]:02x} (want {want[0]:02x} {want[1]:02x}), run-in {runin:.0f} IRE")
+        if tid == "B2":
+            bad = []
+            for j, (L, f) in enumerate(slots):
+                k = pm.map_id(L)
+                if not k:
+                    continue
+                xj = ire(g.dump(HALF_BASE * half + j))
+                at = lambda t: xj[int(round(ORIGIN + t * US)) - 3:int(round(ORIGIN + t * US)) + 4].mean()
+                cells = [at(pm.ID_START_US + (c + 0.5) * pm.ID_CELL_US) > pm.CC_IRE / 2 for c in range(pm.ID_CELLS)]
+                stair = [at((a + b) / 2) for a, b in zip(pm.STAIR_US, pm.STAIR_US[1:])]
+                if pm.decode_id(cells) != k or max(abs(s_ - w) for s_, w in zip(stair, pm.STAIR_IRE)) > 2.5:
+                    bad.append(L)
+            ok &= not bad
+            notes.append(f"line map: {21 - len(bad)}/21 IDs and staircases right{' (bad: ' + str(bad) + ')' if bad else ''}")
+        return ok, " " + "; ".join(notes)
     return True, ""
 
 
@@ -267,7 +297,7 @@ def main():
                                                          for (a, w), (ea, ew) in zip(pl, exp))
                 struct_ok &= good_l
                 struct_note += f" line {L}{' (altered)' if altered else ''}: {got};"
-        if tid in ("S1", "S2", "C1", "C2", "C4", "L1", "L2", "L3", "L4"):
+        if tid in ("S1", "S2", "C1", "C2", "C4", "L1", "L2", "L3", "L4", "B1", "B2"):
             ok_c, note_c = content_check(g, tid, test, man, slots, plan, cum, half, frame, ire, tip_code, blank_code)
             struct_ok &= ok_c
             struct_note += note_c

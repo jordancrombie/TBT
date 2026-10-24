@@ -6,6 +6,8 @@
 #include "ntsc_gen.h"
 #include "ntsc_timing.h"
 #include "patterns.h"
+#include "perturb.h"
+#include "vbi.h"
 
 using namespace ntsc;
 
@@ -63,6 +65,11 @@ void print_manifest(Print &o) {
              "\"layout\":\"start 10, code 8, rung 4, frame 16, crc4 (poly 0x3 init 0, 28 bits MSB first), stop 01\"},",
              marker::LINE_F1, marker::LINE_F2, marker::CELLS, marker::CELL_US, marker::START_US, marker::LO_IRE,
              marker::HI_IRE);
+    if (perturb::uses_captions(t))
+        o.printf("\"vbi\":{\"caption_lines\":[%d,%d],\"caption_ire\":%.1f,\"caption_cycle_frames\":%d,"
+                 "\"map_lines\":[[%d,%d],[%d,%d]]%s},",
+                 vbi::CC_LINE_F1, vbi::CC_LINE_F2, vbi::CC_IRE, vbi::CC_CYCLE, vbi::MAP_F1_FIRST, vbi::MAP_F1_LAST,
+                 vbi::MAP_F2_FIRST, vbi::MAP_F2_LAST, t.def->kind == perturb::VBI_MAP ? ",\"map\":true" : "");
     print_pattern(o);
     o.printf(",\"ideal\":{\"pattern\":\"unperturbed\",\"line_tbc\":\"%s\",\"frame_tbc\":\"%s\"}}\n",
              t.def->ideal_line, t.def->ideal_frame);

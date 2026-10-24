@@ -259,8 +259,11 @@ def frame_slots(test, frame):
     tid, p = test["id"], test["params"]
     if tid == "S5":  # 240p: two 262-line fields with field-1 timing
         return [(L, 0) for _ in range(2) for L in range(1, 263)]
-    if tid == "S7":
-        every = int(p["every_frames"])
+    if tid == "B1" and int(p["disruption"]) == 2:  # as S10: CC_LOST fields of no signal per LOSS_PERIOD
+        return [(L, SLOT_DEAD if (2 * frame + (L >= 264)) % LOSS_PERIOD < CC_LOST else 0)
+                for L in range(1, LINES_PER_FRAME + 1)]
+    if tid == "S7" or (tid == "B1" and int(p["disruption"]) == 1):
+        every = int(p["every_frames"]) if tid == "S7" else CC_DROP_EVERY
         if frame % every == every - 1:  # field 1 only, ending half-way along line 263
             return [(L, 0) for L in range(1, 263)] + [(263, SLOT_HALF)]
     if tid in ("S6", "S8"):
@@ -365,3 +368,69 @@ def decode_marker(bits36):
     if crc4(d) != (w & 0xF):
         return None
     return d >> 20, (d >> 16) & 0xF, d & 0xFFFF
+
+
+# ---- Vertical blanking data (B tests; src/vbi.h) ------------------------------
+CC_LINES = (21, 284)                 # line 21 of each field
+CC_IRE = 50.0
+CC_RUNIN_US, CC_START_US, CC_RUNIN_CYCLES = 10.5, 27.382, 7
+CC_BIT_US = 1e6 / (32 * FH_HZ)       # 1.986 us
+CC_CYCLE = 32                        # frames per field-1 caption cycle
+CC_DROP_EVERY, CC_LOST = 30, 2       # B1 rungs 2 and 3
+CC_ROWS = ("Brought to you by the", "Media Archive Project")
+MAP_F1, MAP_F2 = (10, 20), (273, 282)
+ID_START_US, ID_CELL_US, ID_CELLS = 12.0, 1.5, 9
+STAIR_US, STAIR_IRE = (30.0, 38.0, 46.0, 54.0), (25.0, 50.0, 75.0)
+
+
+def with_parity(c):
+    c &= 0x7F
+    return c if bin(c).count("1") % 2 else c | 0x80
+
+
+def _f1_bytes(i):
+    def text(row, j):
+        s = CC_ROWS[row]
+        return [ord(s[k]) if k < len(s) else 0 for k in (2 * j, 2 * j + 1)]
+    if i < 2: return [0x14, 0x20]            # RCL: resume caption loading
+    if i < 4: return [0x14, 0x2E]            # ENM: erase non-displayed memory
+    if i < 6: return [0x14, 0x52]            # PAC: row 14, indent 4
+    if i < 17: return text(0, i - 6)
+    if i < 19: return [0x14, 0x72]           # PAC: row 15, indent 4
+    if i < 30: return text(1, i - 19)
+    return [0x14, 0x2F]                      # EOC: end of caption (display it)
+
+
+def cc_pair(field, frame):
+    """The two bytes (parity included) line 21 of `field` (1 or 2) carries in `frame`."""
+    b = _f1_bytes(frame % CC_CYCLE) if field == 1 else [0x20 + (frame & 0x3F), 0x20 + ((frame >> 6) & 0x3F)]
+    return with_parity(b[0]), with_parity(b[1])
+
+
+def cc_frame_of_f2(b0, b1):
+    """Field 2's frame counter (12 bits) from its bytes, or None if they aren't one."""
+    c0, c1 = b0 & 0x7F, b1 & 0x7F
+    if not (0x20 <= c0 < 0x60 and 0x20 <= c1 < 0x60):
+        return None
+    return (c0 - 0x20) | ((c1 - 0x20) << 6)
+
+
+def map_id(L):
+    """B2 line-map ID (1..11) NTSC line L carries, or 0."""
+    for a, b in (MAP_F1, MAP_F2):
+        if a <= L <= b:
+            return L - a + 1
+    return 0
+
+
+def id_cells(k):
+    bits = [(k >> 3) & 1, (k >> 2) & 1, (k >> 1) & 1, k & 1]
+    return [1, 0] + bits + [0 if sum(bits) % 2 else 1, 0, 1]
+
+
+def decode_id(cells):
+    """9 cells (0/1) -> k, or None if the framing or parity is wrong."""
+    c = [int(v) for v in cells]
+    if c[:2] != [1, 0] or c[7:] != [0, 1] or sum(c[2:7]) % 2 != 1:
+        return None
+    return (c[2] << 3) | (c[3] << 2) | (c[4] << 1) | c[5]

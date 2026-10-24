@@ -8,7 +8,7 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Rungs.** Each test is a ladder of *rungs*, from mild (rung 1) to severe.
   Run one with `run_test.py H1 4`, or several with `run_suite.py H1:1-6`.
   The default field trial runs one representative rung of every test, plus
-  every rung of S10, S11 and X1.
+  every rung of S10, S11, B1 and X1.
 - **Two kinds of TBC.** A *line TBC* straightens each line's timing but passes
   the field structure through as it came. A *frame TBC* or synchroniser
   stores whole frames and always outputs standard fields. Where they should
@@ -19,8 +19,9 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Colour-under.** By default TBT imitates VHS and Betamax: sync, picture
   and the colour signal's envelope are disturbed, but the colour carrier
   itself stays steady, as a deck's colour processor delivers it.
-- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.3.0`
-  (0.3.0 added H6 and the title card). On
+- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.4.0`
+  (0.4.0 added the B tests: captions and the VBI line map; 0.3.0 added H6
+  and the title card). On
   the serial console, `tests` prints the catalog the firmware actually runs.
   If this page and the firmware disagree, the firmware is right (and this
   page needs fixing).
@@ -349,6 +350,44 @@ proc amp.
 | Rung | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|
 | Level (100 is normal) | 80 % | 90 % | 110 % | 120 % |
+
+## B: Vertical blanking interval
+
+The lines between the vertical sync and the picture (lines 10–21 of each
+field) carry data on many tapes: closed captions on line 21, and on some,
+timecode (VITC) or other data in lines 10–20. A TBC may pass these lines,
+blank them, or damage them. For an archive, captions are content: a capture
+that loses them has lost something.
+
+### B1 · Captions (line 21)
+**Imitates:** a captioned tape. Line 21 of both fields carries standard
+closed captions (EIA/CTA-608). Field 1 is a caption that a TV with captions
+on (CC1) shows as "Brought to you by the / Media Archive Project", sent again
+every 32 frames. Field 2 carries a frame counter, so repeated or lost fields
+show up.
+**Why it matters:** captions are part of the recording. The analysis checks
+every field's two caption bytes against what was sent for that frame:
+intact, damaged (parity), missing (stripped), or carrying another frame's
+data.
+**Good TBC:** every caption arrives intact, including around dropped and lost
+fields.
+
+| Rung | What else happens |
+|---|---|
+| 1 | Nothing: clean input |
+| 2 | A field dropped every 30 frames (as S7) |
+| 3 | 2 fields of no signal once a second (as S10) |
+
+### B2 · VBI line map
+**Imitates:** a tape with data in the whole vertical interval. Lines 10–20 of
+field 1 and 273–282 of field 2 each carry an ID for their line, and a
+25/50/75 IRE staircase. Captions are on line 21 as in B1.
+**Why it matters:** shows which lines a TBC passes, blanks, moves to another
+line, or damages, and whether it changes their levels.
+**Good TBC:** every line passed in place at its own level. Blanking lines
+10–20 is common by design and counts as a minor miss; moving or damaging them
+fails.
+**Rungs:** 1.
 
 ## X: Fault hunt
 

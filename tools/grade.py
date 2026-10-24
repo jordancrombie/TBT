@@ -43,11 +43,14 @@ LIMITS = {
     "h6_passed_slow": 0.3,       # H6 at 1 kHz and below: share of the jitter passed (main)
     "h6_passed_fast": 0.5,       # H6 above 1 kHz: share passed (minor)
     "recovery_lines": 3,         # H3: lines until the picture is back after a step
+    "captions_intact": 0.98,     # B1/B2: share of our fields whose line 21 data arrives intact
+    "captions_disrupted": 0.9,   # B1 r2/r3: the same, when fields are dropped or lost (a field
+                                 # damaged as the TBC recovers is minor, as in S10)
 }
 # Nominal picture (SMPTE bars, 75 %) for single-channel runs.
 NOMINAL = {"yellow_hue_deg": 167.1, "yellow_chroma_pp_ire": 62.0, "burst_pp_ire": 40.0, "gray_ire": 76.9}
 # Group weights for the overall score: re-timing is the TBC's core job.
-WEIGHTS = {"H": 3.0, "F": 1.5, "S": 2.0, "C": 1.5, "L": 1.0, "X": 1.0, "V": 1.0}
+WEIGHTS = {"H": 3.0, "F": 1.5, "S": 2.0, "C": 1.5, "L": 1.0, "X": 1.0, "V": 1.0, "B": 1.0}
 # Ladders that aren't ordered mild -> severe: graded as "k of n rungs".
 UNORDERED = {"S4", "S6", "C1", "X1", "H6"}   # H6: a frequency sweep, not a severity ladder
 STRUCTURE = {"S5", "S6", "S7", "S8"}     # line vs frame ideals differ
@@ -257,6 +260,35 @@ def structure_checks(r, ctx, tid):
     return out
 
 
+def vbi_checks(r, ctx, tid):
+    """B1/B2: captions preserved (not stripped or corrupted); B2 also lines 10-20.
+
+    Stripped or damaged captions fail (lost content). Blanking lines 10-20
+    is common by design, so it is a minor miss; moving or damaging them fails."""
+    v = r.get("vbi")
+    if not v:
+        return [check("VBI analysed", False, "no result", "")]
+    c = v["captions"]
+    frac = c["intact_fraction"] or 0.0
+    lim = LIMITS["captions_disrupted"] if tid == "B1" and r["test"]["rung"] > 1 else LIMITS["captions_intact"]
+    out = [check("captions intact", frac >= lim, f"{c['intact']}/{c['fields']} ({c['state']})", f">= {100 * lim:.0f} %"),
+           check("every caption intact", c["intact"] == c["fields"],
+                 f"{c['parity_errors']} damaged, {c['missing']} missing, {c['wrong_data']} wrong, "
+                 f"{sum(c['other_frame'].values())} from another frame", "0", minor=True)]
+    vi = ((r.get("input") or {}).get("vbi") or {}).get("captions")
+    if vi and c["found"]:
+        gaps = lambda x: sum(x[k][q] for k in ("field1_stream", "field2_stream") for q in ("repeated", "skipped"))
+        out.append(check("caption stream as sent", gaps(c) <= gaps(vi),
+                         f"{gaps(c)} repeated/skipped", f"<= input's {gaps(vi)}", minor=True))
+    m = v.get("line_map")
+    if m:
+        out.append(check("VBI lines not corrupted", m["moved"] + m["damaged"] == 0,
+                         f"{m['moved']} moved, {m['damaged']} damaged", "0"))
+        out.append(check("VBI lines 10-20 passed", m["blank"] == 0,
+                         f"{m['in_place']}/{m['checked']} passed, {m['blank']} blanked", "all", minor=True))
+    return out
+
+
 def grade_run(r, ctx):
     t = r["test"]
     tid = t["id"]
@@ -304,6 +336,12 @@ def grade_run(r, ctx):
                                 "clean within 3 frames"))
             checks.append(check("no stuck or ghosted fields", H["stuck_or_ghost"] == 0, H["stuck_or_ghost"], "0",
                                 minor=True))
+        elif tid in ("B1", "B2"):
+            if tid == "B1" and t["rung"] > 1:      # disrupted input: the S7/S10 tests judge the picture
+                checks = [c for c in checks if c["name"] != "standard output fields"]
+            else:
+                checks += sequence_checks(r, ctx, tid)
+            checks += vbi_checks(r, ctx, tid)
         elif tid in STRUCTURE:
             checks += structure_checks(r, ctx, tid)
         else:

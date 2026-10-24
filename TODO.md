@@ -19,12 +19,12 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
 
 ## Feature requests (ranked 2026-10-24)
 Scored for value against what the suite already covers.
-- [ ] **#25 VBI data and line 21 integrity (82).** Nothing is generated in
-      lines 10–21 today. Encode EIA-608 captions on line 21 (and optionally
-      timecode or a per-line ramp in lines 10–20); decode them on CH1 and CH2,
-      and report a byte error rate plus a per-line map: passed, blanked or
-      damaged. Combine it with S7 and S10 for "during dropped fields".
-      This lays the groundwork for #27.
+- [x] **#25 VBI data and line 21 integrity (82).** Done 2026-10-24: B1
+      captions (clean, dropped field, lost fields) and the B2 line map,
+      first measured on the TBC-3000.
+  - [ ] Run B1/B2 on the other units (TBC-1000, AVT-8710, DVR-220, ES-10)
+        and add the traits to their fingerprints.
+  - [ ] Optional: VITC timecode on a line in 10–20, decoded the same way.
 - [ ] **#27 Macrovision-like AGC pulses (76).** Pseudo-sync and AGC pulse pairs
       in the vertical blanking, with their level cycling slowly; optionally
       colour stripe. Report whether the pulses reach the output, and whether
@@ -104,8 +104,10 @@ Scored for value against what the suite already covers.
         should survive that.
 
 ## Generator
-- [ ] Root-cause the intermittent DMA stop (the watchdog recovers it; see
-      the bench notes).
+- [ ] Confirm the intermittent DMA stop is gone. A likely cause, a race on
+      test switches, was fixed 2026-10-24 and three full verifier passes
+      since showed no restarts; keep watching `dma_restarts` over a few
+      field trials before closing it (see the bench notes).
 - [ ] H7 velocity error: timing that drifts *within* a line (needs
       pre-stretched line copies). For line TBCs and the tape-deck phase.
 - [ ] Tape program mode: step through test rungs on a timed schedule while

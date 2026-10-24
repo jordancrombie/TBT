@@ -11,6 +11,7 @@
 #include "marker.h"
 #include "ntsc_timing.h"
 #include "patterns.h"
+#include "vbi.h"
 
 using namespace ntsc;
 using namespace render;
@@ -27,6 +28,7 @@ namespace gen {
 static constexpr int HALF_CAP = 600;
 static constexpr int MAX_BASES = 96;   // 64 was enough for test patterns; text cards need ~85 (each text row x 2 burst phases)
 static constexpr int MAX_MARKERS = 4;    // marker lines per frame (240p shows each marker line twice)
+static constexpr int MAP_KEY = 1000;    // row keys from here on are B2 line-map IDs, not pattern rows
 static constexpr int HEAP_RESERVE = 48 * 1024;
 static constexpr int SAFE_CAP = SAMPLES_PER_LINE + MAX_EXT;
 
@@ -51,6 +53,7 @@ static uint8_t s_base_idx[LINES_PER_FRAME + 1][2][2];
 static int s_nbases;
 static uint16_t **s_pool;                // [base * nsub + v]
 static uint16_t *s_marker[2][MAX_MARKERS];
+static uint16_t *s_cc[2][2];             // caption lines (B tests), [half][field]
 static uint16_t *s_noise[perturb::NOISE_VARIANTS];  // snow lines (S9), only when the test uses them
 static uint16_t *s_dropout[perturb::DROPOUT_VARIANTS][2];  // bar lines with a dropout (L1), [variant][phase]
 static render::Style s_style;            // the test's static rendering style
@@ -62,6 +65,11 @@ static TaskHandle_t s_task;
 static uint32_t s_written[2];            // frame number last written to each half
 static volatile uint32_t s_max_write_us;
 static volatile bool s_hold;
+// Set (under s_lock) when a setter changes what the ring is built from, cleared
+// by a successful rebuild(). Until then the frame task writes nothing: the new
+// test's buffers (captions, snow, no-signal, dropouts) don't exist yet, and a
+// frame written in that gap would hand the DMA a null or freed buffer.
+static bool s_pending;
 static volatile uint32_t s_dma_restarts;
 static char s_restart_note[48];          // test and time of the last watchdog restart
 
@@ -119,6 +127,15 @@ static void render_marker(uint16_t *buf, uint32_t frame, int phase, int v) {
     render_line(buf, s_cap, H_BLANK, H_BLANK, phase, origin_of(v), carrier_of(v), segs, m, s_levels, style_of(v, 0));
 }
 
+static void render_cc(uint16_t *buf, uint16_t pair, int phase, int v) {
+    // Static: ~3.8 KB would overflow the frame task's stack. Only ever called under s_lock.
+    static Segment raw[80];
+    static ActiveSeg segs[80];
+    int n = vbi::cc_segments(pair, raw, 80);
+    int m = place_segments(raw, n, H_BLANK, H_BLANK, segs, 80);
+    render_line(buf, s_cap, H_BLANK, H_BLANK, phase, origin_of(v), carrier_of(v), segs, m, s_levels, style_of(v, 0));
+}
+
 // Write frame number `frame` into half `h` of the ring.
 static void write_half(int h, uint32_t frame) {
     int64_t t0 = esp_timer_get_time();
@@ -131,6 +148,7 @@ static void write_half(int h, uint32_t frame) {
     lldesc_t *d = &s_ring[h * HALF_CAP];
     uint32_t cum = perturb::frame_start_mod4(s_test, frame);
     int markers = 0;
+    const bool captions = perturb::uses_captions(s_test);
     for (int i = 0; i < ns; i++) {
         int nominal = (slots[i].flags & perturb::SLOT_HALF) ? perturb::HALF_SAMPLES : SAMPLES_PER_LINE;
         int len = nominal + p[i + 1].e - p[i].e;
@@ -145,6 +163,11 @@ static void write_half(int h, uint32_t frame) {
             buf = s_dead;
         } else if (slots[i].flags & perturb::SLOT_NOISE) {
             buf = s_noise[perturb::noise_variant(frame, i)];
+        } else if (captions && (line == vbi::CC_LINE_F1 || line == vbi::CC_LINE_F2)) {
+            int f = line == vbi::CC_LINE_F1 ? 1 : 2;
+            uint16_t *cb = s_cc[h][f - 1];
+            render_cc(cb, vbi::cc_pair(f, frame), phase, p[i].v);
+            buf = cb;
         } else if ((line == marker::LINE_F1 || line == marker::LINE_F2) && markers < MAX_MARKERS) {
             uint16_t *mb = s_marker[h][markers++];
             render_marker(mb, frame, phase, p[i].v);
@@ -190,8 +213,8 @@ static void frame_task(void *) {
             xSemaphoreGive(s_lock);
             continue;
         }
-        if (s_hold) continue;
         xSemaphoreTake(s_lock, portMAX_DELAY);
+        if (s_hold || s_pending) { xSemaphoreGive(s_lock); continue; }
         // When half h finishes, the DMA moves on to the other half; h plays
         // next after that, so it gets the frame after the other half's.
         // (Not "this half's frame + 2": after a rebuild the first interrupt
@@ -211,6 +234,8 @@ static void free_pool() {
     }
     for (auto &half : s_marker)
         for (auto &m : half) { heap_caps_free(m); m = nullptr; }
+    for (auto &half : s_cc)
+        for (auto &c : half) { heap_caps_free(c); c = nullptr; }
     for (auto &nz : s_noise) { heap_caps_free(nz); nz = nullptr; }
     for (auto &var : s_dropout)
         for (auto &d : var) { heap_caps_free(d); d = nullptr; }
@@ -282,6 +307,7 @@ static bool rebuild() {
         LineSpec ls = line_spec(L);
         bool colour = ls.a == H_BLANK || ls.a == H_ACTIVE;
         int16_t key = (int16_t)(ls.row >= 0 ? pat.row_key(ls.row) : -1);
+        if (s_test.def->kind == perturb::VBI_MAP && vbi::map_id(L)) key = (int16_t)(MAP_KEY + vbi::map_id(L));
         uint8_t alt_mods = perturb::alt_mods(s_test, L);
         // An unserrated V-sync that continues from the previous line must
         // start low, not at blanking.
@@ -306,7 +332,7 @@ static bool rebuild() {
     if (s_ext > MAX_EXT) s_ext = MAX_EXT;
     s_cap = SAMPLES_PER_LINE + s_ext;
     long budget = (long)heap_caps_get_free_size(MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL) - HEAP_RESERVE -
-                  (2L * MAX_MARKERS + perturb::NOISE_VARIANTS + 2 * perturb::DROPOUT_VARIANTS + 1) * s_cap * 2;
+                  (2L * MAX_MARKERS + 4 + perturb::NOISE_VARIANTS + 2 * perturb::DROPOUT_VARIANTS + 1) * s_cap * 2;
     s_nsub = 8;
     while (s_nsub > 1 && (long)s_nbases * s_nsub * s_cap * 2 > budget) s_nsub /= 2;
 
@@ -318,7 +344,7 @@ static bool rebuild() {
         int nseg = 0;
         if (b.key >= 0) {
             Segment raw[64];
-            int n = pat.segments(b.key, raw, 64);
+            int n = b.key >= MAP_KEY ? vbi::id_segments(b.key - MAP_KEY, raw, 64) : pat.segments(b.key, raw, 64);
             nseg = place_segments(raw, n, b.a, b.b, segs, 64);
         }
         for (int v = 0; v < s_nsub; v++) {
@@ -331,6 +357,10 @@ static bool rebuild() {
     for (auto &half : s_marker)
         for (auto &m : half)
             if (ok && !(m = alloc_line())) ok = false;
+    if (perturb::uses_captions(s_test))
+        for (auto &half : s_cc)
+            for (auto &c : half)
+                if (ok && !(c = alloc_line())) ok = false;
     if (s_test.def->kind == perturb::DROPOUTS) {
         // A colour-bar line (line 50's content) with a stretch of snow over it.
         LineSpec ls = line_spec(50);
@@ -363,6 +393,7 @@ static bool rebuild() {
     write_half(0, s_start_frame);
     write_half(1, s_start_frame + 1);
     render_safe_frame();  // levels may have changed; the ring no longer reads these
+    s_pending = false;
     xSemaphoreGive(s_lock);
     return true;
 }
@@ -379,6 +410,16 @@ static void apply_clock() {
 }
 
 // ---- API --------------------------------------------------------------------------
+// Change the state the ring is built from, under the lock, and hold the frame
+// task off until rebuild() has caught up.
+template <typename F>
+static void stage(F change) {
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_pending = true;
+    change();
+    xSemaphoreGive(s_lock);
+}
+
 bool begin(int pattern, Levels lv) {
     s_pattern = pattern;
     s_levels = lv;
@@ -416,18 +457,18 @@ bool begin(int pattern, Levels lv) {
 bool set_pattern(int pattern) {
     if (pattern < 0 || pattern >= NUM_PATTERNS) return false;
     int old = s_pattern;
-    s_pattern = pattern;
+    stage([&] { s_pattern = pattern; });
     if (rebuild()) return true;
-    s_pattern = old;
+    stage([&] { s_pattern = old; });
     rebuild();
     return false;
 }
 
 bool set_levels(Levels lv) {
     Levels old = s_levels;
-    s_levels = lv;
+    stage([&] { s_levels = lv; });
     if (rebuild()) return true;
-    s_levels = old;
+    stage([&] { s_levels = old; });
     rebuild();
     return false;
 }
@@ -440,12 +481,10 @@ bool set_clock_ppm(float ppm) {
 
 bool set_test(const perturb::Test &t, uint32_t start_frame) {
     perturb::Test old = s_test;
-    s_test = t;
-    s_start_frame = start_frame;
+    stage([&] { s_test = t; s_start_frame = start_frame; });
     apply_clock();
     if (rebuild()) return true;
-    s_test = old;
-    s_start_frame = 0;
+    stage([&] { s_test = old; s_start_frame = 0; });
     apply_clock();
     rebuild();
     return false;
@@ -453,9 +492,9 @@ bool set_test(const perturb::Test &t, uint32_t start_frame) {
 
 bool set_chroma_follows(bool follows) {
     bool old = s_chroma_follows;
-    s_chroma_follows = follows;
+    stage([&] { s_chroma_follows = follows; });
     if (rebuild()) return true;
-    s_chroma_follows = old;
+    stage([&] { s_chroma_follows = old; });
     rebuild();
     return false;
 }
@@ -474,7 +513,13 @@ uint32_t max_write_us() { return s_max_write_us; }
 uint32_t dma_restarts() { return s_dma_restarts; }
 const char *dma_restart_note() { return s_restart_note; }
 
-void hold(bool on) { s_hold = on; }
+// Under the lock, so once hold(true) returns no frame write is in progress and
+// none starts: the frame numbers it reports match the halves' contents.
+void hold(bool on) {
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_hold = on;
+    xSemaphoreGive(s_lock);
+}
 uint32_t frame_in_half(int h) { return s_written[h & 1]; }
 
 int line_length(int index) {

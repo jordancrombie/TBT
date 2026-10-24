@@ -398,25 +398,30 @@ same unit.
 the library that identification will match unknown TBCs against.
 `--html` writes a readable trait card to `reports/`.
 
-The library holds four devices so far. The **timing correction class** comes
+The library holds five devices so far (the TBC-3000 once per input). The **timing correction class** comes
 from how fast and how completely each one corrects line timing (see
 [docs/design.md](docs/design.md)).
 
-| Trait | Datavideo TBC-1000 | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
-|---|---|---|---|---|
-| Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | 0.4 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 107 ns | 98 ns | 11 ns | 3 ns |
-| With no input at all | black | its own colour bars | black | no output |
-| Lost fields ridden through | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
-| Colour killer | yes | no | no | no |
-| Output vs input | free-running, +22 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
-| Luma gain | ×0.63 | ×0.99 | ×1.00 | ×1.02 |
-| Field-trial score (provisional) | 50–53 | 36–44 | 22–31 | 59–62 |
+| Trait | Datavideo TBC-1000 | Datavideo TBC-3000 (input A / B) | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
+|---|---|---|---|---|---|
+| Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
+| Correction bandwidth | 0.4 kHz | 0.43 / 0.45 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 107 ns | 86 / 82 ns | 98 ns | 11 ns | 3 ns |
+| At a 5 µs timing step (H3) | no jolt | no jolt / 2 lines jolted 1.2 µs | 1 line jolted 1.3 µs | 1 line jolted 1.4 µs | no jolt |
+| With no input at all | black | black | its own colour bars | black | no output |
+| Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ (snow: its own picture) |
+| Colour killer | yes | yes | no | no | no |
+| Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | wanders, often locked |
+| Luma gain | ×0.63 | ×0.83 / ×1.02 | ×0.99 | ×1.00 | ×1.02 |
+| Output noise / jitter | 0.53 IRE / 0.87 ns | 0.35, 0.28 IRE / 0.58 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
+| Field-trial score (provisional) | 50–53 | 48–50 / 40–43 | 36–44 | 22–31 | 59–62 |
 
-The two frame synchronisers differ in one timing detail: at a 5 µs timing
-step the AVT-8710 jolts one line by 1.3 µs, while the TBC-1000's slower lock
-glides through with no jolt.
+The TBC-3000 was identified **blind** (2026-10-23). Its timing and
+behaviour matched the TBC-1000 (16–17 of 18 model traits), but its clock
+offset didn't, so it was called a different unit from the same family. Its
+two inputs were tested as separate "unknowns" and recognised as one unit
+with two inputs: the same crystal (+1.75 / +1.85 ppm) and timing core, but
+different front ends.
 
 The fingerprints were built from 2 to 7 trials each. The ES-10's come
 from lid-off trials: with the lid on, an overheating fault spoils its colour

@@ -263,6 +263,39 @@ so runs are now deleted after their report unless `--keep` is given.
 - **Ghost detection** first flagged every field because of the lower output
   level. Marker cells are now judged against each field's own framing cells.
 
+## Datavideo TBC-3000 (two inputs)
+
+- **Blind test, 2026-10-23:** three field trials per input, each input
+  presented as an unknown device. `fingerprints/datavideo-tbc-3000-input-a.json`
+  and `-input-b.json`.
+- **Frame synchroniser,** the same timing core as the TBC-1000:
+  - bandwidth 0.42–0.47 kHz;
+  - 110–113 % of the jitter passed at 4–8 kHz;
+  - 92 % at 1 kHz (H6);
+  - 79–87 ns of head-switch skew left.
+
+  It shares 16–17 of 18 model traits with the TBC-1000: black with no
+  input, ∞ lost fields, a colour killer, partial ACC, 240p converted.
+- **One unit, recognisable by its crystal:** the output clock sits at
+  +1.75 ppm (input A) and +1.85 ppm (input B). The TBC-1000 sits at
+  +22.1 ppm, steady to ±0.04 over 9 days.
+- **The inputs differ.** Each reading was steady within each input's trials:
+
+  | | Input A | Input B |
+  |---|---|---|
+  | Luma gain | ×0.83 | ×1.02 |
+  | Saturation | ×1.03 | ×1.12 |
+  | Hue offset | −1.2° | −2.6° |
+  | Noise | 0.35 IRE | 0.28 IRE |
+  | H3 5 µs step | no jolt (like the TBC-1000) | 2 lines jolted 1.2 µs |
+  | L4 | passes | fails |
+  | Score | 48–50 | 40–43 |
+
+  The level differences may be per-input settings. The step jolt looks like a
+  difference in the input hardware or sync handling.
+- **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
+  output jitter 0.57–0.58 ns.
+
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
 - **First field trial, 2026-10-20** (CH2 at its input, single termination;

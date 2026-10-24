@@ -19,7 +19,8 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Colour-under.** By default TBT imitates VHS and Betamax: sync, picture
   and the colour signal's envelope are disturbed, but the colour carrier
   itself stays steady, as a deck's colour processor delivers it.
-- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.2.0`. On
+- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.3.0`
+  (0.3.0 added H6 and the title card). On
   the serial console, `tests` prints the catalog the firmware actually runs.
   If this page and the firmware disagree, the firmware is right (and this
   page needs fixing).

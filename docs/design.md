@@ -341,7 +341,7 @@ uses a seeded hash (lowbias32) summed Irwin-Hall style, which is
 integer-exact. Periodic tests use an integer phase increment. F2's
 quantization uses exact integer arithmetic. `tools/perturb_model.py` is the
 reference implementation for the grader. `tools/verify_timing.py` checks the
-firmware against it in 47 configurations: shifts agree to 0.002 ns, and every
+firmware against it in 49 configurations: shifts agree to 0.002 ns, and every
 line length matches.
 
 **Manifest example**, trimmed from a real run (H1, rung 4):
@@ -349,7 +349,7 @@ line length matches.
 ```json
 {
   "schema": "tbc-test/1",
-  "generator": {"firmware": "ntsc-gen 0.2.0", "sample_hz": 14318186.442,
+  "generator": {"firmware": "ntsc-gen 0.3.0", "sample_hz": 14318186.442,
                 "nominal_sample_hz": 14318181.818, "clock_ppm_base": 0.0,
                 "levels": {"sync_code": 0.0, "white_code": 73.0},
                 "subsample_steps": 2, "max_ext_samples": 10},
@@ -417,12 +417,16 @@ model the firmware renders from.
 5. **Phase 4, fault tests (done 2026-10-13/14):** S10, S11, V1 and X1, the
    dropout watch, suite comparison, CH2 input check and latency,
    single-channel mode.
-6. **Phase 5, grading and fingerprints (2026-10-14):** `grade.py` with
-   provisional thresholds and picture displacement; `fingerprint.py` and the
-   `fingerprints/` library (Datavideo TBC-1000 first). Next: identifying an
-   unknown TBC against the library, which needs a second model in it (the
-   AVT-8710, re-run with CH2).
-7. **Later:** H7 velocity error, and a tape program mode
+6. **Phase 5, grading and fingerprints (2026-10-14 to 10-15):** `grade.py`
+   with provisional thresholds and picture displacement; `fingerprint.py` and
+   the `fingerprints/` library.
+7. **Phase 6, line TBC or frame synchroniser (2026-10-20 to 10-24):** H6, the
+   jitter transfer and H3 step recovery, calibrated on four devices; the
+   timing class in fingerprints; the colour watch. A blind test identified a
+   Datavideo TBC-3000, and both its inputs, against the library.
+8. **Next:** an automatic identification tool (the blind test's comparison,
+   formalised).
+9. **Later:** H7 velocity error, and a tape program mode
    that steps through rungs on a timed schedule for recording test tapes,
    for tape-based TBCs with no passthrough.
 

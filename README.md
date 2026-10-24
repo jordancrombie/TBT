@@ -24,23 +24,22 @@ Measured hardware and toolchain facts (settling times, quirks, pitfalls) are in
 [docs/bench-notes.md](docs/bench-notes.md). Read it before changing the tools.
 Open work is in [TODO.md](TODO.md).
 
-## Status (2026-10-14)
+## Status (2026-10-24)
 
 | Area | State | Details |
 |---|---|---|
-| Colour bars, first light | Done | SMPTE and EIA bars, staircase, flat, crosshatch. Hue within 1.5° and luma within 0.5 IRE at the DAC |
-| Timing tests (H1–H5, F1–F3) | Done | Verified against the reference model. F1 not yet measured on the scope |
-| Structure tests (S1–S9) | Done | Verified, and observed through two TBCs. S4, S8 and S9 target frame synchronisers |
-| Colour and level tests (C1–C4, L1–L4) | Done | Verified, with picture metrics (burst, hue, saturation, level, noise, hum) |
-| Fault tests (S10, S11, X1, V1) | Done | Lost-field tolerance, a stress-and-recovery fault hunt for buggy units, and a no-signal capture of the TBC's own fallback output |
+| Colour bars, first light | Done | SMPTE and EIA bars, staircase, flat, crosshatch, and a title card. Hue within 1.5° and luma within 0.5 IRE at the DAC |
+| Test catalog (31 tests, V/H/F/S/C/L/X) | Done | Verified against the reference model (`verify_timing.py`, 49 configurations). See [docs/tests.md](docs/tests.md) |
 | Colour-under (VHS/Betamax) | Default | Direct colour (U-matic/1") available with `chroma follows` |
-| Frame marker, manifest, capture runner | Done | The marker decodes through the TBC on CH1 and on the CH2 reference |
-| Device tagging and reports | Done | `--dut`/`--note` on every run; optional `--html` report |
-| CH2 reference | Done | Every two-channel run checks its input, and measures the TBC's latency, whether its output is locked to the input, and its gain against the real input |
+| Frame marker, manifest, capture runner | Done | The marker decodes through every TBC tested, and on the CH2 reference |
+| CH2 reference | Done | Each two-channel run checks its input, and measures latency, output lock and gain against the real input |
 | One-channel rigs | Supported | `--channels 1` needs only CH1 (one scope channel, no tee) |
+| Reports | Done | `--dut`/`--note` on every run; optional `--html` report; `compare_suites.py` lines field trials up |
 | Grader | Provisional | `tools/grade.py` (or `run_suite.py --grade`) grades every run, each test and the whole field trial. Thresholds not yet checked against a known-good TBC |
-| Fingerprinting | Done | `tools/fingerprint.py` builds a fingerprint from several field trials; `fingerprints/` holds the library (TBC-1000 so far) |
-| Identification | Planned | Matching an unknown TBC against the fingerprint library |
+| Line TBC or frame synchroniser | Done | H6 jitter sweep, jitter transfer and H3 step recovery, calibrated on four devices (see [docs/design.md](docs/design.md)) |
+| Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 7 entries for 5 devices |
+| Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; an automatic `identify` tool is next |
+| Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
 | Rig calibration | In progress | CH2 wired; generator levels and chroma roll-off still to calibrate, CH1 to terminate |
 
 Open work is in [TODO.md](TODO.md).
@@ -247,13 +246,13 @@ The host tools need `numpy` and `pyserial`.
 export TBC_DUT="AVT-8710"                         # name the device under test once per session
 export TBC_NOTE="composite in/out, controls at default"
 export TBC_CHANNELS=1                             # only if your rig has CH1 alone (see "Minimal rig")
-python3 tools/run_suite.py                      # a field trial: one rung of every test (~3 s each)
-python3 tools/run_suite.py --html               # ...plus an HTML report in reports/
+python3 tools/run_suite.py full --grade --html   # the standard field trial: 76 runs, ~11 min, graded
+python3 tools/run_suite.py                      # the quick smoke set: one rung of every test (~3 s each)
 python3 tools/run_suite.py H1:all S7:4-5        # chosen tests and rungs on one scope session
 python3 tools/run_test.py H1 4                  # a single rung
 python3 tools/run_test.py H1 4 --keep           # ...and keep its capture for debugging
 python3 tools/observe_tbc.py runs/<run>         # what the TBC passed, dropped or repeated
-python3 tools/verify_timing.py                  # check the firmware against the reference model (~25 s)
+python3 tools/verify_timing.py                  # check the firmware against the reference model (~75 s)
 python3 tools/check_lines.py                    # check colour bars as rendered
 ```
 
@@ -294,8 +293,11 @@ ends up in the results.
 
 ## Sample report
 
-[docs/sample-report.html](docs/sample-report.html) is a full `--html` report
-of a field trial: 56 runs on a warmed-up green AVT-8710, covering one rung of every test, every
+[docs/sample-report.html](docs/sample-report.html) is an early `--html`
+report (2026-10-13), from before CH2, grading and H6 existed. Today's reports
+add an input check, latency, grades and the line-TBC measurements;
+regenerating it is on the TODO. It is a field trial of 56 runs on a
+warmed-up green AVT-8710, covering one rung of every test, every
 rung of S10/S11, all five X1 stresses and V1. GitHub shows HTML files as
 source, so download it and open it in a browser. The page is self-contained.
 
@@ -508,42 +510,6 @@ It found the DMR-ES10's overheating colour fault (see
 | `dump <i>` | DAC codes of ring line *i* (half 0 from 0, half 1 from 600) |
 | `diag`, `dc [code]`, `gpio <0\|1>` | DMA progress, constant DAC output, digital wiring test |
 
-## First observations through the TBC
-
-These are observations of a green AVT-8710 from CH1 alone, made before CH2
-was wired, not grades. The Datavideo TBC-1000's are in
-[docs/bench-notes.md](docs/bench-notes.md#datavideo-tbc-1000).
-
-| Test | What came out of the TBC |
-|---|---|
-| V0, S3 (20 missing syncs), S5 (240p), H3 (5 µs steps) | Every field passed once, in order |
-| H4 (10 µs head-switch skew) | Fully corrected; marker at 0.0 µs offset |
-| S6 −10 lines per field | Drops a field now and then to keep up |
-| S6 +10 lines per field | Repeats a frame |
-| S7 dropped fields | Re-shows earlier fields (…168 169 168 169…) |
-| H1 50 ns rms jitter | About 23 ns rms residual picture displacement (floor 0.7 ns) |
-| S4 unserrated V-sync, EQ pulses as H sync | Locks normally |
-| S4 V-sync missing in every field | Still outputs standard fields in order, but with no vertical reference the picture sits far lower: marker at line 201–209 after V-sync instead of 15, landing somewhere different each time it locks |
-| S8 field-length wow (±20 lines at 2 Hz) | Occasionally repeats a field to keep its output standard |
-| S9 noise bar (20 lines) | Every field passed in order |
-| C1 burst 10 / 60 IRE | Burst regenerated at ~43 IRE; chroma ×1.7 (partial ACC) with ~22° hue error and jitter / ×0.65 (ACC) |
-| C2 no burst | **No colour killer:** burst inserted, chroma passed with a random hue |
-| C3 phase jitter 10° / 20° rms | Passed: output hue wanders ±9° / ±18° (no per-line chroma phase correction) |
-| C4 hue +20° | Passed unchanged |
-| L2 noise 4 IRE rms | ~2.6 IRE rms out (some noise reduction or bandwidth limiting) |
-| L3 hum 20 / 40 IRE p-p | Blanking clamped flat, but the gray bar reads higher (84 / 95 IRE vs 79); not yet explained |
-| L4 level 80 % / 120 % | Passed unchanged (no AGC) |
-| V1 no signal | Outputs its own bars: 8 full-field bars, 100 % white (100/69/56/48/36/28/16/7.5 IRE) |
-| S10/S11 lost fields | **Rides through up to 6 consecutive lost fields; from 7 falls back to its own bars.** The gap shows as black, often followed by one garbled field on recovery |
-| X1 fault hunt (all 5 stresses) | Clean after every stress burst. Under stress: stuck/torn fields and back-steps with dropped/lost fields (expected for a frame sync), and 1–2 ghosted fields under jitter alone |
-
-Picture figures are relative to the TBC's own V0 output (gray 79 IRE, yellow
-chroma 70 IRE p-p, burst 43 IRE). CH1 is still unterminated, so absolute
-levels wait for the tees.
-
-In every run the output stayed standard: 262.5 lines per field and 0.4–0.6 ns
-rms line jitter.
-
 ## Code map
 
 | Path | |
@@ -564,8 +530,8 @@ rms line jitter.
 | `tools/fingerprint.py` | builds a TBC's fingerprint (model traits, unit traits, variable behaviours) from several field trials |
 | `fingerprints/` | the fingerprint library, one JSON per unit or model |
 | `tools/grade.py` | grades a field trial: per run, per test and overall (provisional thresholds) |
+| `tools/colour_watch.py`, `tools/dropout_watch.py` | long-running watches: colour and clock over time; dead output |
 | `tools/compare_suites.py` | lines up several suites' results test by test; dead-output episodes, level and latency |
-| `tools/colour_watch.py` | listens to a device's output every few seconds for minutes (hue, chroma, noise, clock); finds warm-up and intermittent colour faults |
 | `tools/dropout_watch.py` | samples the TBC output once a second through clean / input-loss / clean phases; dead-output episodes |
 | `tools/verify_timing.py`, `tools/check_lines.py` | firmware verification over serial |
 | `tools/analyze_capture.py` | levels, line rate and bar colours from a capture |

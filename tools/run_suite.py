@@ -6,6 +6,9 @@ usage: run_suite.py [SPEC ...] [--channels 1|2] [--grade [--class frame|line]] [
 
 SPEC is TEST:RUNGS, e.g. H1:1-6, S7:4, H5:1,3,5 or H2:all.
 With no SPEC, runs the smoke set: one representative rung of every test.
+SPEC "full" runs the standard field trial (76 runs, ~11 min): the smoke set
+plus every rung of H1, H6, C1, C3, L2, S10, S11 and X1, and V1. Fingerprints
+and the comparisons in docs/ are built from it.
 
 The scope settles once for the whole suite; each rung then costs the TBC
 lock time plus the capture. Each run is reported and then deleted, as in
@@ -25,6 +28,12 @@ from run_test import add_common_args, dut_of, finish, prepare, run_one, write_ht
 SMOKE = ["V0:1", "H1:4", "H2:3", "H3:5", "H4:5", "H5:4", "H6:all", "F1:3", "F2:5", "F3:2",
          "S1:5", "S2:3", "S3:5", "S4:3", "S4:6", "S5:1", "S6:5", "S6:6", "S7:4", "S8:5", "S9:4",
          "C1:3", "C2:1", "C3:3", "C4:3", "L1:4", "L2:3", "L3:3", "L4:4"]
+
+
+FULL = ["V0:1", "H1:all", "H2:3", "H3:5", "H4:5", "H5:4", "H6:all", "F1:3", "F2:5", "F3:2",
+        "S1:5", "S2:3", "S3:5", "S4:3", "S4:6", "S5:1", "S6:5", "S6:6", "S7:4", "S8:5", "S9:4",
+        "C1:all", "C2:1", "C3:all", "C4:3", "L1:4", "L2:all", "L3:3", "L4:4",
+        "S10:all", "S11:all", "X1:all", "V1:1"]
 
 
 def rungs_of(spec, catalog):
@@ -124,7 +133,8 @@ def main():
             f = line.split()
             if f and ":" in line and f[0][0].isalpha() and f[0][1:].isdigit():
                 catalog[f[0]] = len(line.rsplit(":", 1)[1].split())  # the ladder follows the last colon
-        plan = [r for spec in (a.specs or SMOKE) for r in rungs_of(spec, catalog)]
+        specs = FULL if a.specs == ["full"] else (a.specs or SMOKE)
+        plan = [r for spec in specs for r in rungs_of(spec, catalog)]
         size = f", keeping about {2 * a.channels * a.rate * a.seconds * len(plan) / 1e9:.1f} GB of captures" if a.keep else ""
         print(f"{len(plan)} runs{size}")
         results = []

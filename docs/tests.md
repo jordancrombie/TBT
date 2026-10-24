@@ -16,6 +16,9 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Units.** 1 µs = 1000 ns. One NTSC line lasts 63.6 µs; one field is
   262.5 lines (1/60 s); one frame is two fields. IRE is the video level
   scale: sync −40, black 7.5, white 100. "p-p" means peak to peak.
+- **Timing resolution.** Timing shifts move in steps of 70 ns today (the
+  generator's memory allows two sub-sample copies of each line). A shift
+  smaller than half a step rounds to none: see H1.
 - **Colour-under.** By default TBT imitates VHS and Betamax: sync, picture
   and the colour signal's envelope are disturbed, but the colour carrier
   itself stays steady, as a deck's colour processor delivers it.
@@ -62,6 +65,11 @@ random amount early or late.
 | Rung | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|---|---|---|---|---|---|
 | Jitter, rms | 5 ns | 10 ns | 20 ns | 50 ns | 100 ns | 200 ns |
+
+**Note:** with today's 70 ns timing steps, rungs 1 and 2 deliver no jitter
+at all (every line rounds to no shift), and rung 3 arrives as occasional
+70 ns jumps rather than a fine shimmer. Rungs 4–6 are accurate. Treat a
+"pass" on rungs 1–2 as meaningless until the resolution is raised.
 
 ### H2 · Sinusoidal jitter (wow and flutter)
 **Imitates:** a capstan or drum with a periodic speed error. Timing swings

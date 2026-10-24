@@ -19,7 +19,11 @@ One rung with `run_suite.py` takes about **3.0 s**:
 
 Before the two waits overlapped and the scope stayed open, each run took
 6.5 s. `verify_timing.py` took about 10 minutes at 115200 baud with blocking
-serial reads; at 921600 baud with non-blocking reads it takes 24 s.
+serial reads; at 921600 baud with non-blocking reads it took 24 s. By
+2026-10-24 it checks 60 configurations and takes 86 s.
+
+A full field trial (`run_suite.py full`, 83 runs) takes about 12 minutes;
+`--cards` adds about 2.8.
 
 **Disk:** a capture is 4 bytes × rate × seconds (two int16 channels), so
 0.5 s at 50 MS/s is 100 MB per run. About 25 exploratory runs filled 2.6 GB,

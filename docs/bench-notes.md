@@ -156,6 +156,44 @@ so runs are now deleted after their report unless `--keep` is given.
 - **Its output is always standard:** 262.5 lines per field and 0.4–0.6 ns
   rms line jitter, whatever the input does.
 
+### First observations (2026-10-13, CH1 only, before CH2)
+
+Observations of the green AVT-8710 from CH1 alone, before CH2 was wired.
+Kept as history: the later CH2-era figures above supersede them. In
+particular, **"H4 fully corrected" was wrong.** It came from the marker
+offset, which rounds to 0.1 µs. The displacement measure later showed
+75–101 ns of head-switch skew left.
+
+| Test | What came out of the TBC |
+|---|---|
+| V0, S3 (20 missing syncs), S5 (240p), H3 (5 µs steps) | Every field passed once, in order |
+| H4 (10 µs head-switch skew) | Marker at 0.0 µs offset (later measured: 75–101 ns of skew left) |
+| S6 −10 lines per field | Drops a field now and then to keep up |
+| S6 +10 lines per field | Repeats a frame |
+| S7 dropped fields | Re-shows earlier fields (…168 169 168 169…) |
+| H1 50 ns rms jitter | About 23 ns rms residual picture displacement (floor 0.7 ns) |
+| S4 unserrated V-sync, EQ pulses as H sync | Locks normally |
+| S4 V-sync missing in every field | Still outputs standard fields in order, but with no vertical reference the picture sits far lower: marker at line 201–209 after V-sync instead of 15, landing somewhere different each time it locks |
+| S8 field-length wow (±20 lines at 2 Hz) | Occasionally repeats a field to keep its output standard |
+| S9 noise bar (20 lines) | Every field passed in order |
+| C1 burst 10 / 60 IRE | Burst regenerated at ~43 IRE; chroma ×1.7 (partial ACC) with ~22° hue error and jitter / ×0.65 (ACC) |
+| C2 no burst | **No colour killer:** burst inserted, chroma passed with a random hue |
+| C3 phase jitter 10° / 20° rms | Passed: output hue wanders ±9° / ±18° (no per-line chroma phase correction) |
+| C4 hue +20° | Passed unchanged |
+| L2 noise 4 IRE rms | ~2.6 IRE rms out (some noise reduction or bandwidth limiting) |
+| L3 hum 20 / 40 IRE p-p | Blanking clamped flat, but the gray bar reads higher (84 / 95 IRE vs 79); not yet explained |
+| L4 level 80 % / 120 % | Passed unchanged (no AGC) |
+| V1 no signal | Outputs its own bars: 8 full-field bars, 100 % white (100/69/56/48/36/28/16/7.5 IRE) |
+| S10/S11 lost fields | **Rides through up to 6 consecutive lost fields; from 7 falls back to its own bars.** The gap shows as black, often followed by one garbled field on recovery |
+| X1 fault hunt (all 5 stresses) | Clean after every stress burst. Under stress: stuck/torn fields and back-steps with dropped/lost fields (expected for a frame sync), and 1–2 ghosted fields under jitter alone |
+
+Picture figures are relative to the TBC's own V0 output (gray 79 IRE, yellow
+chroma 70 IRE p-p, burst 43 IRE). CH1 is still unterminated, so absolute
+levels wait for the tees.
+
+In every run the output stayed standard: 262.5 lines per field and 0.4–0.6 ns
+rms line jitter.
+
 ## Datavideo TBC-1000
 
 - **Its output intermittently goes dead for about a minute.** No sync at all,

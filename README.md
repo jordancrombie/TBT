@@ -259,7 +259,7 @@ python3 tools/check_lines.py                    # check colour bars as rendered
 
 Every run prints `observe_tbc`'s report on the TBC output. With two channels
 it adds the input check from CH2, the latency, the output's line rate against
-the input (0 ppm means locked; otherwise latency drifts and the TBC drops or
+the input (0 ppm, within ±0.5, means locked; otherwise latency drifts and the TBC drops or
 repeats a frame when it wraps), and burst, chroma, gray and hue against the
 real input. Every run also records the
 device under test (`--dut`, or `$TBC_DUT`) and its settings (`--note`, or

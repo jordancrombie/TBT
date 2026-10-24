@@ -216,7 +216,7 @@ in the "after" window.
   - **Input check:** markers decoded in order, and no generator DMA restart.
     V1 must show no signal on CH2.
   - **Latency:** the same field (frame and parity) on both channels.
-  - **Output line rate against the input:** 0 ppm means the TBC locks its
+  - **Output line rate against the input:** 0 ppm (within ±0.5) means the TBC locks its
     output to its input. A free-running frame synchroniser shows an offset,
     a latency that drifts, and a dropped or repeated frame each time it
     wraps.

@@ -307,7 +307,7 @@ def run_card(r, idx, base=None, g=None):
         L = inp["latency"]
         tiles.append(tile("Latency", f"{L['median_ms']:.2f}", f"ms ({L['fields']:.2f} fields)"))
     if inp.get("rate_ppm") is not None:
-        tiles.append(tile("Output rate vs input", f"{inp['rate_ppm']:+.1f}", "ppm (0 = locked)"))
+        tiles.append(tile("Output rate vs input", f"{inp['rate_ppm']:+.1f}", "ppm (0 ± 0.5 = locked)"))
     v = inp.get("vs_input")
     if v:
         times = lambda x: f"×{x:.2f}" if x is not None else "—"

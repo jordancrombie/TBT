@@ -707,7 +707,7 @@ def print_input(r):
     L = i.get("latency")
     rate = i.get("rate_ppm")
     lock = (f"; output line rate {rate:+.1f} ppm vs input"
-            + (" (locked)" if abs(rate) < 2 else " (free-running: latency drifts)")) if rate is not None else ""
+            + (" (locked)" if abs(rate) < pm.LOCKED_PPM else " (free-running: latency drifts)")) if rate is not None else ""
     if L:
         print(f"  latency: {L['median_ms']:.3f} ms ({L['fields']:.2f} fields), {L['matched']} fields matched, "
               f"{100 * L['steady']:.0f} % within 0.05 ms{lock}")

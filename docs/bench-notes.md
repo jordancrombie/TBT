@@ -327,6 +327,12 @@ so runs are now deleted after their report unless `--keep` is given.
 
 ## Measurement pitfalls
 
+- **"Locked" means within ±0.5 ppm.** Genuinely locked devices read
+  0.0 ± 0.1 ppm against their input. A blind-tested unit (2026-10-23) held a
+  steady +1.75 ppm. Its latency swept the full 0–2 fields within a trial, so
+  it was free-running with a crystal close to ours. The old 2 ppm threshold
+  called it locked.
+
 - **Bar lines must look like bars.** A line qualifies for picture figures
   only if gray is high, blue low, *and* yellow at least 0.7× gray. The
   DVR-220's stray marker copy (black, with the marker's start cell on the

@@ -99,7 +99,7 @@ def verdict(G, tid, rung):
 
 def traits_of(runs):
     """One trial's traits as {key: value}; a trait is left out if its test wasn't run."""
-    runs = [r for r in runs if r]
+    runs = [grade.correct_saved(r) for r in runs if r]
     G = grade.grade(runs)
     t = {}
     v0 = find(runs, "V0")

@@ -27,6 +27,8 @@ TBC passes the structure through. Default: frame.
 import argparse, json, math, os, re, time
 from collections import OrderedDict
 
+from observe_tbc import correct_saved
+
 # Proposed pass thresholds (docs/design.md, Scoring).
 LIMITS = {
     "output_jitter_ns": 5.0,     # output line-period jitter, rms
@@ -399,7 +401,7 @@ def overall(tests):
 
 
 def grade(runs, tbc_class="frame"):
-    runs = [r for r in runs if r]
+    runs = [correct_saved(r) for r in runs if r]   # results saved before the first-field fix
     ctx = ctx_of(runs, tbc_class)
     graded = [grade_run(r, ctx) for r in runs]
     tests = grade_tests(graded)

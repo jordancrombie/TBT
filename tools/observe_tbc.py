@@ -56,6 +56,40 @@ def field_starts(ft, w, us):
     return vs
 
 
+FIRST_FIELD_RULE = 1   # recorded in each analysis; results without it predate field_starts()
+
+
+def correct_saved(r):
+    """A saved analysis from before field_starts(), corrected the same way:
+    its first field is dropped if the capture began less than 12 lines
+    before it (a partial vertical interval). Returns r unchanged if it is
+    newer, or has no field times to decide by."""
+    if not r or r.get("dead") or (r.get("fields") or {}).get("first_field_rule"):
+        return r
+    fl = r.get("field_log") or []
+    if not fl or "t_s" not in fl[0] or fl[0]["t_s"] >= 12 * 63.556e-6:
+        return r
+    import copy
+    r = copy.deepcopy(r)
+    f0, L = fl[0], r["fields"]["lengths"]
+    k = f"{f0['lines']:g}"
+    if L.get(k):
+        L[k] -= 1
+        if not L[k]:
+            del L[k]
+    r["fields"]["count"] -= 1
+    r["fields"]["all_standard"] = bool(L) and set(L) == {"262.5"}
+    r["fields"]["first_field_rule"] = FIRST_FIELD_RULE
+    r["fields"]["corrected_on_load"] = True
+    r["field_log"] = fl[1:]
+    r["field_summary"] = summarize_fields(r["field_log"])
+    if r.get("loss"):
+        r["loss"] = loss_summary(r["test"], r["field_log"])
+    if r.get("hunt"):
+        r["hunt"] = hunt_summary(r["field_log"])
+    return r
+
+
 def frame_events(frames):
     """Classify the frame-counter sequence: each frame should show up twice (two fields)."""
     if len(frames) < 3:
@@ -644,7 +678,8 @@ def analyze(run, ch=1):
     line = np.median(full) * us if len(full) else 63.556 * us
     fields = np.round(np.diff(vs) / line * 2) / 2
     out["fields"] = {"count": int(len(vs)), "lengths": {f"{k:g}": int(v) for k, v in Counter(fields.tolist()).items()},
-                     "all_standard": bool(len(fields) > 0 and np.all(fields == 262.5))}
+                     "all_standard": bool(len(fields) > 0 and np.all(fields == 262.5)),
+                     "first_field_rule": FIRST_FIELD_RULE}
     # No vertical sync at all: the TBC isn't outputting video (seen on a
     # Datavideo TBC-1000, which went dead for about a minute after input losses).
     out["dead"] = len(vs) < 2

@@ -2,7 +2,7 @@
  "schema": "tbt-fingerprint/1",
  "name": "Pioneer DVR-220",
  "notes": "DVD recorder, line-in to line-out passthrough. CH2 at its input, single termination. Rerun with the stray-line fix.",
- "created": "2026-10-23 19:35",
+ "created": "2026-10-24 13:43",
  "trials": [
   {
    "trial": "20261020-164815",
@@ -14,14 +14,14 @@
    "trial": "20261020-185113",
    "channels": 2,
    "runs": 76,
-   "score": 22.3
+   "score": 31.8
   }
  ],
  "score": {
-  "median": 26.8,
+  "median": 31.55,
   "range": [
-   22.3,
-   31.3
+   31.3,
+   31.8
   ]
  },
  "traits": {
@@ -371,16 +371,6 @@
  },
  "variable": [
   {
-   "test": "V0",
-   "rung": 1,
-   "trials": 2,
-   "verdicts": {
-    "pass": 1,
-    "fail": 1
-   },
-   "pass_rate": 0.5
-  },
-  {
    "test": "H2",
    "rung": 3,
    "trials": 2,
@@ -393,6 +383,16 @@
   {
    "test": "C1",
    "rung": 1,
+   "trials": 2,
+   "verdicts": {
+    "fail": 1,
+    "pass": 1
+   },
+   "pass_rate": 0.5
+  },
+  {
+   "test": "L2",
+   "rung": 4,
    "trials": 2,
    "verdicts": {
     "fail": 1,

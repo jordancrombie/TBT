@@ -54,6 +54,21 @@ instead.
   [bench-notes.md](bench-notes.md), and the cause is found before merging:
   either the change or the device.
 
+## Closing issues
+
+Never close an issue without a comment saying what was decided:
+
+- **Done:** what was built (tests, tools, docs), how it was validated, what
+  it found, anything deferred, and the PR. Close it with that comment, or
+  have the PR close it and then comment.
+- **Not done:** why (out of scope, covered by existing tests, not feasible),
+  what covers it instead if anything, and what would make us revisit it.
+- **Deferred:** a comment with the assessment and where it sits in TODO.md;
+  leave it open.
+
+The requester should be able to read the issue alone and know what
+happened, without reading the PR.
+
 ## Planned tooling
 
 A tool that compares a trial with a fingerprint and lists every trait and

@@ -17,6 +17,27 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
       `sips -s format jpeg -s formatOptions 80 /tmp/sample-report.html.png --out docs/sample-report.jpg`.
       Repeat whenever tests or the report layout change.
 
+## Feature requests (ranked 2026-10-24)
+Scored for value against what the suite already covers.
+- [ ] **#25 VBI data and line 21 integrity (82).** Nothing is generated in
+      lines 10–21 today. Encode EIA-608 captions on line 21 (and optionally
+      timecode or a per-line ramp in lines 10–20); decode them on CH1 and CH2,
+      and report a byte error rate plus a per-line map: passed, blanked or
+      damaged. Combine it with S7 and S10 for "during dropped fields".
+      This lays the groundwork for #27.
+- [ ] **#27 Macrovision-like AGC pulses (76).** Pseudo-sync and AGC pulse pairs
+      in the vertical blanking, with their level cycling slowly; optionally
+      colour stripe. Report whether the pulses reach the output, and whether
+      the picture level stays steady. Check the DAC headroom above peak white
+      first. Build it from public descriptions, and give it a neutral name.
+- [ ] **#26 Head-switching disruption (34).** H4 and H3 mostly cover it. Add
+      a line-by-line recovery count after H4's switch point, check whether
+      the marker line moves under H4 (vertical stretch in a frame TBC), and
+      perhaps a variant that adjusts where the switch happens.
+- [ ] **#28 SCH phase drift (30).** F2 and C3 mostly cover it. Add a wandering
+      (back-and-forth) drift rung to F2, and measure the output's own
+      sync-to-subcarrier phase, not just its hue.
+
 ## Rig calibration
 - [x] CH2 wired, teed at the TBC input (2026-10-14): input check, latency,
       output lock and gain against the input on every two-channel run.

@@ -110,6 +110,7 @@ FRAME_HZ = FH_HZ / LINES_PER_FRAME
 
 # Render modifiers for SLOT_ALT lines (src/line_render.h)
 MOD_NO_HSYNC, MOD_EQ_AS_HSYNC, MOD_VS_UNSERRATED, MOD_VS_AS_EQ = 1, 2, 4, 8
+MOD_AGC_OFF, MOD_BURST_INV = 32, 64                              # B3
 
 
 def line_halves(L):
@@ -136,6 +137,10 @@ def alt_mods(test, L):
     tid, p = test["id"], test["params"]
     if tid == "S3":
         return MOD_NO_HSYNC if 100 <= L < 100 + int(p["lines"]) else 0
+    if tid == "B3":
+        if agc_line(L):
+            return MOD_AGC_OFF if int(p["mode"]) >= 2 else 0
+        return MOD_BURST_INV if int(p["mode"]) == 3 and stripe_line(L) else 0
     if tid != "S4":
         return 0
     h = line_halves(L)
@@ -286,6 +291,10 @@ def frame_slots(test, frame):
         return [(L, SLOT_ALT if active and alt_mods(test, L) else 0) for L in range(1, LINES_PER_FRAME + 1)]
     if tid == "S3":
         return [(L, SLOT_ALT if alt_mods(test, L) else 0) for L in range(1, LINES_PER_FRAME + 1)]
+    if tid == "B3":  # AGC lines take their off rendering in the cycle's off half; stripes always
+        off = not agc_on(test, frame)
+        return [(L, SLOT_ALT if alt_mods(test, L) and (off if agc_line(L) else True) else 0)
+                for L in range(1, LINES_PER_FRAME + 1)]
     if tid in ("S10", "S11", "V1"):  # lost fields: field 1 = lines 1..263, field 2 = 264..525
         lost = SLOT_NOISE if tid == "S11" else SLOT_DEAD
         n = 10 ** 9 if tid == "V1" else int(p["fields"])
@@ -434,3 +443,40 @@ def decode_id(cells):
     if c[:2] != [1, 0] or c[7:] != [0, 1] or sum(c[2:7]) % 2 != 1:
         return None
     return (c[2] << 3) | (c[3] << 2) | (c[4] << 1) | c[5]
+
+
+# ---- AGC pulses (B3; src/vbi.h) ----------------------------------------------
+# Macrovision-like, from the Ryan patents (US4631603, US4819098): the licensed
+# production spec isn't public.
+AGC_F1, AGC_F2 = (12, 19), (275, 282)
+AGC_PAIRS, AGC_START_US, AGC_PAIR_US = 6, 12.0, 8.0
+PSEUDO_US, AGC_GAP_US, AGC_US = 2.0, 1.0, 3.0
+PSEUDO_IRE, AGC_IRE = -40.0, 110.0
+AGC_CYCLE = 30                                   # frames on, then frames off
+STRIPE_F1, STRIPE_F2, STRIPE_EVERY, STRIPE_LINES = (30, 250), (293, 513), 20, 4
+
+
+def agc_line(L):
+    return AGC_F1[0] <= L <= AGC_F1[1] or AGC_F2[0] <= L <= AGC_F2[1]
+
+
+def stripe_line(L):
+    for a, b in (STRIPE_F1, STRIPE_F2):
+        if a <= L <= b:
+            return (L - a) % STRIPE_EVERY < STRIPE_LINES
+    return False
+
+
+def agc_on(test, frame):
+    """B3: whether the AGC pulses are up in `frame` (always, on rung 1)."""
+    return test["id"] != "B3" or int(test["params"]["mode"]) < 2 or frame % (2 * AGC_CYCLE) < AGC_CYCLE
+
+
+def agc_windows():
+    """[(kind, t0_us, t1_us)] of one AGC line: 'pseudo' and 'agc' pulses."""
+    out = []
+    for k in range(AGC_PAIRS):
+        t = AGC_START_US + k * AGC_PAIR_US
+        a = t + PSEUDO_US + AGC_GAP_US
+        out += [("pseudo", t, t + PSEUDO_US), ("agc", a, a + AGC_US)]
+    return out

@@ -378,6 +378,18 @@ rms line jitter.
   - **Lines 10–20 and 273–282 are blanked,** all 21 of them, in every field
     (305 of 305). It keeps line 21 only: a deliberate choice, presumably to
     keep captions while stripping other VBI data.
+  - **AGC copy-protection pulses (B3) are removed,** with lines 12–19 flat on
+    every field, as its blanking of lines 10–20 predicted. It isn't blinded:
+    the gray bar stays at 63 IRE through the 1 s on / 1 s off cycle (0.0 IRE
+    pumping). **Colour stripe is removed too:** striped lines come out at the
+    same hue as the rest (the input shows the 180° stripe), so it decodes
+    colour against a steady reference, not each line's own burst.
+  - **Torn frames on line-count changes are occasional, not fixed:** S6 r6
+    (+10 lines a field) tears a frame in about 1 run in 4 (2 of 8 trials, 2 of
+    6 repeats). S6 r5 (−10 lines) did it once in 15 runs (the B3 regression
+    trial; 6 repeats on the same firmware passed). It's the frame
+    synchroniser slipping a field as the frame store wraps, so it depends on
+    when that falls in the capture.
 
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
@@ -474,6 +486,11 @@ rms line jitter.
   second.
 
 ## Measurement pitfalls
+
+- **Output H jitter depends on the capture rate:** 0.62 ns at 50 MS/s, 2.51
+  ns at 12.5 MS/s on the same unit (V0, TBC-3000), from coarser sampling of
+  the sync edges. B3 and X1 capture at 12.5 MS/s, so their 2.5 ns isn't the
+  TBC. Compare jitter only between runs at the same rate.
 
 - **A capture that starts inside a vertical interval** (fixed 2026-10-24,
   found by the PR #29 regression trial). It sees only that interval's later

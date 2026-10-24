@@ -32,6 +32,28 @@ constexpr float ID_START_US = 12.0f, ID_CELL_US = 1.5f;
 constexpr int ID_CELLS = 9;
 constexpr float STAIR_US[4] = {30.0f, 38.0f, 46.0f, 54.0f};  // 25, 50, 75 IRE steps
 
+// AGC pulses (B3), modelled on the Ryan / Macrovision patents (US4631603,
+// US4819098); the licensed production spec isn't public. On lines 12-19 and
+// 275-282: AGC_PAIRS pairs of a pseudo-sync pulse (down to sync tip) and an
+// AGC pulse above peak white, every AGC_PAIR_US from AGC_START_US. B3 rung 2+
+// cycles them: AGC_CYCLE frames with AGC pulses on, then as many at blanking
+// (the pseudo-syncs stay), the brightness-pumping pattern on copied tapes.
+// Rung 3 adds colour stripe: the burst inverted on STRIPE_LINES lines in every
+// STRIPE_EVERY, in the picture.
+constexpr int AGC_F1_FIRST = 12, AGC_F1_LAST = 19, AGC_F2_FIRST = 275, AGC_F2_LAST = 282;
+constexpr int AGC_PAIRS = 6;
+constexpr float AGC_START_US = 12.0f, AGC_PAIR_US = 8.0f;
+constexpr float PSEUDO_US = 2.0f, AGC_GAP_US = 1.0f, AGC_US = 3.0f;
+constexpr float PSEUDO_IRE = -40.0f, AGC_IRE = 110.0f;
+constexpr int AGC_CYCLE = 30;  // frames on, then frames off (1 s each)
+constexpr int STRIPE_F1_FIRST = 30, STRIPE_F1_LAST = 250, STRIPE_F2_FIRST = 293, STRIPE_F2_LAST = 513;
+constexpr int STRIPE_EVERY = 20, STRIPE_LINES = 4;
+
+bool agc_line(int line);
+bool stripe_line(int line);
+// Segments for an AGC line: pseudo-syncs, and AGC pulses at `agc_ire`.
+int agc_segments(float agc_ire, Segment *out, int max);
+
 // Bit period, us (32 x fH).
 float cc_bit_us();
 uint8_t with_parity(uint8_t c7);

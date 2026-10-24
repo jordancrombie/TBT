@@ -250,6 +250,15 @@ def fault_html(r):
         parts.append(f'<p><span class="badge {cls}">{esc(L["fields_lost"])} lost field(s): {esc(verdict)}</span> '
                      f'blank {L["blank_fields"]} · garbled {L["garbled_fields"]} · own pattern {L["fallback_fields"]} · '
                      f'non-standard {L["nonstandard_fields"]}</p>')
+    A = r.get("agc")
+    if A:
+        cls = "b-ok" if A["state"] == "stripped" else "b-warn"
+        p = A.get("pumping_ire")
+        parts.append(f'<p><span class="badge {cls}">AGC pulses {esc(A["state"])}</span> '
+                     f'pseudo-sync {A["pseudo_ire"] or 0:.0f} IRE · AGC {A["agc_on_ire"] or 0:.0f} IRE'
+                     + (f' · picture pumping {p:+.1f} IRE' if p is not None else '')
+                     + (f' · colour stripe {"on output" if A["stripe_on_output"] else "removed"}'
+                        if "stripe_on_output" in A else '') + '</p>')
     V = r.get("vbi")
     if V:
         c = V["captions"]

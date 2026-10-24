@@ -49,6 +49,7 @@ HINTS = {
     "V1": "NO INPUT: WHAT DOES IT SHOW?",
     "B1": "TURN CAPTIONS ON (CC1) TO READ",
     "B2": "HIDDEN VBI LINES: KEPT?",
+    "B3": "COPY GUARD: NO PUMPING, NO ROLL",
 }
 
 # The firmware's parameter names, as a viewer would say them.
@@ -58,7 +59,7 @@ UNITS = {
     "rise_ns": "NS EDGES", "lines": "LINES", "variant": "", "delta_lines": "LINES",
     "every_frames": "FRAMES APART", "peak_lines": "LINES", "burst_pp_ire": "IRE BURST",
     "rms_deg": "DEG RMS", "deg": "DEG", "length_us": "US", "snr_db": "DB SNR",
-    "pp_ire": "IRE P-P", "white_pct": "% LEVEL", "fields": "FIELDS", "stress": "", "disruption": "",
+    "pp_ire": "IRE P-P", "white_pct": "% LEVEL", "fields": "FIELDS", "stress": "", "disruption": "", "mode": "",
 }
 PX = (7, 5, 4, 3, 3)   # font size per card line (the firmware shrinks a line to fit)
 
@@ -91,6 +92,9 @@ def rungs_text(info, rungs):
         return f"{len(rungs)} STRESS TYPES" if len(rungs) > 1 else f"STRESS TYPE {rungs[0]}"
     if info["p1"] == "disruption":  # B1
         names = {1: "CLEAN", 2: "DROPPED FIELD", 3: "LOST FIELDS"}
+        return ", ".join(names.get(r, str(r)) for r in rungs)
+    if info["p1"] == "mode":  # B3
+        names = {1: "STEADY", 2: "CYCLING", 3: "CYCLING + COLOUR STRIPE"}
         return ", ".join(names.get(r, str(r)) for r in rungs)
     if info["p1"] == "variant":
         return f"VARIANT{'S' if len(rungs) > 1 else ''} {', '.join(str(r) for r in rungs)}"

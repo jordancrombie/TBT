@@ -8,7 +8,7 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Rungs.** Each test is a ladder of *rungs*, from mild (rung 1) to severe.
   Run one with `run_test.py H1 4`, or several with `run_suite.py H1:1-6`.
   The default field trial runs one representative rung of every test, plus
-  every rung of S10, S11, B1 and X1.
+  every rung of S10, S11, B1, B3 and X1.
 - **Two kinds of TBC.** A *line TBC* straightens each line's timing but passes
   the field structure through as it came. A *frame TBC* or synchroniser
   stores whole frames and always outputs standard fields. Where they should
@@ -19,9 +19,9 @@ what a good TBC should do with it, and every rung (version) of it.
 - **Colour-under.** By default TBT imitates VHS and Betamax: sync, picture
   and the colour signal's envelope are disturbed, but the colour carrier
   itself stays steady, as a deck's colour processor delivers it.
-- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.4.0`
-  (0.4.0 added the B tests: captions and the VBI line map; 0.3.0 added H6
-  and the title card). On
+- **Catalog version.** Test model `perturb/1`, firmware `ntsc-gen 0.5.0`
+  (0.5.0 added B3, AGC pulses; 0.4.0 added B1 and B2, captions and the VBI
+  line map; 0.3.0 added H6 and the title card). On
   the serial console, `tests` prints the catalog the firmware actually runs.
   If this page and the firmware disagree, the firmware is right (and this
   page needs fixing).
@@ -388,6 +388,26 @@ line, or damages, and whether it changes their levels.
 10–20 is common by design and counts as a minor miss; moving or damaging them
 fails.
 **Rungs:** 1.
+
+### B3 · AGC pulses (copy protection)
+**Imitates:** a copy-protected commercial tape (Macrovision-like). Lines
+12–19 and 275–282 each carry 6 pairs of a *pseudo-sync* pulse (down to sync
+level) and an *AGC pulse* at 110 IRE, above peak white. A recorder's automatic
+gain control measures sync against these and sees a signal far too strong, so
+it turns the picture down. The licensed Macrovision spec isn't public: this
+is built from the Ryan patents (US4631603, US4819098), within their stated
+ranges.
+**Why it matters:** many commercial VHS tapes carry it. A TBC can remove it
+(good for whatever captures its output), pass it on, or be fooled by it
+itself: its picture level pumps, or it loses lock.
+**Good TBC:** locks and keeps its picture level steady; ideally removes the
+pulses (and the colour stripe).
+
+| Rung | Signal |
+|---|---|
+| 1 | AGC pulses steady at 110 IRE |
+| 2 | Cycling: 1 s at 110 IRE, then 1 s at blanking (pseudo-syncs stay), the brightness-pumping pattern of copied tapes |
+| 3 | Rung 2 plus colour stripe: the colour burst inverted on 4 lines in every 20 of the picture |
 
 ## X: Fault hunt
 

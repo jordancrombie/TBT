@@ -2,7 +2,7 @@
  "schema": "tbt-fingerprint/1",
  "name": "AVT-8710 (green)",
  "notes": "Fingerprint series, trial 1 of 3 back to back. CH2 at the TBC input, single termination (fixed 2026-10-15).",
- "created": "2026-10-24 13:43",
+ "created": "2026-10-24 16:24",
  "trials": [
   {
    "trial": "20261015-113907",
@@ -264,30 +264,6 @@
    ],
    "agree": null
   },
-  "output_jitter_ns": {
-   "kind": "unit",
-   "label": "Output H jitter (V0)",
-   "unit": "ns rms",
-   "n": 4,
-   "value": 0.42,
-   "range": [
-    0.4,
-    0.46
-   ],
-   "agree": null
-  },
-  "noise_out_ire": {
-   "kind": "unit",
-   "label": "Output noise on gray (V0)",
-   "unit": "IRE rms",
-   "n": 4,
-   "value": 0.385,
-   "range": [
-    0.32,
-    0.5
-   ],
-   "agree": null
-  },
   "acc_fraction": {
    "kind": "unit",
    "label": "ACC fraction (0 none, 1 full)",
@@ -372,6 +348,14 @@
    ],
    "agree": null
   },
+  "ch1_termination": {
+   "kind": "rig",
+   "label": "CH1 (TBC output) termination, from its sync depth",
+   "unit": "",
+   "n": 4,
+   "value": "open (unterminated)",
+   "agree": 1.0
+  },
   "sync_depth_v": {
    "kind": "rig",
    "label": "Output sync depth (V0; depends on termination)",
@@ -381,6 +365,30 @@
    "range": [
     0.539,
     0.542
+   ],
+   "agree": null
+  },
+  "output_jitter_ns": {
+   "kind": "rig",
+   "label": "Output H jitter (V0; scope floor, depends on termination)",
+   "unit": "ns rms",
+   "n": 4,
+   "value": 0.42,
+   "range": [
+    0.4,
+    0.46
+   ],
+   "agree": null
+  },
+  "noise_out_ire": {
+   "kind": "rig",
+   "label": "Output noise on gray (V0; scope floor, depends on termination)",
+   "unit": "IRE rms",
+   "n": 4,
+   "value": 0.385,
+   "range": [
+    0.32,
+    0.5
    ],
    "agree": null
   }

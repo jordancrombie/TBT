@@ -551,7 +551,10 @@ rms line jitter.
   scope's input noise is fixed in volts and the signal is now half the
   volts, so its sync edges are half as steep. The scope's range doesn't
   matter (2 V and 5 V read the same, A/B twice). Every fingerprint before
-  this date was measured unterminated. Line jitter floor 3.1 ns rms
+  this date was measured unterminated. So fingerprints now record CH1's
+  termination (from the sync depth: under 0.40 V is terminated), and output
+  jitter and noise are rig-dependent traits, recorded but not compared. The
+  library was rebuilt with that; nothing else in it changed. Line jitter floor 3.1 ns rms
   (CH2's line-period jitter for H1 r4, 50 ns rms injected, reads 77 ns: a
   period spans two independently jittered syncs, so expect √2 × 50 = 71 ns).
 - **Picture lines are picked relatively.** `picture_metrics` used to accept

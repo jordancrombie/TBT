@@ -269,7 +269,10 @@ in the "after" window.
     wraps.
   - **Gain against the real input:** burst, chroma and gray ratios, and the
     hue shift.
-  - **Output level** (sync depth in volts), to catch a sagging output.
+  - **Output level** (sync depth in volts), to catch a sagging output. It
+    also tells whether CH1 is terminated (about 0.28 V) or open (about
+    0.56 V), which fingerprints record: an open CH1 doubles the volts and
+    lowers the measured jitter and noise floors.
 
 ## Scoring (implemented, provisional)
 

@@ -65,6 +65,17 @@ ESP32's DAC can push its output up but barely pull it down, so an open-ended
 run turns the 3.58 MHz chroma into a sawtooth (about 4× too small) and the
 picture goes dark and rolls.
 
+**CH1 without a terminator still works,** if you have no spare 75 Ω
+terminator or tee: a TBC drives its output fine into an open end. All the
+picture figures are scaled from the signal's own sync, so gains, hue, timing
+and grades come out the same. What changes: the output reads twice the volts
+(sync about 0.56 V instead of 0.28), and the scope's own noise counts for
+less, so output jitter and noise read lower than on a terminated rig (0.66
+against 0.97 ns, 0.33 against 0.39 IRE on the same TBC-3000). Fingerprints
+record which way CH1 was wired, worked out from the sync depth, and don't
+compare those figures. Our own rig was unterminated until 2026-10-24; see
+[Fingerprints](#fingerprints).
+
 The default levels (`levels 0 73`) still need calibrating. The target is
 286 mV of sync and 714 mV of white above blanking. Measured on CH2 into the
 TBC's 75 Ω input: 236 mV of sync (82 %). Relative to that sync, burst reads
@@ -442,9 +453,10 @@ Its traits come in three kinds:
   by them.
 - **Unit traits** are measurements that may differ between units of one
   model: clock offset against the input, latency range, luma gain,
-  saturation, hue offset, output burst, jitter floor, noise.
-- **Rig-dependent** figures, such as output level in volts, are recorded
-  but won't be used to match.
+  saturation, hue offset, output burst.
+- **Rig-dependent** figures are recorded but not used to match: whether CH1
+  was terminated (worked out from the output sync depth), the sync depth
+  itself, and the output jitter and noise floors, which depend on it.
 
 Each trait records how many trials agreed. Tests whose verdict varies
 between trials are listed as rates ("S8 r5 failed in 4 of 6"), because a
@@ -455,7 +467,18 @@ same unit.
 the library that identification will match unknown TBCs against.
 `--html` writes a readable trait card to `reports/`.
 
-The library holds five devices so far (the TBC-3000 once per input). The **timing correction class** comes
+The library holds five devices so far (the TBC-3000 once per input).
+
+> **Every fingerprint in the library so far was measured with CH1
+> unterminated** (2026-10-13 to 10-24, before our rig had its terminator).
+> Each records that ("CH1 termination: open"). Behaviour traits, gains, hue
+> and clock are unaffected, so they compare with any rig. Only the output
+> jitter and noise below read lower than a terminated rig would. That makes
+> them a direct reference if your rig is unterminated too; on a terminated
+> rig, expect about ×1.5 the jitter and ×1.2 the noise. New entries will be
+> measured terminated, and will say so.
+
+The **timing correction class** comes
 from how fast and how completely each one corrects line timing (see
 [docs/design.md](docs/design.md)).
 
@@ -470,7 +493,7 @@ from how fast and how completely each one corrects line timing (see
 | Colour killer | yes | yes | no | no | no |
 | Output vs input | free-running, +22 ppm | free-running, +1.8 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−18 to +1.6 ppm) |
 | Luma gain | ×0.63 | ×0.82 / ×0.79 (hue −1° / +3°) | ×0.99 | ×1.00 | ×1.02 |
-| Output noise / jitter | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
+| Output noise / jitter (CH1 unterminated) | 0.53 IRE / 0.87 ns | 0.32, 0.33 IRE / 0.57, 0.64 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.45 IRE / 0.65 ns |
 | Field-trial score (provisional) | 51–53 | 49–51 / 51–52 | 38–44 | 31–32 | 62–64 |
 | Captions / VBI lines 10–20 (B1, B2) | not yet tested | captions intact (one field damaged after each signal loss) / blanked | not yet tested | not yet tested | not yet tested |
 | Copy protection: AGC pulses / colour stripe (B3) | not yet tested | removed, not blinded / removed | not yet tested | not yet tested | not yet tested |

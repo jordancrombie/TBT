@@ -55,8 +55,12 @@ Scored for value against what the suite already covers.
 - [x] Terminate CH1 (2026-10-24): sync 0.56 → 0.281 V. Output jitter and
       noise floors rose (half the volts against the same scope noise); see
       the bench notes.
-  - [ ] Decide: output jitter and noise as rig-dependent fingerprint traits
-        (the library was measured unterminated).
+  - [x] Output jitter and noise are rig-dependent fingerprint traits, and
+        fingerprints record CH1's termination; the library (all
+        unterminated) was rebuilt with it.
+  - [ ] After the levels calibration: terminated baselines, starting with
+        the reference unit (TBC-3000 input A), then the others as they come
+        back on the bench. Keep the unterminated entries as references.
 - [ ] Calibrate `levels` on CH2 to 286 mV sync / 714 mV white (now about
       236 mV sync, 82 %). Leave headroom below the sync tip (sync at code
       ~15–20), so S1 can go deeper than 40 IRE and L2 noise isn't clipped.

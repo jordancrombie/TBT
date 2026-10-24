@@ -26,6 +26,12 @@ unit, with 6 trials, no heat fault, and it's normally on the bench. If it's
 unavailable, use another unit whose fingerprint has 3 or more trials, and
 say which in the PR.
 
+Its fingerprint was measured with CH1 unterminated; the rig is terminated
+since 2026-10-24. Rig-dependent traits (CH1 termination, sync depth, output
+jitter and noise) are never compared. Everything else is, as below. Once
+the generator's levels are calibrated, a terminated baseline for the
+reference unit replaces it.
+
 ## A regression field trial passes when
 
 Run `run_suite.py full --grade` on the reference unit, then compare with
@@ -33,8 +39,10 @@ its fingerprint:
 
 1. **Every model trait matches** (timing class, output lock, lost-field
    tolerance, colour killer, and so on).
-2. **Unit traits fall within the fingerprint's range:** clock offset, gain,
-   hue, noise, head-switch skew left.
+2. **Unit traits fall within the fingerprint's range:** gain, hue,
+   head-switch skew left, and the clock offset within about ±0.5 ppm (a
+   crystal drifts that much over a day). Rig-dependent traits aren't
+   compared.
 3. **No test verdict changes,** except tests the fingerprint lists as
    variable for that unit.
 4. **The rig stays clean:** 0 generator DMA restarts during captures, and the

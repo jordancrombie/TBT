@@ -577,9 +577,15 @@ rms line jitter.
   ES-10's input on the line the bounce rose back above the slicer on ~10 %
   of lines, so the edge was taken at the second crossing, ~50 ns late. With
   the TBC-3000 it stayed below. Sliced at 15–70 % of sync depth on the first
-  crossing, the input was clean (4.9–6.5 ns). `sync_pulses` now closes gaps
-  above the slicer shorter than 0.25 µs and takes the first crossing: CH2
-  6.0–6.2 ns at both levels, and kept runs analyse identically. The
+  crossing, the input was clean (4.9–6.5 ns). `sync_pulses` now looks back
+  up to 0.25 µs from each edge for an earlier crossing and uses it; which
+  pulses exist is decided as before. CH2 reads 6.0–6.2 ns at both levels,
+  and kept runs analyse identically. **My first fix was wrong:** it closed
+  short gaps above the slicer anywhere, which at full levels merged
+  colour-burst troughs into extra pulses, so frame markers were counted
+  twice (L4 r4: 47 markers in a 30-field capture). The first ES-10
+  rebaseline trials were graded with it (dozens of runs "invalid: generator
+  frame sequence broken"); they were set aside and re-run. The
   TBC-3000 rebaseline and every earlier trial read 6.0–6.5 ns on CH2, so
   they weren't affected. A reconstruction low-pass after the DAC would
   remove the glitch at its source (TODO).

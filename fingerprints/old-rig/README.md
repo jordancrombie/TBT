@@ -10,8 +10,13 @@ Each entry records both (`ch1_termination`, and the sync depths). What they
 mean for the figures:
 - **Behaviour traits** (timing class, lost-field tolerance, colour killer, VBI
   and so on) held when units were re-measured on the calibrated rig.
-- **Luma gain reads about 18 % low:** a TBC regenerates its own sync but
-  passes the picture in proportion to its under-level input.
+- **Luma gain reads about 18 % low** on units that pass the picture in
+  proportion to their under-level input (the Datavideos: TBC-3000 ×0.79 →
+  ×0.94, TBC-1000 ×0.63 → ×0.83). The AVT-8710 scales the picture to its
+  input's sync, so it wasn't affected (×0.99 both).
+- **Some early entries (2026-10-13 to 10-15) captured H3 for 0.39 s,** which
+  can miss its 0.5 s step, so their H3 passes and "slow timing corrects"
+  traits may be untested (the AVT's was).
 - **Timing figures are biased:** with full-size sync, the TBC-3000 corrected
   more (head-switch skew left 77 → 57 ns, correction bandwidth 424 → 523 Hz).
 - **Output jitter and noise read lower** than a terminated rig (twice the

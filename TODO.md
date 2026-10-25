@@ -78,9 +78,15 @@ Scored for value against what the suite already covers.
   - [x] Datavideo TBC-3000 input A (the reference unit), 2026-10-24
   - [ ] Datavideo TBC-1000
   - [ ] AVT-8710 (green)
-  - [ ] Pioneer DVR-220
+  - [x] Pioneer DVR-220, 2026-10-24/25 (third set: the first had V0 caught
+        mid-recovery, the second the old B3 detector)
   - [x] Panasonic DMR-ES10 (lid off), 2026-10-24 (third attempt: the first
         two were spoilt by analysis bugs, since fixed; see the bench notes)
+- [ ] Longer S10/S11 captures for slow-recovering units: the DVR-220's
+      picture often hasn't come back within the 1.3 s capture after an 8-11
+      field gap, so those rungs read "gap not captured" and its tolerance
+      comes out 8 (1 of 3 trials agree) where it blanked through every gap
+      seen.
 - [ ] Checksum the other serial replies (`lens`, `pdump`, `manifest`), as
       `dump` now is.
 - [x] Generator chroma: it read about 0.68× nominal on CH2 until 2026-10-14,

@@ -458,6 +458,30 @@ rms line jitter.
   (an unchanged picture read 34 % bright in sync-scaled IRE). Each was found
   in the data, fixed and checked on kept captures before re-running.
 
+## Pioneer DVR-220 on the calibrated rig (2026-10-24/25)
+
+- **Slow gain recovery after losing its input:** V0 gray 76.1 IRE 2 s after
+  4 s of no signal, 77.9 after 5 s, 79.8 after 10 s, 80.9 after 20 s (80.6
+  settled). Back to back, each trial's V0 followed the previous trial's V1
+  and was captured mid-recovery, so about 40 later runs failed "luma" by
+  ~3 IRE (scores 13–24). `run_suite.py` now holds clean V0 for 20 s before
+  the first test and after V1, S10, S11, X1, B1 and B3 blocks. The TBC-3000
+  and ES-10 recover at once (V0 matched later runs within 0.1 IRE), so their
+  baselines weren't affected.
+- **Blinded by copy protection:** from a settled V0 (582 mV above black),
+  B3 r1 took its picture to 495 mV after 2 s and 458 mV (−21 %) after 20 s,
+  still falling: its slow AGC is fooled. It also puts out its own APS on
+  lines 10–17 (pseudo-syncs −56 IRE; AGC pulses cycling 97–151 IRE) and cuts
+  its sync to 75 % (216 mV), like the ES-10. The cycling AGC pulses made the
+  first detector (peaks above 90 IRE) flip between "altered" and
+  "replaced"; pseudo-sync dips now mark them.
+- **VBI:** blanks lines 10–19; line 20 carries its known stray copy of our
+  frame marker (B2: "damaged"). Captions intact but slipping against the
+  picture, as on the ES-10.
+- **Variable:** 15 tests vary between trials (H4 r5's skew left, 8.6 ns, sits
+  at the 10 ns limit; V0 luma at +2.3 IRE once, against 2). Score 30–41.
+- **Three sets of trials;** the first two are in `reports/discarded/`.
+
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
 - **First field trial, 2026-10-20** (CH2 at its input, single termination;

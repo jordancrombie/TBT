@@ -2,7 +2,7 @@
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-3000 (input A)",
  "notes": "Source A; controls at baseline; calibrated levels 5/92; CH1 terminated",
- "created": "2026-10-24 18:32",
+ "created": "2026-10-24 20:29",
  "trials": [
   {
    "trial": "20261024-180741",
@@ -14,7 +14,7 @@
    "trial": "20261024-181930",
    "channels": 2,
    "runs": 83,
-   "score": 62.1
+   "score": 62.5
   },
   {
    "trial": "20261024-183112",
@@ -24,10 +24,10 @@
   }
  ],
  "score": {
-  "median": 62.1,
+  "median": 62.4,
   "range": [
    61.7,
-   62.4
+   62.5
   ]
  },
  "traits": {
@@ -473,6 +473,16 @@
    "verdicts": {
     "pass": 2,
     "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "B1",
+   "rung": 2,
+   "trials": 3,
+   "verdicts": {
+    "marginal": 2,
+    "pass": 1
    },
    "pass_rate": 0.67
   }

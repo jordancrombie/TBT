@@ -2,32 +2,32 @@
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-3000 (input B)",
  "notes": "Source B (rear, left as seen from the back); controls at baseline; calibrated levels 5/92; CH1 terminated",
- "created": "2026-10-24 17:54",
+ "created": "2026-10-24 20:29",
  "trials": [
   {
    "trial": "20261024-172834",
    "channels": 2,
    "runs": 83,
-   "score": 53.3
+   "score": 53.7
   },
   {
    "trial": "20261024-174013",
    "channels": 2,
    "runs": 83,
-   "score": 53.6
+   "score": 54.1
   },
   {
    "trial": "20261024-175153",
    "channels": 2,
    "runs": 83,
-   "score": 48.7
+   "score": 49.2
   }
  ],
  "score": {
-  "median": 53.3,
+  "median": 53.7,
   "range": [
-   48.7,
-   53.6
+   49.2,
+   54.1
   ]
  },
  "traits": {

@@ -562,6 +562,7 @@ def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
     cap = {"fields": 0, "found": 0, "intact": 0, "parity_errors": 0, "wrong_data": 0, "missing": 0,
            "other_frame": Counter(), "line_index": Counter(), "runin_ire": [], "data_ire": []}
     f1_frames, f2_frames = [], []
+    decoded = []          # (bytes, frame of the picture they came with), parity good
     lmap = {"in_place": 0, "moved": 0, "blank": 0, "damaged": 0, "per_line": {}, "stair": []}
     for f in log:
         if f["class"] != "ours" or f["frame"] is None or f["i"] + 1 >= len(vs):
@@ -590,21 +591,10 @@ def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
             cap["runin_ire"].append(d["runin_ire"])
             if d["data_ire"] is not None:
                 cap["data_ire"].append(d["data_ire"])
-            # Which field's data this is comes from the data itself: after a
-            # dropped field the next field arrives with the other timing parity.
-            pair, fr = tuple(d["pair"]), f["frame"]
-            which = next((fld for fld in (f["parity"], 3 - f["parity"]) if pm.cc_pair(fld, fr) == pair), None)
             if not d["parity_ok"] or not d["start_bit"]:
                 cap["parity_errors"] += 1
-            elif which:
-                cap["intact"] += 1
-                (f1_frames if which == 1 else f2_frames).append(fr)
             else:
-                off = next((o for o in (-1, 1, -2, 2, -3, 3) for fld in (1, 2) if pm.cc_pair(fld, fr + o) == pair), None)
-                if off is not None:
-                    cap["other_frame"][off] += 1
-                else:
-                    cap["wrong_data"] += 1
+                decoded.append((tuple(d["pair"]), f["frame"]))
         if test["id"] == "B2":
             n_ids = pm.MAP_F1[1] - pm.MAP_F1[0] + 1 if f["parity"] == 1 else pm.MAP_F2[1] - pm.MAP_F2[0] + 1
             for idx in range(1, n_ids + 1):
@@ -623,6 +613,30 @@ def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
                 lmap[st] += 1
                 lmap["per_line"].setdefault(key, Counter())[st] += 1
 
+    # Which frame's caption each field carries. Intact = parity good and the
+    # bytes exactly those of a frame within 3 of the picture's: a unit may
+    # pass line 21 out of step with its picture, and the offset may slip as
+    # it runs (the DMR-ES10: in step or one frame ahead, varying), which is
+    # harmless for captions. The offsets are reported, and the caption
+    # stream's own continuity (field 2's frame counter, unique per frame) is
+    # what a caption decoder would see. Which field's data it is comes from
+    # the bytes: after a dropped field the next field arrives with the other
+    # timing parity.
+    which = lambda pair, fr: next((fld for fld in (1, 2) if pm.cc_pair(fld, fr) == pair), None)
+    offsets = (0, -1, 1, -2, 2, -3, 3)
+    for pair, fr in decoded:
+        o = next((o for o in offsets if which(pair, fr + o)), None)
+        if o is None:
+            cap["wrong_data"] += 1
+            continue
+        cap["intact"] += 1
+        cap["other_frame"][o] += 1                  # here: every offset, 0 included
+        (f1_frames if which(pair, fr + o) == 1 else f2_frames).append(fr + o)
+    offs = cap["other_frame"]
+    offset = max(offs, key=lambda o: (offs[o], o == 0)) if offs else 0
+    in_step = offs.get(0, 0) / cap["intact"] if cap["intact"] else None
+    cap["other_frame"] = Counter({o: n for o, n in offs.items() if o != 0})
+
     def seq(frames):
         """Consecutive same-field caption data: repeated (a held frame) or skipped frames."""
         d = np.diff(frames)
@@ -636,7 +650,8 @@ def vbi_summary(x, fs, hs, vs, log, tip, blank, test, inp_log=None):
                         "other_frame": {str(k_): v for k_, v in sorted(cap["other_frame"].items())},
                         "line_index": {str(k_): v for k_, v in sorted(cap["line_index"].items())},
                         "runin_ire": med(cap["runin_ire"]), "data_ire": med(cap["data_ire"]),
-                        "field1_stream": seq(f1_frames), "field2_stream": seq(f2_frames)}}
+                        "field1_stream": seq(f1_frames), "field2_stream": seq(f2_frames),
+                        "frame_offset": offset, "in_step_fraction": in_step}}
     c = out["captions"]
     c["intact_fraction"] = c["intact"] / c["fields"] if c["fields"] else None
     c["state"] = ("no fields" if not c["fields"] else "stripped" if not c["found"] else
@@ -666,7 +681,10 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
 
     Pulses: on each of our fields' AGC lines, the pseudo-sync and AGC pulse
     levels, so each line is passed (pulses there), stripped (flat), or
-    altered. Blinded: the picture's gray level in the cycle's on half against
+    altered. Lines 10-20 are also scanned for copy-protection pulses anywhere
+    (dips below -25 IRE and peaks above 90): a unit that detects protection
+    may put its own on its output instead (the DMR-ES10 does: -56 / +163 IRE
+    on lines 10-17, latched on), which reads as "replaced". Blinded: the picture's gray level in the cycle's on half against
     its off half (a TBC whose own AGC is fooled darkens with the pulses), and
     for rung 3 the hue on colour-stripe lines against the others."""
     us = fs / 1e6
@@ -677,6 +695,7 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
     bar = lambda b, a=0.3, z=0.7: (9.4 + 52.6 * (b + a) / 7, 9.4 + 52.6 * (b + z) / 7)
     mode = int(test["params"]["mode"])
     lines = {"passed": 0, "stripped": 0, "altered": 0}
+    own = {"fields": 0, "lines": Counter(), "min": [], "max": []}   # pulses that aren't ours
     pseudo, agc_on_lv, agc_off_lv = [], [], []
     gray = {True: [], False: []}
     hue = {True: [], False: []}
@@ -687,6 +706,20 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
         if len(field) < 200:
             continue
         on = pm.agc_on(test, f["frame"])
+        theirs = False
+        for idx in range(1, 12):                      # lines 10-20 (273-283)
+            s_ = field[idx - 1]
+            seg = np.convolve(ire(x[int(s_ + 10 * us):int(s_ + 60 * us)]), box, mode="valid")
+            if seg.min() < -25 and seg.max() > 90:
+                ps = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "pseudo"]
+                ag = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "agc"]
+                ours = AGC_INDEX[0] <= idx <= AGC_INDEX[1] and min(ps) < -25 and min(ag) > 0.6 * pm.AGC_IRE
+                if not ours:
+                    theirs = True
+                    own["lines"][idx] += 1
+                    own["min"].append(float(seg.min()))
+                    own["max"].append(float(seg.max()))
+        own["fields"] += theirs
         for idx in range(AGC_INDEX[0], AGC_INDEX[1] + 1):
             s_ = field[idx - 1]
             ps = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "pseudo"]
@@ -716,9 +749,16 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
                 hue[pm.stripe_line(L)].append(float((d + 180) % 360 - 180))
     med = lambda v: float(np.median(v)) if v else None
     n = sum(lines.values())
+    nf = len(gray[True]) + len(gray[False])
+    replaced = nf and own["fields"] > 0.5 * nf
     out = {"lines": lines, "checked": n,
-           "state": ("no fields" if not n else "stripped" if lines["stripped"] > 0.95 * n else
+           "state": ("no fields" if not n else "replaced" if replaced else
+                     "stripped" if lines["stripped"] > 0.95 * n else
                      "passed" if lines["passed"] > 0.95 * n else "altered"),
+           "own_pulses": {"fields": own["fields"], "of_fields": nf,
+                          "lines": [int(k_) + 9 for k_ in sorted(own["lines"])],     # NTSC field-1 numbering
+                          "min_ire": min(own["min"]) if own["min"] else None,
+                          "max_ire": max(own["max"]) if own["max"] else None},
            "pseudo_ire": med(pseudo), "agc_on_ire": med(agc_on_lv), "agc_off_ire": med(agc_off_lv),
            "gray_on_ire": med(gray[True]), "gray_off_ire": med(gray[False]),
            "fields_on": len(gray[True]), "fields_off": len(gray[False])}
@@ -937,6 +977,10 @@ def print_report(r):
 def print_agc(a, label="AGC pulses"):
     f = lambda v: f"{v:.0f}" if v is not None else "—"
     L = a["lines"]
+    o = a.get("own_pulses") or {}
+    if o.get("fields"):
+        print(f"  its own copy-protection pulses on {o['fields']}/{o['of_fields']} fields, lines {o['lines']}: "
+              f"{o['min_ire']:.0f} to {o['max_ire']:.0f} IRE (ours: -40 / 110)")
     print(f"  {label} (lines 12-19, 275-282): {a['state'].upper()}: {L['passed']}/{a['checked']} passed, "
           f"{L['stripped']} stripped, {L['altered']} altered; pseudo-sync {f(a['pseudo_ire'])} IRE, "
           f"AGC {f(a['agc_on_ire'])} IRE on / {f(a['agc_off_ire'])} off (sent -40, 110 / 0)")
@@ -953,9 +997,11 @@ def print_vbi(v, label="captions"):
     other = sum(c["other_frame"].values())
     f = lambda x: f"{x:.0f}" if x is not None else "—"
     print(f"  {label} (line 21): {c['state'].upper()}: {c['intact']}/{c['fields']} fields intact, "
-          f"{c['missing']} missing, {c['parity_errors']} damaged (parity), {c['wrong_data']} wrong, "
-          f"{other} from another frame {c['other_frame'] or ''}; run-in {f(c['runin_ire'])} IRE, "
+          f"{c['missing']} missing, {c['parity_errors']} damaged (parity), {c['wrong_data']} wrong; run-in {f(c['runin_ire'])} IRE, "
           f"data {f(c['data_ire'])} IRE (50 sent), on line index {c['line_index']}")
+    if c.get("in_step_fraction") is not None and c["in_step_fraction"] < 1:
+        print(f"  captions out of step with the picture on {sum(c['other_frame'].values())} fields "
+              f"(frame offsets {c['other_frame']}): the data is intact, but line 21 takes its own path through the unit")
     s1, s2 = c["field1_stream"], c["field2_stream"]
     print(f"  caption stream: field 1 {s1['repeated']} repeated, {s1['skipped']} skipped; "
           f"field 2 {s2['repeated']} repeated, {s2['skipped']} skipped, {s2['backward']} backward")

@@ -1,0 +1,492 @@
+{
+ "schema": "tbt-fingerprint/1",
+ "name": "Datavideo TBC-1000",
+ "notes": "Graded field trial after a power-cycle. CH2 reference at the TBC input; CH1 likely unterminated.",
+ "created": "2026-10-24 16:24",
+ "trials": [
+  {
+   "trial": "20261014-192342",
+   "channels": 2,
+   "runs": 71,
+   "score": 51.5
+  },
+  {
+   "trial": "20261014-193943",
+   "channels": 2,
+   "runs": 71,
+   "score": 53.3
+  },
+  {
+   "trial": "20261014-194852",
+   "channels": 2,
+   "runs": 71,
+   "score": 51.8
+  },
+  {
+   "trial": "20261014-195803",
+   "channels": 2,
+   "runs": 71,
+   "score": 51.0
+  },
+  {
+   "trial": "20261014-200714",
+   "channels": 2,
+   "runs": 71,
+   "score": 52.6
+  },
+  {
+   "trial": "20261014-201625",
+   "channels": 2,
+   "runs": 71,
+   "score": 51.5
+  },
+  {
+   "trial": "20261023-195448",
+   "channels": 2,
+   "runs": 76,
+   "score": 51.1
+  }
+ ],
+ "score": {
+  "median": 51.5,
+  "range": [
+   51.0,
+   53.3
+  ]
+ },
+ "traits": {
+  "output_lock": {
+   "kind": "model",
+   "label": "Output locked to its input",
+   "unit": "",
+   "n": 7,
+   "value": "free-running",
+   "agree": 1.0
+  },
+  "no_signal_output": {
+   "kind": "model",
+   "label": "With no input at all (V1)",
+   "unit": "",
+   "n": 7,
+   "value": "black",
+   "agree": 1.0
+  },
+  "lost_fields_no_signal": {
+   "kind": "model",
+   "label": "Lost fields ridden through, no signal (S10)",
+   "unit": "fields",
+   "n": 7,
+   "value": 11,
+   "range": [
+    11,
+    11
+   ],
+   "agree": 1.0
+  },
+  "lost_fields_snow": {
+   "kind": "model",
+   "label": "Lost fields ridden through, snow (S11)",
+   "unit": "fields",
+   "n": 7,
+   "value": 11,
+   "range": [
+    11,
+    11
+   ],
+   "agree": 1.0
+  },
+  "gap_shows_as": {
+   "kind": "model",
+   "label": "A lost-field gap shows as",
+   "unit": "",
+   "n": 7,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "colour_killer": {
+   "kind": "model",
+   "label": "Colour killer (C2)",
+   "unit": "",
+   "n": 7,
+   "value": "yes",
+   "agree": 1.0
+  },
+  "acc": {
+   "kind": "model",
+   "label": "Automatic colour control (C1, 10 IRE burst)",
+   "unit": "",
+   "n": 7,
+   "value": "partial",
+   "agree": 1.0
+  },
+  "chroma_phase_correction": {
+   "kind": "model",
+   "label": "Per-line chroma phase correction (C3)",
+   "unit": "",
+   "n": 7,
+   "value": "no",
+   "agree": 1.0
+  },
+  "line_jitter_correction": {
+   "kind": "model",
+   "label": "Random line-jitter correction (H1, 50 ns rms)",
+   "unit": "",
+   "n": 7,
+   "value": "none",
+   "agree": 1.0
+  },
+  "head_switch_correction": {
+   "kind": "model",
+   "label": "Head-switch skew correction (H4, 10 µs)",
+   "unit": "",
+   "n": 7,
+   "value": "passes it through",
+   "agree": 1.0
+  },
+  "timing_class": {
+   "kind": "model",
+   "label": "Timing correction class",
+   "unit": "",
+   "n": 1,
+   "value": "frame synchroniser (slow lock)",
+   "agree": 1.0
+  },
+  "fast_timing_correction": {
+   "kind": "model",
+   "label": "Corrects timing changes at 1 kHz (H6 r3)",
+   "unit": "",
+   "n": 1,
+   "value": "no",
+   "agree": 1.0
+  },
+  "step_recovery": {
+   "kind": "model",
+   "label": "After a timing step (H3)",
+   "unit": "",
+   "n": 1,
+   "value": "no visible disturbance",
+   "agree": 1.0
+  },
+  "slow_timing_correction": {
+   "kind": "model",
+   "label": "Slow timing correction (H2, H3, F1)",
+   "unit": "",
+   "n": 7,
+   "value": "corrects",
+   "agree": 1.0
+  },
+  "progressive_240p": {
+   "kind": "model",
+   "label": "240p input (S5)",
+   "unit": "",
+   "n": 7,
+   "value": "converted to standard fields",
+   "agree": 1.0
+  },
+  "no_vsync_position": {
+   "kind": "model",
+   "label": "Picture with no V-sync (S4 r6)",
+   "unit": "",
+   "n": 7,
+   "value": "drops lower",
+   "agree": 1.0
+  },
+  "hum_clamp": {
+   "kind": "model",
+   "label": "Hum clamped (L3, 20 IRE)",
+   "unit": "",
+   "n": 7,
+   "value": "yes",
+   "agree": 1.0
+  },
+  "level_control": {
+   "kind": "model",
+   "label": "Level control (L4, 120 %)",
+   "unit": "",
+   "n": 7,
+   "value": "passes the level",
+   "agree": 1.0
+  },
+  "rate_ppm": {
+   "kind": "unit",
+   "label": "Output line rate vs input",
+   "unit": "ppm",
+   "n": 7,
+   "value": 22.11,
+   "range": [
+    22.07,
+    22.14
+   ],
+   "agree": null
+  },
+  "latency_ms": {
+   "kind": "unit",
+   "label": "Latency, range seen",
+   "unit": "ms",
+   "n": 7,
+   "value": [
+    0.06,
+    33.37
+   ],
+   "agree": null
+  },
+  "luma_gain": {
+   "kind": "unit",
+   "label": "Luma gain (V0, gray out / in)",
+   "unit": "×",
+   "n": 7,
+   "value": 0.632,
+   "range": [
+    0.618,
+    0.723
+   ],
+   "agree": null
+  },
+  "saturation_ratio": {
+   "kind": "unit",
+   "label": "Saturation (V0, chroma/burst out ÷ in)",
+   "unit": "×",
+   "n": 7,
+   "value": 0.937,
+   "range": [
+    0.937,
+    0.953
+   ],
+   "agree": null
+  },
+  "hue_offset_deg": {
+   "kind": "unit",
+   "label": "Hue offset (V0, out − in)",
+   "unit": "°",
+   "n": 7,
+   "value": -1.7,
+   "range": [
+    -1.9,
+    -1.5
+   ],
+   "agree": null
+  },
+  "burst_out_ire": {
+   "kind": "unit",
+   "label": "Output burst (V0)",
+   "unit": "IRE p-p",
+   "n": 7,
+   "value": 38.1,
+   "range": [
+    38.1,
+    38.3
+   ],
+   "agree": null
+  },
+  "acc_fraction": {
+   "kind": "unit",
+   "label": "ACC fraction (0 none, 1 full)",
+   "unit": "",
+   "n": 7,
+   "value": 0.32,
+   "range": [
+    0.3,
+    0.35
+   ],
+   "agree": null
+  },
+  "jitter_correction_db": {
+   "kind": "unit",
+   "label": "H1 r4 correction (input ÷ residual)",
+   "unit": "dB",
+   "n": 7,
+   "value": -1.1,
+   "range": [
+    -1.2,
+    -1.1
+   ],
+   "agree": null
+  },
+  "correction_bandwidth_hz": {
+   "kind": "unit",
+   "label": "Timing-correction bandwidth (H1, CH2)",
+   "unit": "Hz",
+   "n": 1,
+   "value": 397,
+   "range": [
+    397,
+    397
+   ],
+   "agree": null
+  },
+  "near_line_rate_passed": {
+   "kind": "unit",
+   "label": "Jitter passed at 4-8 kHz (H1, CH2)",
+   "unit": "%",
+   "n": 1,
+   "value": 110,
+   "range": [
+    110,
+    110
+   ],
+   "agree": null
+  },
+  "h4_residual_ns": {
+   "kind": "unit",
+   "label": "Head-switch skew left (H4 r5, over V0)",
+   "unit": "ns rms",
+   "n": 7,
+   "value": 107.3,
+   "range": [
+    84.6,
+    108.8
+   ],
+   "agree": null
+  },
+  "h6_passed_1k": {
+   "kind": "unit",
+   "label": "Jitter passed at 1 kHz (H6 r3)",
+   "unit": "%",
+   "n": 1,
+   "value": 95,
+   "range": [
+    95,
+    95
+   ],
+   "agree": null
+  },
+  "h6_passed_3k": {
+   "kind": "unit",
+   "label": "Jitter passed at 3 kHz (H6 r4)",
+   "unit": "%",
+   "n": 1,
+   "value": 117,
+   "range": [
+    117,
+    117
+   ],
+   "agree": null
+  },
+  "ch1_termination": {
+   "kind": "rig",
+   "label": "CH1 (TBC output) termination, from its sync depth",
+   "unit": "",
+   "n": 7,
+   "value": "open (unterminated)",
+   "agree": 1.0
+  },
+  "sync_depth_v": {
+   "kind": "rig",
+   "label": "Output sync depth (V0; depends on termination)",
+   "unit": "V",
+   "n": 7,
+   "value": 0.491,
+   "range": [
+    0.491,
+    0.505
+   ],
+   "agree": null
+  },
+  "output_jitter_ns": {
+   "kind": "rig",
+   "label": "Output H jitter (V0; scope floor, depends on termination)",
+   "unit": "ns rms",
+   "n": 7,
+   "value": 0.87,
+   "range": [
+    0.86,
+    0.9
+   ],
+   "agree": null
+  },
+  "noise_out_ire": {
+   "kind": "rig",
+   "label": "Output noise on gray (V0; scope floor, depends on termination)",
+   "unit": "IRE rms",
+   "n": 7,
+   "value": 0.53,
+   "range": [
+    0.39,
+    0.55
+   ],
+   "agree": null
+  }
+ },
+ "variable": [
+  {
+   "test": "S1",
+   "rung": 5,
+   "trials": 7,
+   "verdicts": {
+    "pass": 6,
+    "fail": 1
+   },
+   "pass_rate": 0.86
+  },
+  {
+   "test": "S4",
+   "rung": 6,
+   "trials": 7,
+   "verdicts": {
+    "fail": 4,
+    "marginal": 3
+   },
+   "pass_rate": 0.21
+  },
+  {
+   "test": "S6",
+   "rung": 5,
+   "trials": 7,
+   "verdicts": {
+    "pass": 6,
+    "fail": 1
+   },
+   "pass_rate": 0.86
+  },
+  {
+   "test": "S6",
+   "rung": 6,
+   "trials": 7,
+   "verdicts": {
+    "pass": 5,
+    "fail": 2
+   },
+   "pass_rate": 0.71
+  },
+  {
+   "test": "S8",
+   "rung": 5,
+   "trials": 7,
+   "verdicts": {
+    "fail": 4,
+    "pass": 3
+   },
+   "pass_rate": 0.43
+  },
+  {
+   "test": "L2",
+   "rung": 3,
+   "trials": 7,
+   "verdicts": {
+    "pass": 4,
+    "fail": 3
+   },
+   "pass_rate": 0.57
+  },
+  {
+   "test": "L3",
+   "rung": 3,
+   "trials": 7,
+   "verdicts": {
+    "fail": 6,
+    "pass": 1
+   },
+   "pass_rate": 0.14
+  },
+  {
+   "test": "S10",
+   "rung": 2,
+   "trials": 7,
+   "verdicts": {
+    "pass": 2,
+    "marginal": 5
+   },
+   "pass_rate": 0.64
+  }
+ ]
+}

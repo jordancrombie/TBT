@@ -76,7 +76,8 @@ Scored for value against what the suite already covers.
       `fingerprints/old-rig/`:
   - [x] Datavideo TBC-3000 input B (Source B), 2026-10-24
   - [x] Datavideo TBC-3000 input A (the reference unit), 2026-10-24
-  - [ ] Datavideo TBC-1000
+  - [x] Datavideo TBC-1000, 2026-10-25 (its output sync wandered; see the
+        bench notes)
   - [ ] AVT-8710 (green)
   - [x] Pioneer DVR-220, 2026-10-24/25 (third set: the first had V0 caught
         mid-recovery, the second the old B3 detector)

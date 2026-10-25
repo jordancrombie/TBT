@@ -458,6 +458,25 @@ rms line jitter.
   (an unchanged picture read 34 % bright in sync-scaled IRE). Each was found
   in the data, fixed and checked on kept captures before re-running.
 
+## Datavideo TBC-1000 on the calibrated rig (2026-10-25)
+
+- **Behaviour unchanged** from the old rig; same family as the TBC-3000 and
+  the same level effects: luma ×0.632 → ×0.832, correction bandwidth 397 →
+  488 Hz, head-switch skew left 107 → 62.5 ns, H6 at 1 kHz 95 → 90 %. Clock
+  +21.8 ppm (old +22.1). Score 49.7–52.2 (V0 fails on its genuinely low
+  gain). B tests: captions intact and in step (first fields after a loss
+  damaged), lines 10–20 blanked, copy protection removed, not blinded.
+- **Its output sync wandered** during the three trials (about 45 minutes of
+  testing): trial 1 steady at 255–261 mV; trial 2 sagged from 252 to
+  **188 mV** around B1 r2/r3, then recovered to ~240; trial 3 started at
+  221 and climbed back to 250. The sync sagged far more than the picture
+  (−25 % against −7 % of the total swing). That's the symptom that came
+  before its dead-output episodes in October ("the swing sagging first").
+  No run went dead, and since every picture figure is scaled from the
+  output's own sync, the picture figures held (V0 gray 65.4–66.4 IRE). The
+  B3 check "output sync as on V0" caught it (94–108 %). B2's one "damaged"
+  line 10 (trial 2) fell in the same window. Worth watching its temperature.
+
 ## Pioneer DVR-220 on the calibrated rig (2026-10-24/25)
 
 - **Slow gain recovery after losing its input:** V0 gray 76.1 IRE 2 s after

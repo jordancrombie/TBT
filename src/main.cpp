@@ -100,7 +100,7 @@ static void handle(String line) {
             sum += codes[k];
         }
         // The host checks n and the sum: a byte lost on the serial link would
-        // otherwise shift every sample after it (seen ~1 % of dumps).
+        // otherwise shift every sample after it (0.4 % of dumps, 2026-10-24).
         Serial.printf("end sum=%u\n", (unsigned)sum);
     } else if (cmd == "diag") {
         for (int i = 0; i < 5; i++) { Serial.printf("dscr %08x\n", (unsigned)i2s_dac::current_descriptor()); delayMicroseconds(37); }

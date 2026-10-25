@@ -681,10 +681,12 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
 
     Pulses: on each of our fields' AGC lines, the pseudo-sync and AGC pulse
     levels, so each line is passed (pulses there), stripped (flat), or
-    altered. Lines 10-20 are also scanned for copy-protection pulses anywhere
-    (dips below -25 IRE and peaks above 90): a unit that detects protection
-    may put its own on its output instead (the DMR-ES10 does: -56 / +163 IRE
-    on lines 10-17, latched on), which reads as "replaced". Blinded: the picture's gray level in the cycle's on half against
+    altered. Lines 10-20 are also scanned for pseudo-sync dips anywhere (below
+    -25 IRE: nothing else on those lines goes below black): a unit that
+    detects protection may put its own on its output instead, which reads as
+    "replaced". The DMR-ES10 and the DVR-220 both do: pseudo-syncs at -54 to
+    -56 IRE on lines 10-17, latched on; the DVR-220's AGC pulses also cycle
+    in amplitude (97-151 IRE), so their peaks don't mark them. Blinded: the picture's gray level in the cycle's on half against
     its off half (a TBC whose own AGC is fooled darkens with the pulses), and
     for rung 3 the hue on colour-stripe lines against the others."""
     us = fs / 1e6
@@ -710,10 +712,13 @@ def agc_summary(x, fs, hs, vs, log, tip, blank, test):
         for idx in range(1, 12):                      # lines 10-20 (273-283)
             s_ = field[idx - 1]
             seg = np.convolve(ire(x[int(s_ + 10 * us):int(s_ + 60 * us)]), box, mode="valid")
-            if seg.min() < -25 and seg.max() > 90:
+            if seg.min() < -25:
                 ps = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "pseudo"]
                 ag = [lvl(s_, a, b) for kd, a, b in pm.agc_windows() if kd == "agc"]
-                ours = AGC_INDEX[0] <= idx <= AGC_INDEX[1] and min(ps) < -25 and min(ag) > 0.6 * pm.AGC_IRE
+                # Our own pattern: pseudo-syncs at our positions, AGC pulses up
+                # in the cycle's on half and at blanking in its off half.
+                ours = (AGC_INDEX[0] <= idx <= AGC_INDEX[1] and min(ps) < -25 and
+                        (min(ag) > 0.6 * pm.AGC_IRE if on else max(ag) < 0.2 * pm.AGC_IRE))
                 if not ours:
                     theirs = True
                     own["lines"][idx] += 1

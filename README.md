@@ -521,20 +521,35 @@ from how fast and how completely each one corrects line timing (see
 
 | Trait | Datavideo TBC-1000 | Datavideo TBC-3000 (input A / B) | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
 |---|---|---|---|---|---|
-| Measured on | old rig | **calibrated rig** (2026-10-24) | old rig | old rig | **calibrated rig** (2026-10-24) |
+| Measured on | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | old rig | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-24) |
 | Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | 0.4 kHz | 0.53 / 0.52 kHz | 0.5 kHz | 3.8 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 107 ns | 66 / 58 ns | 98 ns | 11 ns | 2 ns |
+| Correction bandwidth | 0.49 kHz | 0.53 / 0.52 kHz | 0.5 kHz | 3.6 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 63 ns | 66 / 58 ns | 98 ns | 9 ns | 2 ns |
 | At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.3 µs | 1 line jolted 1.4 µs | no jolt |
 | With no input at all | black | black | its own colour bars | black | no output |
 | Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ with no signal; with snow its own picture shows at once |
 | Colour killer | yes | yes | no | no | no |
 | Output vs input | free-running, +22 ppm | free-running, +2.1 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−16 to +2 ppm) |
-| Luma gain (old rig reads ~18 % low) | ×0.63 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.00 | ×1.01 |
-| Output noise / jitter (rig-dependent) | 0.53 IRE / 0.87 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.39 IRE / 0.42 ns | 0.39 IRE / 0.66 ns | 0.57 IRE / 0.99 ns |
-| Field-trial score (provisional) | 51–53 | 62 / 49–54 | 38–44 | 31–32 | 60 |
-| Captions / VBI lines 10–20 (B1, B2) | not yet tested | intact; after a signal loss A damages 1–2 fields, B none / blanked | not yet tested | not yet tested | intact, but line 21 slips between in step and a frame ahead of the picture; first fields after a loss damaged / blanked |
-| Copy protection: AGC pulses / colour stripe (B3) | not yet tested | removed, not blinded / removed | not yet tested | not yet tested | replaced with its own (−54 / +154 IRE on lines 10–17, sync cut to 75 %), picture not affected / passed |
+| Luma gain (old rig reads ~18 % low) | ×0.83 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.02 | ×1.01 |
+| Output noise / jitter (rig-dependent) | 0.36 IRE / 1.01 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.39 IRE / 0.42 ns | 0.40 IRE / 1.10 ns | 0.57 IRE / 0.99 ns |
+| Field-trial score (provisional) | 50–52 | 62 / 49–54 | 38–44 | 30–41 | 60 |
+| Captions / VBI lines 10–20 (B1, B2) | intact, in step; first fields after a loss damaged / blanked | intact; after a signal loss A damages 1–2 fields, B none / blanked | not yet tested | intact, but line 21 slips against the picture / lines 10–19 blanked, line 20 carries its stray copy of our frame marker | intact, but line 21 slips between in step and a frame ahead of the picture; first fields after a loss damaged / blanked |
+| Copy protection: AGC pulses / colour stripe (B3) | removed, not blinded / removed | removed, not blinded / removed | not yet tested | **blinded**: picture darkens 21 % and keeps falling; also replaces ours with its own (−56 / up to +151 IRE, AGC cycling) and cuts sync to 75 % / removed | replaced with its own (−54 / +154 IRE on lines 10–17, sync cut to 75 %), picture not affected / passed |
+
+The Datavideo TBC-1000 on the calibrated rig behaves like its sibling the
+TBC-3000: luma ×0.83 (×0.63 on the old rig, the biggest level correction),
+and better timing correction with full-size sync (skew left 107 → 63 ns).
+It removes copy protection and isn't blinded. Its output sync wandered
+during the trials (188–261 mV), the symptom that preceded its dead-output
+episodes before; see the bench notes.
+
+The Pioneer DVR-220 on the calibrated rig: still no TBC (fast lock, no
+per-line correction), and the least consistent unit (scores 30–41, 15 tests
+that vary between trials). Its gain recovers slowly after losing its input
+(15–20 s), which is why field trials now hold clean V0 after signal-loss
+tests (`run_suite.py --recover`). Copy protection blinds it: its slow AGC
+darkens the picture by 21 % and more, while it also puts out its own
+protection like the ES-10.
 
 The DMR-ES10 on the calibrated rig: still the one line TBC, with the same
 behaviour as before. The B tests show how a DVD recorder treats data and

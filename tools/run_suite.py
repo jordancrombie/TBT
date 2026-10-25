@@ -2,12 +2,12 @@
 
 usage: run_suite.py [SPEC ...] [--channels 1|2] [--grade [--class frame|line]] [--cards [SECONDS]] [--dut NAME]
                     [--note TEXT] [--keep] [--html [PATH]] [--title [SECONDS]] [--rate HZ] [--seconds S]
-                    [--settle S]
+                    [--settle S] [--recover S]
 
 SPEC is TEST:RUNGS, e.g. H1:1-6, S7:4, H5:1,3,5 or H2:all.
 With no SPEC, runs the smoke set: one representative rung of every test.
-SPEC "full" runs the standard field trial (76 runs, ~11 min): the smoke set
-plus every rung of H1, H6, C1, C3, L2, S10, S11 and X1, and V1. Fingerprints
+SPEC "full" runs the standard field trial (83 runs, ~14 min): the smoke set
+plus every rung of H1, H6, C1, C3, L2, S10, S11, B1, B3 and X1, and V1. Fingerprints
 and the comparisons in docs/ are built from it.
 
 The scope settles once for the whole suite; each rung then costs the TBC
@@ -21,6 +21,11 @@ shows, and the test pattern is restored before each test.
 --grade grades the field trial (provisional; see grade.py) and adds the
 grades to the HTML report. A saved trial can be re-graded later with
 grade.py.
+--recover holds clean V0 for S seconds (default 20) before the first test,
+and after a block of tests that take the input away or disturb a unit's gain
+(V1, S10, S11, X1, B1, B3): a unit with slow AGC (the Pioneer DVR-220 needs
+15-20 s after losing its input) would otherwise still be recovering when the
+next test, or the next trial's V0 reference, is captured. 0 turns it off.
 """
 import argparse, json, os, re, time
 
@@ -34,6 +39,11 @@ SMOKE = ["V0:1", "H1:4", "H2:3", "H3:5", "H4:5", "H5:4", "H6:all", "F1:3", "F2:5
          "S1:5", "S2:3", "S3:5", "S4:3", "S4:6", "S5:1", "S6:5", "S6:6", "S7:4", "S8:5", "S9:4",
          "C1:3", "C2:1", "C3:3", "C4:3", "L1:4", "L2:3", "L3:3", "L4:4", "B1:1", "B2:1", "B3:2"]
 
+
+# Tests that take the input away or disturb a unit's gain, so a unit with slow
+# AGC (the Pioneer DVR-220 needs 15-20 s after a loss) is still recovering
+# when the next test starts. --recover holds clean V0 after them.
+DISTURBING = {"V1", "S10", "S11", "X1", "B1", "B3"}
 
 FULL = ["V0:1", "H1:all", "H2:3", "H3:5", "H4:5", "H5:4", "H6:all", "F1:3", "F2:5", "F3:2",
         "S1:5", "S2:3", "S3:5", "S4:3", "S4:6", "S5:1", "S6:5", "S6:6", "S7:4", "S8:5", "S9:4",
@@ -144,6 +154,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("specs", nargs="*")
     ap.add_argument("--grade", action="store_true", help="grade the field trial (provisional thresholds)")
+    ap.add_argument("--recover", type=float, default=20.0, metavar="S",
+                    help="hold clean V0 this long before the first test and after signal-loss tests (default 20; 0 = off)")
     ap.add_argument("--class", dest="tbc_class", choices=("frame", "line"), default="frame",
                     help="which ideal the structure tests are graded against (default frame)")
     ap.add_argument("--cards", nargs="?", type=float, const=5.0, metavar="SECONDS",
@@ -171,6 +183,14 @@ def main():
         info = cards.parse_catalog(tests_text) if a.cards else {}
         tests_in_plan = list(dict.fromkeys(t for t, _ in plan))
         for i, (test, rung) in enumerate(plan, 1):
+            prev = plan[i - 2][0] if i > 1 else None
+            if a.recover and (i == 1 or (prev.upper() in DISTURBING and prev != test)):
+                # Clean signal first, so a slow-recovering unit is settled before
+                # the next test: its first run (the trial's reference, usually
+                # V0), and after a block of tests that take the input away.
+                request(s, "test V0", until="\n")
+                print(f"holding V0 {a.recover:g} s ({'before the first test' if i == 1 else 'recovery after ' + prev})")
+                time.sleep(a.recover)
             if a.cards and (i == 1 or plan[i - 2][0] != test):
                 block = []
                 for t_, r_ in plan[i - 1:]:

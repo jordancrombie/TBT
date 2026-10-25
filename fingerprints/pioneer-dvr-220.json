@@ -1,27 +1,33 @@
 {
  "schema": "tbt-fingerprint/1",
  "name": "Pioneer DVR-220",
- "notes": "DVD recorder, line-in to line-out passthrough. CH2 at its input, single termination. Rerun with the stray-line fix.",
- "created": "2026-10-24 16:24",
+ "notes": "line in to line out; suite with --recover 20; B3 own-pulse fix; calibrated levels 5/92; CH1 terminated",
+ "created": "2026-10-24 23:57",
  "trials": [
   {
-   "trial": "20261020-164815",
+   "trial": "20261024-232920",
    "channels": 2,
-   "runs": 71,
-   "score": 31.3
+   "runs": 83,
+   "score": 40.9
   },
   {
-   "trial": "20261020-185113",
+   "trial": "20261024-234257",
    "channels": 2,
-   "runs": 76,
-   "score": 31.8
+   "runs": 83,
+   "score": 37.0
+  },
+  {
+   "trial": "20261024-235631",
+   "channels": 2,
+   "runs": 83,
+   "score": 29.6
   }
  ],
  "score": {
-  "median": 31.55,
+  "median": 37.0,
   "range": [
-   31.3,
-   31.8
+   29.6,
+   40.9
   ]
  },
  "traits": {
@@ -29,7 +35,7 @@
    "kind": "model",
    "label": "Output locked to its input",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "locked",
    "agree": 1.0
   },
@@ -37,7 +43,7 @@
    "kind": "model",
    "label": "With no input at all (V1)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "black",
    "agree": 1.0
   },
@@ -45,31 +51,31 @@
    "kind": "model",
    "label": "Lost fields ridden through, no signal (S10)",
    "unit": "fields",
-   "n": 2,
-   "value": 11,
+   "n": 3,
+   "value": 8,
    "range": [
-    11,
-    11
+    7,
+    10
    ],
-   "agree": 1.0
+   "agree": 0.33
   },
   "lost_fields_snow": {
    "kind": "model",
    "label": "Lost fields ridden through, snow (S11)",
    "unit": "fields",
-   "n": 2,
+   "n": 3,
    "value": 11,
    "range": [
-    11,
+    10,
     11
    ],
-   "agree": 1.0
+   "agree": 0.67
   },
   "gap_shows_as": {
    "kind": "model",
    "label": "A lost-field gap shows as",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "blanked",
    "agree": 1.0
   },
@@ -77,7 +83,7 @@
    "kind": "model",
    "label": "Colour killer (C2)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "no",
    "agree": 1.0
   },
@@ -85,7 +91,7 @@
    "kind": "model",
    "label": "Automatic colour control (C1, 10 IRE burst)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "partial",
    "agree": 1.0
   },
@@ -93,7 +99,7 @@
    "kind": "model",
    "label": "Per-line chroma phase correction (C3)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "no",
    "agree": 1.0
   },
@@ -101,7 +107,7 @@
    "kind": "model",
    "label": "Random line-jitter correction (H1, 50 ns rms)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "none",
    "agree": 1.0
   },
@@ -109,15 +115,19 @@
    "kind": "model",
    "label": "Head-switch skew correction (H4, 10 µs)",
    "unit": "",
-   "n": 2,
-   "value": "passes it through",
-   "agree": 1.0
+   "n": 3,
+   "value": "corrects",
+   "agree": 0.67,
+   "seen": {
+    "corrects": 2,
+    "passes it through": 1
+   }
   },
   "timing_class": {
    "kind": "model",
    "label": "Timing correction class",
    "unit": "",
-   "n": 1,
+   "n": 3,
    "value": "fast lock, no per-line correction",
    "agree": 1.0
   },
@@ -125,7 +135,7 @@
    "kind": "model",
    "label": "Corrects timing changes at 1 kHz (H6 r3)",
    "unit": "",
-   "n": 1,
+   "n": 3,
    "value": "yes",
    "agree": 1.0
   },
@@ -133,7 +143,7 @@
    "kind": "model",
    "label": "After a timing step (H3)",
    "unit": "",
-   "n": 1,
+   "n": 3,
    "value": "settles within 1 lines",
    "agree": 1.0
   },
@@ -141,11 +151,11 @@
    "kind": "model",
    "label": "Slow timing correction (H2, H3, F1)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "partial",
-   "agree": 0.5,
+   "agree": 0.67,
    "seen": {
-    "partial": 1,
+    "partial": 2,
     "no": 1
    }
   },
@@ -153,7 +163,7 @@
    "kind": "model",
    "label": "240p input (S5)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "converted to standard fields",
    "agree": 1.0
   },
@@ -161,7 +171,7 @@
    "kind": "model",
    "label": "Hum clamped (L3, 20 IRE)",
    "unit": "",
-   "n": 2,
+   "n": 3,
    "value": "yes",
    "agree": 1.0
   },
@@ -169,22 +179,74 @@
    "kind": "model",
    "label": "Level control (L4, 120 %)",
    "unit": "",
-   "n": 2,
-   "value": "partial",
-   "agree": 0.5,
-   "seen": {
-    "partial": 1,
-    "passes the level": 1
-   }
+   "n": 3,
+   "value": "passes the level",
+   "agree": 1.0
+  },
+  "captions": {
+   "kind": "model",
+   "label": "Line 21 captions (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "passed intact",
+   "agree": 1.0
+  },
+  "captions_after_loss": {
+   "kind": "model",
+   "label": "Captions around lost fields (B1 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "first fields damaged",
+   "agree": 1.0
+  },
+  "captions_in_step": {
+   "kind": "model",
+   "label": "Captions in step with the picture (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "slips (VBI and picture take different paths)",
+   "agree": 1.0
+  },
+  "vbi_lines": {
+   "kind": "model",
+   "label": "VBI lines 10-20 (B2)",
+   "unit": "",
+   "n": 3,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "agc_pulses": {
+   "kind": "model",
+   "label": "AGC copy-protection pulses (B3)",
+   "unit": "",
+   "n": 3,
+   "value": "replaced with its own (sync reduced)",
+   "agree": 1.0
+  },
+  "agc_blinded": {
+   "kind": "model",
+   "label": "Blinded by AGC pulses (B3 r2)",
+   "unit": "",
+   "n": 3,
+   "value": "yes: picture level shifts",
+   "agree": 1.0
+  },
+  "colour_stripe": {
+   "kind": "model",
+   "label": "Colour stripe (B3 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "removed",
+   "agree": 1.0
   },
   "rate_ppm": {
    "kind": "unit",
    "label": "Output line rate vs input",
    "unit": "ppm",
-   "n": 2,
-   "value": 0.0,
+   "n": 3,
+   "value": 0.02,
    "range": [
-    -0.02,
+    -0.07,
     0.02
    ],
    "agree": null
@@ -193,10 +255,10 @@
    "kind": "unit",
    "label": "Latency, range seen",
    "unit": "ms",
-   "n": 2,
+   "n": 3,
    "value": [
-    33.65,
-    58.37
+    34.9,
+    65.49
    ],
    "agree": null
   },
@@ -204,11 +266,11 @@
    "kind": "unit",
    "label": "Luma gain (V0, gray out / in)",
    "unit": "×",
-   "n": 2,
-   "value": 1.011,
+   "n": 3,
+   "value": 1.024,
    "range": [
-    1.005,
-    1.018
+    1.024,
+    1.029
    ],
    "agree": null
   },
@@ -216,11 +278,11 @@
    "kind": "unit",
    "label": "Saturation (V0, chroma/burst out ÷ in)",
    "unit": "×",
-   "n": 2,
-   "value": 0.976,
+   "n": 3,
+   "value": 0.982,
    "range": [
-    0.962,
-    0.989
+    0.968,
+    0.986
    ],
    "agree": null
   },
@@ -228,11 +290,11 @@
    "kind": "unit",
    "label": "Hue offset (V0, out − in)",
    "unit": "°",
-   "n": 2,
-   "value": 0.75,
+   "n": 3,
+   "value": 0.3,
    "range": [
-    0.6,
-    0.9
+    0.0,
+    0.8
    ],
    "agree": null
   },
@@ -240,11 +302,11 @@
    "kind": "unit",
    "label": "Output burst (V0)",
    "unit": "IRE p-p",
-   "n": 2,
-   "value": 38.15,
+   "n": 3,
+   "value": 38.5,
    "range": [
-    38.1,
-    38.2
+    38.5,
+    38.6
    ],
    "agree": null
   },
@@ -252,11 +314,11 @@
    "kind": "unit",
    "label": "ACC fraction (0 none, 1 full)",
    "unit": "",
-   "n": 2,
-   "value": 0.32,
+   "n": 3,
+   "value": 0.36,
    "range": [
-    0.31,
-    0.33
+    0.36,
+    0.38
    ],
    "agree": null
   },
@@ -264,8 +326,8 @@
    "kind": "unit",
    "label": "H1 r4 correction (input ÷ residual)",
    "unit": "dB",
-   "n": 2,
-   "value": 1.9,
+   "n": 3,
+   "value": 2.0,
    "range": [
     1.8,
     2.0
@@ -276,11 +338,11 @@
    "kind": "unit",
    "label": "Timing-correction bandwidth (H1, CH2)",
    "unit": "Hz",
-   "n": 1,
-   "value": 3782,
+   "n": 3,
+   "value": 3611,
    "range": [
-    3782,
-    3782
+    3600,
+    3689
    ],
    "agree": null
   },
@@ -288,10 +350,10 @@
    "kind": "unit",
    "label": "Jitter passed at 4-8 kHz (H1, CH2)",
    "unit": "%",
-   "n": 1,
-   "value": 112,
+   "n": 3,
+   "value": 111,
    "range": [
-    112,
+    108,
     112
    ],
    "agree": null
@@ -300,11 +362,11 @@
    "kind": "unit",
    "label": "Head-switch skew left (H4 r5, over V0)",
    "unit": "ns rms",
-   "n": 2,
-   "value": 11.55,
+   "n": 3,
+   "value": 8.6,
    "range": [
-    10.6,
-    12.5
+    8.4,
+    12.4
    ],
    "agree": null
   },
@@ -312,11 +374,11 @@
    "kind": "unit",
    "label": "Jitter passed at 1 kHz (H6 r3)",
    "unit": "%",
-   "n": 1,
+   "n": 3,
    "value": 13,
    "range": [
-    13,
-    13
+    12,
+    14
    ],
    "agree": null
   },
@@ -324,11 +386,23 @@
    "kind": "unit",
    "label": "Jitter passed at 3 kHz (H6 r4)",
    "unit": "%",
-   "n": 1,
-   "value": 44,
+   "n": 3,
+   "value": 41,
    "range": [
-    44,
-    44
+    40,
+    43
+   ],
+   "agree": null
+  },
+  "caption_gain": {
+   "kind": "unit",
+   "label": "Caption data level (B1, out ÷ in)",
+   "unit": "×",
+   "n": 3,
+   "value": 0.995,
+   "range": [
+    0.995,
+    0.995
    ],
    "agree": null
   },
@@ -336,19 +410,31 @@
    "kind": "rig",
    "label": "CH1 (TBC output) termination, from its sync depth",
    "unit": "",
-   "n": 2,
-   "value": "open (unterminated)",
+   "n": 3,
+   "value": "75 ohm (terminated)",
    "agree": 1.0
+  },
+  "input_sync_v": {
+   "kind": "rig",
+   "label": "Generator sync into the TBC (V0, CH2; nominal 0.286)",
+   "unit": "V",
+   "n": 3,
+   "value": 0.284,
+   "range": [
+    0.284,
+    0.284
+   ],
+   "agree": null
   },
   "sync_depth_v": {
    "kind": "rig",
    "label": "Output sync depth (V0; depends on termination)",
    "unit": "V",
-   "n": 2,
-   "value": 0.575,
+   "n": 3,
+   "value": 0.29,
    "range": [
-    0.572,
-    0.578
+    0.29,
+    0.29
    ],
    "agree": null
   },
@@ -356,11 +442,11 @@
    "kind": "rig",
    "label": "Output H jitter (V0; scope floor, depends on termination)",
    "unit": "ns rms",
-   "n": 2,
-   "value": 0.66,
+   "n": 3,
+   "value": 1.1,
    "range": [
-    0.63,
-    0.69
+    1.1,
+    1.12
    ],
    "agree": null
   },
@@ -368,55 +454,165 @@
    "kind": "rig",
    "label": "Output noise on gray (V0; scope floor, depends on termination)",
    "unit": "IRE rms",
-   "n": 2,
-   "value": 0.39,
+   "n": 3,
+   "value": 0.4,
    "range": [
-    0.38,
-    0.4
+    0.39,
+    0.41
    ],
    "agree": null
   }
  },
  "variable": [
   {
-   "test": "H2",
-   "rung": 3,
-   "trials": 2,
+   "test": "V0",
+   "rung": 1,
+   "trials": 3,
    "verdicts": {
-    "pass": 1,
+    "pass": 2,
     "fail": 1
    },
-   "pass_rate": 0.5
+   "pass_rate": 0.67
   },
   {
-   "test": "C1",
-   "rung": 1,
-   "trials": 2,
+   "test": "H2",
+   "rung": 3,
+   "trials": 3,
    "verdicts": {
-    "fail": 1,
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "H4",
+   "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "F1",
+   "rung": 3,
+   "trials": 3,
+   "verdicts": {
+    "fail": 2,
     "pass": 1
    },
-   "pass_rate": 0.5
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S3",
+   "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "pass": 1,
+    "fail": 2
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "C4",
+   "rung": 3,
+   "trials": 3,
+   "verdicts": {
+    "fail": 2,
+    "pass": 1
+   },
+   "pass_rate": 0.33
   },
   {
    "test": "L2",
-   "rung": 4,
-   "trials": 2,
+   "rung": 2,
+   "trials": 3,
    "verdicts": {
-    "fail": 1,
+    "fail": 2,
     "pass": 1
    },
-   "pass_rate": 0.5
+   "pass_rate": 0.33
+  },
+  {
+   "test": "L2",
+   "rung": 3,
+   "trials": 3,
+   "verdicts": {
+    "fail": 2,
+    "pass": 1
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "L3",
+   "rung": 3,
+   "trials": 3,
+   "verdicts": {
+    "pass": 1,
+    "fail": 2
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S10",
+   "rung": 8,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "info": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "S10",
+   "rung": 10,
+   "trials": 3,
+   "verdicts": {
+    "info": 2,
+    "pass": 1
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S11",
+   "rung": 8,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "marginal": 1
+   },
+   "pass_rate": 0.83
+  },
+  {
+   "test": "S11",
+   "rung": 10,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "marginal": 1
+   },
+   "pass_rate": 0.83
+  },
+  {
+   "test": "S11",
+   "rung": 11,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
   },
   {
    "test": "X1",
-   "rung": 4,
-   "trials": 2,
+   "rung": 3,
+   "trials": 3,
    "verdicts": {
-    "fail": 1,
-    "marginal": 1
+    "marginal": 2,
+    "pass": 1
    },
-   "pass_rate": 0.25
+   "pass_rate": 0.67
   }
  ]
 }

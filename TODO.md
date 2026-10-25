@@ -79,7 +79,8 @@ Scored for value against what the suite already covers.
   - [ ] Datavideo TBC-1000
   - [ ] AVT-8710 (green)
   - [ ] Pioneer DVR-220
-  - [ ] Panasonic DMR-ES10 (lid off)
+  - [x] Panasonic DMR-ES10 (lid off), 2026-10-24 (third attempt: the first
+        two were spoilt by analysis bugs, since fixed; see the bench notes)
 - [ ] Checksum the other serial replies (`lens`, `pdump`, `manifest`), as
       `dump` now is.
 - [x] Generator chroma: it read about 0.68× nominal on CH2 until 2026-10-14,

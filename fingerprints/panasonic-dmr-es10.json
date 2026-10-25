@@ -1,39 +1,33 @@
 {
  "schema": "tbt-fingerprint/1",
  "name": "Panasonic DMR-ES10",
- "notes": "Lid-off back-to-back series, trial 1 of 4: does the colour fault trip without the cover?",
- "created": "2026-10-24 16:24",
+ "notes": "lid off; warmed up; re-run after the B-analysis fixes; calibrated levels 5/92; CH1 terminated",
+ "created": "2026-10-24 21:05",
  "trials": [
   {
-   "trial": "20261021-224221",
+   "trial": "20261024-204051",
    "channels": 2,
-   "runs": 76,
-   "score": 62.3
+   "runs": 83,
+   "score": 60.0
   },
   {
-   "trial": "20261021-225322",
+   "trial": "20261024-205223",
    "channels": 2,
-   "runs": 76,
-   "score": 62.4
+   "runs": 83,
+   "score": 59.9
   },
   {
-   "trial": "20261021-230423",
+   "trial": "20261024-210358",
    "channels": 2,
-   "runs": 76,
-   "score": 64.0
-  },
-  {
-   "trial": "20261021-231526",
-   "channels": 2,
-   "runs": 76,
-   "score": 61.6
+   "runs": 83,
+   "score": 59.6
   }
  ],
  "score": {
-  "median": 62.349999999999994,
+  "median": 59.9,
   "range": [
-   61.6,
-   64.0
+   59.6,
+   60.0
   ]
  },
  "traits": {
@@ -41,7 +35,7 @@
    "kind": "model",
    "label": "Output locked to its input",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "free-running",
    "agree": 1.0
   },
@@ -49,7 +43,7 @@
    "kind": "model",
    "label": "With no input at all (V1)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "no output (no sync)",
    "agree": 1.0
   },
@@ -57,31 +51,31 @@
    "kind": "model",
    "label": "Lost fields ridden through, no signal (S10)",
    "unit": "fields",
-   "n": 4,
+   "n": 3,
    "value": 11,
    "range": [
-    11,
+    0,
     11
    ],
-   "agree": 1.0
+   "agree": 0.67
   },
   "lost_fields_snow": {
    "kind": "model",
    "label": "Lost fields ridden through, snow (S11)",
    "unit": "fields",
-   "n": 4,
-   "value": 1,
+   "n": 3,
+   "value": 0,
    "range": [
     0,
-    2
+    1
    ],
-   "agree": 0.5
+   "agree": 0.67
   },
   "gap_shows_as": {
    "kind": "model",
    "label": "A lost-field gap shows as",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "blanked",
    "agree": 1.0
   },
@@ -89,7 +83,7 @@
    "kind": "model",
    "label": "Colour killer (C2)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "no",
    "agree": 1.0
   },
@@ -97,7 +91,7 @@
    "kind": "model",
    "label": "Automatic colour control (C1, 10 IRE burst)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "partial",
    "agree": 1.0
   },
@@ -105,7 +99,7 @@
    "kind": "model",
    "label": "Per-line chroma phase correction (C3)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "no",
    "agree": 1.0
   },
@@ -113,7 +107,7 @@
    "kind": "model",
    "label": "Random line-jitter correction (H1, 50 ns rms)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "partial",
    "agree": 1.0
   },
@@ -121,7 +115,7 @@
    "kind": "model",
    "label": "Head-switch skew correction (H4, 10 µs)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "corrects",
    "agree": 1.0
   },
@@ -129,7 +123,7 @@
    "kind": "model",
    "label": "Timing correction class",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "line TBC",
    "agree": 1.0
   },
@@ -137,7 +131,7 @@
    "kind": "model",
    "label": "Corrects timing changes at 1 kHz (H6 r3)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "yes",
    "agree": 1.0
   },
@@ -145,7 +139,7 @@
    "kind": "model",
    "label": "After a timing step (H3)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "no visible disturbance",
    "agree": 1.0
   },
@@ -153,7 +147,7 @@
    "kind": "model",
    "label": "Slow timing correction (H2, H3, F1)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "corrects",
    "agree": 1.0
   },
@@ -161,7 +155,7 @@
    "kind": "model",
    "label": "240p input (S5)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "converted to standard fields",
    "agree": 1.0
   },
@@ -169,7 +163,7 @@
    "kind": "model",
    "label": "Picture with no V-sync (S4 r6)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "holds its position",
    "agree": 1.0
   },
@@ -177,7 +171,7 @@
    "kind": "model",
    "label": "Hum clamped (L3, 20 IRE)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "yes",
    "agree": 1.0
   },
@@ -185,19 +179,83 @@
    "kind": "model",
    "label": "Level control (L4, 120 %)",
    "unit": "",
-   "n": 4,
+   "n": 3,
    "value": "passes the level",
+   "agree": 1.0
+  },
+  "captions": {
+   "kind": "model",
+   "label": "Line 21 captions (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "passed intact",
+   "agree": 1.0
+  },
+  "captions_after_loss": {
+   "kind": "model",
+   "label": "Captions around lost fields (B1 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "first fields damaged",
+   "agree": 0.67,
+   "seen": {
+    "first fields damaged": 2,
+    "intact": 1
+   }
+  },
+  "captions_in_step": {
+   "kind": "model",
+   "label": "Captions in step with the picture (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "in step",
+   "agree": 0.67,
+   "seen": {
+    "in step": 2,
+    "slips (VBI and picture take different paths)": 1
+   }
+  },
+  "vbi_lines": {
+   "kind": "model",
+   "label": "VBI lines 10-20 (B2)",
+   "unit": "",
+   "n": 3,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "agc_pulses": {
+   "kind": "model",
+   "label": "AGC copy-protection pulses (B3)",
+   "unit": "",
+   "n": 3,
+   "value": "replaced with its own (sync reduced)",
+   "agree": 1.0
+  },
+  "agc_blinded": {
+   "kind": "model",
+   "label": "Blinded by AGC pulses (B3 r2)",
+   "unit": "",
+   "n": 3,
+   "value": "no",
+   "agree": 1.0
+  },
+  "colour_stripe": {
+   "kind": "model",
+   "label": "Colour stripe (B3 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "passed",
    "agree": 1.0
   },
   "rate_ppm": {
    "kind": "unit",
    "label": "Output line rate vs input",
    "unit": "ppm",
-   "n": 4,
-   "value": -14.35,
+   "n": 3,
+   "value": -13.31,
    "range": [
-    -17.51,
-    1.55
+    -16.12,
+    1.99
    ],
    "agree": null
   },
@@ -205,10 +263,10 @@
    "kind": "unit",
    "label": "Latency, range seen",
    "unit": "ms",
-   "n": 4,
+   "n": 3,
    "value": [
-    64.3,
-    111.4
+    65.06,
+    94.55
    ],
    "agree": null
   },
@@ -216,11 +274,11 @@
    "kind": "unit",
    "label": "Luma gain (V0, gray out / in)",
    "unit": "×",
-   "n": 4,
-   "value": 1.008,
+   "n": 3,
+   "value": 1.01,
    "range": [
-    1.005,
-    1.011
+    1.01,
+    1.012
    ],
    "agree": null
   },
@@ -228,11 +286,11 @@
    "kind": "unit",
    "label": "Saturation (V0, chroma/burst out ÷ in)",
    "unit": "×",
-   "n": 4,
-   "value": 1.038,
+   "n": 3,
+   "value": 1.037,
    "range": [
-    1.032,
-    1.044
+    1.036,
+    1.038
    ],
    "agree": null
   },
@@ -240,11 +298,11 @@
    "kind": "unit",
    "label": "Hue offset (V0, out − in)",
    "unit": "°",
-   "n": 4,
-   "value": 0.05,
+   "n": 3,
+   "value": 0.3,
    "range": [
-    -0.2,
-    0.5
+    0.2,
+    0.4
    ],
    "agree": null
   },
@@ -252,11 +310,11 @@
    "kind": "unit",
    "label": "Output burst (V0)",
    "unit": "IRE p-p",
-   "n": 4,
-   "value": 39.15,
+   "n": 3,
+   "value": 39.6,
    "range": [
-    39.1,
-    39.2
+    39.6,
+    39.6
    ],
    "agree": null
   },
@@ -264,11 +322,11 @@
    "kind": "unit",
    "label": "ACC fraction (0 none, 1 full)",
    "unit": "",
-   "n": 4,
-   "value": 0.42,
+   "n": 3,
+   "value": 0.5,
    "range": [
-    0.42,
-    0.42
+    0.5,
+    0.5
    ],
    "agree": null
   },
@@ -276,11 +334,11 @@
    "kind": "unit",
    "label": "H1 r4 correction (input ÷ residual)",
    "unit": "dB",
-   "n": 4,
-   "value": 6.7,
+   "n": 3,
+   "value": 7.1,
    "range": [
-    6.6,
-    7.0
+    7.0,
+    7.3
    ],
    "agree": null
   },
@@ -288,7 +346,7 @@
    "kind": "unit",
    "label": "Timing-correction bandwidth (H1, CH2)",
    "unit": "Hz",
-   "n": 4,
+   "n": 3,
    "value": 8000.0,
    "range": [
     8000.0,
@@ -300,11 +358,11 @@
    "kind": "unit",
    "label": "Jitter passed at 4-8 kHz (H1, CH2)",
    "unit": "%",
-   "n": 4,
-   "value": 40.5,
+   "n": 3,
+   "value": 38,
    "range": [
     38,
-    42
+    38
    ],
    "agree": null
   },
@@ -312,11 +370,11 @@
    "kind": "unit",
    "label": "Head-switch skew left (H4 r5, over V0)",
    "unit": "ns rms",
-   "n": 4,
-   "value": 2.8,
+   "n": 3,
+   "value": 1.6,
    "range": [
-    2.4,
-    3.5
+    1.0,
+    1.7
    ],
    "agree": null
   },
@@ -324,11 +382,11 @@
    "kind": "unit",
    "label": "Jitter passed at 1 kHz (H6 r3)",
    "unit": "%",
-   "n": 4,
-   "value": 21.0,
+   "n": 3,
+   "value": 20,
    "range": [
-    21,
-    21
+    20,
+    20
    ],
    "agree": null
   },
@@ -336,11 +394,23 @@
    "kind": "unit",
    "label": "Jitter passed at 3 kHz (H6 r4)",
    "unit": "%",
-   "n": 4,
-   "value": 52.0,
+   "n": 3,
+   "value": 51,
    "range": [
-    51,
+    50,
     52
+   ],
+   "agree": null
+  },
+  "caption_gain": {
+   "kind": "unit",
+   "label": "Caption data level (B1, out ÷ in)",
+   "unit": "×",
+   "n": 3,
+   "value": 1.004,
+   "range": [
+    1.003,
+    1.005
    ],
    "agree": null
   },
@@ -348,19 +418,31 @@
    "kind": "rig",
    "label": "CH1 (TBC output) termination, from its sync depth",
    "unit": "",
-   "n": 4,
-   "value": "open (unterminated)",
+   "n": 3,
+   "value": "75 ohm (terminated)",
    "agree": 1.0
+  },
+  "input_sync_v": {
+   "kind": "rig",
+   "label": "Generator sync into the TBC (V0, CH2; nominal 0.286)",
+   "unit": "V",
+   "n": 3,
+   "value": 0.284,
+   "range": [
+    0.284,
+    0.284
+   ],
+   "agree": null
   },
   "sync_depth_v": {
    "kind": "rig",
    "label": "Output sync depth (V0; depends on termination)",
    "unit": "V",
-   "n": 4,
-   "value": 0.562,
+   "n": 3,
+   "value": 0.281,
    "range": [
-    0.561,
-    0.562
+    0.281,
+    0.281
    ],
    "agree": null
   },
@@ -368,11 +450,11 @@
    "kind": "rig",
    "label": "Output H jitter (V0; scope floor, depends on termination)",
    "unit": "ns rms",
-   "n": 4,
-   "value": 0.65,
+   "n": 3,
+   "value": 0.99,
    "range": [
-    0.64,
-    0.66
+    0.99,
+    1.0
    ],
    "agree": null
   },
@@ -380,86 +462,55 @@
    "kind": "rig",
    "label": "Output noise on gray (V0; scope floor, depends on termination)",
    "unit": "IRE rms",
-   "n": 4,
-   "value": 0.45,
+   "n": 3,
+   "value": 0.57,
    "range": [
-    0.44,
-    0.47
+    0.52,
+    0.62
    ],
    "agree": null
   }
  },
  "variable": [
   {
-   "test": "C3",
-   "rung": 1,
-   "trials": 4,
-   "verdicts": {
-    "fail": 3,
-    "pass": 1
-   },
-   "pass_rate": 0.25
-  },
-  {
    "test": "S10",
    "rung": 1,
-   "trials": 4,
-   "verdicts": {
-    "marginal": 3,
-    "pass": 1
-   },
-   "pass_rate": 0.62
-  },
-  {
-   "test": "S10",
-   "rung": 2,
-   "trials": 4,
-   "verdicts": {
-    "marginal": 3,
-    "pass": 1
-   },
-   "pass_rate": 0.62
-  },
-  {
-   "test": "S10",
-   "rung": 3,
-   "trials": 4,
-   "verdicts": {
-    "marginal": 3,
-    "pass": 1
-   },
-   "pass_rate": 0.62
-  },
-  {
-   "test": "S11",
-   "rung": 1,
-   "trials": 4,
-   "verdicts": {
-    "marginal": 3,
-    "fail": 1
-   },
-   "pass_rate": 0.38
-  },
-  {
-   "test": "S11",
-   "rung": 2,
-   "trials": 4,
-   "verdicts": {
-    "fail": 3,
-    "marginal": 1
-   },
-   "pass_rate": 0.12
-  },
-  {
-   "test": "X1",
-   "rung": 4,
-   "trials": 4,
+   "trials": 3,
    "verdicts": {
     "marginal": 2,
-    "pass": 1,
     "fail": 1
    },
-   "pass_rate": 0.5
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S10",
+   "rung": 2,
+   "trials": 3,
+   "verdicts": {
+    "marginal": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S11",
+   "rung": 1,
+   "trials": 3,
+   "verdicts": {
+    "fail": 2,
+    "marginal": 1
+   },
+   "pass_rate": 0.17
+  },
+  {
+   "test": "B1",
+   "rung": 1,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "marginal": 1
+   },
+   "pass_rate": 0.83
   }
  ]
 }

@@ -433,6 +433,31 @@ rms line jitter.
     synchroniser slipping a field as the frame store wraps, so it depends on
     when that falls in the capture.
 
+## Panasonic DMR-ES10 on the calibrated rig (2026-10-24, lid off)
+
+- **Same unit, same behaviour:** every old-rig behaviour trait held; line TBC
+  (bandwidth above 8 kHz, head-switch skew left 1.6 ns); luma ×1.01 (it
+  wasn't biased by the old under-level input, unlike the TBC-3000); hue
+  +0.3°; score 59.6–60.0 (61.3–61.5 without the new B tests, as before).
+- **Captions:** intact, but line 21 and the picture take separately buffered
+  paths: in a run, 46 of 77 fields in step and 31 a frame ahead; in another,
+  8 and 69. The caption stream itself stays continuous.
+- **Copy protection:** given our B3 pulses it puts out its **own** APS on
+  lines 10–17 (pseudo-syncs −54 IRE, AGC pulses +154 IRE, three pairs in the
+  first half of the line) and **cuts its output sync to 75 %** (210 mV
+  against 281), latched on through our cycle's off half. Its picture is
+  unchanged in volts (557–574 mV above black against 558 on V0). On a clean
+  input it adds nothing (V0, B1: lines 10–17 flat). In one cycling run
+  (B3 r2) it kept the 75 % sync but added no pulses, so its logic depends
+  on what came before. Colour stripe passes through.
+- **Lost fields:** with snow it shows its own picture for a field or two on
+  most short gaps (S11 r1–r2, 5 of 6 runs); with no signal it rides through.
+- **Three attempts:** the first was graded with a bad slicer fix (markers
+  double-counted), and the second with B analysis that called its slipping
+  captions "damaged", its own APS "altered", and its 75 % sync "blinded"
+  (an unchanged picture read 34 % bright in sync-scaled IRE). Each was found
+  in the data, fixed and checked on kept captures before re-running.
+
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
 - **First field trial, 2026-10-20** (CH2 at its input, single termination;

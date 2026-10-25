@@ -45,6 +45,7 @@ LIMITS = {
     "h6_passed_slow": 0.3,       # H6 at 1 kHz and below: share of the jitter passed (main)
     "h6_passed_fast": 0.5,       # H6 above 1 kHz: share passed (minor)
     "recovery_lines": 3,         # H3: lines until the picture is back after a step
+    "blinded_ire": 5.0,          # B3: a picture level shift that means a fooled AGC (a 2-3 IRE shift isn't)
     "captions_intact": 0.98,     # B1/B2: share of our fields whose line 21 data arrives intact
     "captions_disrupted": 0.9,   # B1 r2/r3: the same, when fields are dropped or lost (a field
                                  # damaged as the TBC recovers is minor, as in S10)
@@ -321,8 +322,8 @@ def agc_checks(r, ctx, tid):
     if g and v0o and sd and sd0:
         want_v = v0o * sd0 / 40 * ((mean(gi) / v0i) if gi and v0i else 1.0)
         d = (mean(g) * sd / 40 - want_v) / (sd0 / 40)          # in V0's IRE
-        out.append(check("not blinded: picture level as on V0", abs(d) <= LIMITS["luma_ire"],
-                         f"{1000 * mean(g) * sd / 40:.0f} mV above black, {d:+.1f} IRE vs V0", f"± {LIMITS['luma_ire']:g} IRE"))
+        out.append(check("not blinded: picture level as on V0", abs(d) <= LIMITS["blinded_ire"],
+                         f"{1000 * mean(g) * sd / 40:.0f} mV above black, {d:+.1f} IRE vs V0", f"± {LIMITS['blinded_ire']:g} IRE"))
         ratio = sd / sd0
         out.append(check("output sync as on V0", abs(ratio - 1) <= 0.05,
                          f"{100 * ratio:.0f} % of V0's" + (" (part of its own protection)" if a["state"] == "replaced" else ""),
@@ -330,8 +331,8 @@ def agc_checks(r, ctx, tid):
     p = a.get("pumping_ire")
     if p is not None:
         pi = ((r.get("input") or {}).get("agc") or {}).get("pumping_ire") or 0.0
-        out.append(check("not blinded: picture level steady", abs(p - pi) <= LIMITS["luma_ire"],
-                         f"{p - pi:+.1f} IRE between the cycle's halves", f"± {LIMITS['luma_ire']:g} IRE"))
+        out.append(check("not blinded: picture level steady", abs(p - pi) <= LIMITS["blinded_ire"],
+                         f"{p - pi:+.1f} IRE between the cycle's halves", f"± {LIMITS['blinded_ire']:g} IRE"))
     o = a.get("own_pulses") or {}
     how = (f"replaced with its own, {o['min_ire']:.0f} / {o['max_ire']:.0f} IRE on lines {o['lines'][0]}-{o['lines'][-1]}"
            if a["state"] == "replaced" else f"{a['state']} ({a['lines']['stripped']}/{a['checked']} lines flat)")

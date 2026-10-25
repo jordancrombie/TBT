@@ -45,6 +45,7 @@ LIMITS = {
     "h6_passed_slow": 0.3,       # H6 at 1 kHz and below: share of the jitter passed (main)
     "h6_passed_fast": 0.5,       # H6 above 1 kHz: share passed (minor)
     "recovery_lines": 3,         # H3: lines until the picture is back after a step
+    "blinded_ire": 5.0,          # B3: a picture level shift that means a fooled AGC (a 2-3 IRE shift isn't)
     "captions_intact": 0.98,     # B1/B2: share of our fields whose line 21 data arrives intact
     "captions_disrupted": 0.9,   # B1 r2/r3: the same, when fields are dropped or lost (a field
                                  # damaged as the TBC recovers is minor, as in S10)
@@ -71,6 +72,7 @@ def ctx_of(runs, tbc_class="frame"):
     line = ((v0 or {}).get("markers") or {}).get("line_after_vsync")
     return {"class": tbc_class, "floor_ns": disp["rms_ns"] if disp else None,
             "v0_out": (v0 or {}).get("picture"), "v0_in": ((v0 or {}).get("input") or {}).get("picture"),
+            "v0_sync_v": ((v0 or {}).get("level") or {}).get("sync_depth_v"),
             "floor_peak_ns": disp["peak_ns"] if disp else None,
             "base_line": line["median"] if line else None}
 
@@ -275,11 +277,16 @@ def vbi_checks(r, ctx, tid):
     lim = LIMITS["captions_disrupted"] if tid == "B1" and r["test"]["rung"] > 1 else LIMITS["captions_intact"]
     out = [check("captions intact", frac >= lim, f"{c['intact']}/{c['fields']} ({c['state']})", f">= {100 * lim:.0f} %"),
            check("every caption intact", c["intact"] == c["fields"],
-                 f"{c['parity_errors']} damaged, {c['missing']} missing, {c['wrong_data']} wrong, "
-                 f"{sum(c['other_frame'].values())} from another frame", "0", minor=True)]
+                 f"{c['parity_errors']} damaged, {c['missing']} missing, {c['wrong_data']} wrong", "0", minor=True)]
+    if c.get("in_step_fraction") is not None:
+        out.append(check("captions in step with the picture", c["in_step_fraction"] >= LIMITS["captions_intact"],
+                         f"{100 * c['in_step_fraction']:.0f} % in step (offsets {c['other_frame'] or 'none'})",
+                         f">= {100 * LIMITS['captions_intact']:.0f} %", minor=True))
     vi = ((r.get("input") or {}).get("vbi") or {}).get("captions")
     if vi and c["found"]:
-        gaps = lambda x: sum(x[k][q] for k in ("field1_stream", "field2_stream") for q in ("repeated", "skipped"))
+        # Field 2's frame counter is unique per frame, so its sequence is the
+        # caption stream as a decoder sees it (field 1 repeats control codes).
+        gaps = lambda x: sum(x["field2_stream"][q] for q in ("repeated", "skipped"))
         out.append(check("caption stream as sent", gaps(c) <= gaps(vi),
                          f"{gaps(c)} repeated/skipped", f"<= input's {gaps(vi)}", minor=True))
     m = v.get("line_map")
@@ -302,13 +309,34 @@ def agc_checks(r, ctx, tid):
     if not a:
         return [check("AGC pulses analysed", False, "no result", "")]
     out = []
+    # A latched response doesn't pump, so compare the picture level with V0's
+    # too, in volts above black: IRE are scaled from the output's own sync,
+    # and a unit may change its sync as part of its own protection (the
+    # DMR-ES10 cuts it to 75 %, which made an unchanged picture read 34 % bright).
+    mean = lambda v: sum(v) / len(v)
+    g = [v for v in (a.get("gray_on_ire"), a.get("gray_off_ire")) if v is not None]
+    v0o, v0i = (ctx.get("v0_out") or {}).get("gray_ire"), (ctx.get("v0_in") or {}).get("gray_ire")
+    ai = (r.get("input") or {}).get("agc") or {}
+    gi = [v for v in (ai.get("gray_on_ire"), ai.get("gray_off_ire")) if v is not None]
+    sd, sd0 = (r.get("level") or {}).get("sync_depth_v"), ctx.get("v0_sync_v")
+    if g and v0o and sd and sd0:
+        want_v = v0o * sd0 / 40 * ((mean(gi) / v0i) if gi and v0i else 1.0)
+        d = (mean(g) * sd / 40 - want_v) / (sd0 / 40)          # in V0's IRE
+        out.append(check("not blinded: picture level as on V0", abs(d) <= LIMITS["blinded_ire"],
+                         f"{1000 * mean(g) * sd / 40:.0f} mV above black, {d:+.1f} IRE vs V0", f"± {LIMITS['blinded_ire']:g} IRE"))
+        ratio = sd / sd0
+        out.append(check("output sync as on V0", abs(ratio - 1) <= 0.05,
+                         f"{100 * ratio:.0f} % of V0's" + (" (part of its own protection)" if a["state"] == "replaced" else ""),
+                         "± 5 %", minor=True))
     p = a.get("pumping_ire")
     if p is not None:
         pi = ((r.get("input") or {}).get("agc") or {}).get("pumping_ire") or 0.0
-        out.append(check("not blinded: picture level steady", abs(p - pi) <= LIMITS["luma_ire"],
-                         f"{p - pi:+.1f} IRE between the cycle's halves", f"± {LIMITS['luma_ire']:g} IRE"))
-    out.append(check("AGC pulses removed", a["state"] == "stripped",
-                     f"{a['state']} ({a['lines']['stripped']}/{a['checked']} lines flat)", "stripped", minor=True))
+        out.append(check("not blinded: picture level steady", abs(p - pi) <= LIMITS["blinded_ire"],
+                         f"{p - pi:+.1f} IRE between the cycle's halves", f"± {LIMITS['blinded_ire']:g} IRE"))
+    o = a.get("own_pulses") or {}
+    how = (f"replaced with its own, {o['min_ire']:.0f} / {o['max_ire']:.0f} IRE on lines {o['lines'][0]}-{o['lines'][-1]}"
+           if a["state"] == "replaced" else f"{a['state']} ({a['lines']['stripped']}/{a['checked']} lines flat)")
+    out.append(check("AGC pulses removed", a["state"] == "stripped", how, "stripped", minor=True))
     if "stripe_on_output" in a:
         out.append(check("colour stripe removed", not a["stripe_on_output"],
                          f"{a['stripe_hue_diff_deg']:+.0f}° on striped lines", "0°", minor=True))

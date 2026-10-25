@@ -55,6 +55,7 @@ TRAITS = [
     ("level_control", "model", "Level control (L4, 120 %)", ""),
     ("captions", "model", "Line 21 captions (B1)", ""),
     ("captions_after_loss", "model", "Captions around lost fields (B1 r3)", ""),
+    ("captions_in_step", "model", "Captions in step with the picture (B1)", ""),
     ("vbi_lines", "model", "VBI lines 10-20 (B2)", ""),
     ("agc_pulses", "model", "AGC copy-protection pulses (B3)", ""),
     ("agc_blinded", "model", "Blinded by AGC pulses (B3 r2)", ""),
@@ -75,6 +76,7 @@ TRAITS = [
     ("h6_passed_3k", "unit", "Jitter passed at 3 kHz (H6 r4)", "%"),
     ("caption_gain", "unit", "Caption data level (B1, out ÷ in)", "×"),
     ("ch1_termination", "rig", "CH1 (TBC output) termination, from its sync depth", ""),
+    ("input_sync_v", "rig", "Generator sync into the TBC (V0, CH2; nominal 0.286)", "V"),
     ("sync_depth_v", "rig", "Output sync depth (V0; depends on termination)", "V"),
     # The scope's noise floor shows through these: an unterminated CH1 has
     # twice the volts, so they read lower (0.66 vs 0.97 ns, 0.33 vs 0.39 IRE
@@ -231,6 +233,9 @@ def traits_of(runs):
     c = ((b1 or {}).get("vbi") or {}).get("captions")
     if c and c["fields"]:
         t["captions"] = {"intact": "passed intact", "stripped": "stripped", "damaged": "damaged"}.get(c["state"], c["state"])
+        if c.get("in_step_fraction") is not None:
+            t["captions_in_step"] = ("in step" if c["in_step_fraction"] >= grade.LIMITS["captions_intact"]
+                                     else "slips (VBI and picture take different paths)")
         ci = (((b1.get("input") or {}).get("vbi") or {}).get("captions") or {})
         if c["data_ire"] and ci.get("data_ire"):
             t["caption_gain"] = round(c["data_ire"] / ci["data_ire"], 3)
@@ -248,8 +253,15 @@ def traits_of(runs):
         states = Counter(r["agc"]["state"] for r in b3)
         t["agc_pulses"] = states.most_common(1)[0][0]
         a2 = next((r for r in b3 if r["test"]["rung"] == 2), None)
-        if a2 and a2["agc"]["pumping_ire"] is not None:
-            t["agc_blinded"] = "yes" if abs(a2["agc"]["pumping_ire"]) > grade.LIMITS["luma_ire"] else "no"
+        if a2:
+            g2 = next((g for g in G["runs"] if g["test"] == "B3" and g["rung"] == 2), None)
+            bad = [c for c in (g2 or {}).get("checks", []) if c["name"].startswith("not blinded") and not c["ok"]]
+            kinds = sorted({"picture level shifts" if "V0" in c["name"] else "picture level pumps" for c in bad})
+            t["agc_blinded"] = ("yes: " + ", ".join(kinds)) if bad else "no"
+        if t["agc_pulses"] == "replaced":
+            g1 = next((g for g in G["runs"] if g["test"] == "B3" and g["rung"] == 1), None)
+            shrunk = any(c["name"] == "output sync as on V0" and not c["ok"] for c in (g1 or {}).get("checks", []))
+            t["agc_pulses"] = "replaced with its own" + (" (sync reduced)" if shrunk else "")
         a3 = next((r for r in b3 if r["test"]["rung"] == 3 and "stripe_on_output" in r["agc"]), None)
         if a3:
             t["colour_stripe"] = "passed" if a3["agc"]["stripe_on_output"] else "removed"
@@ -270,6 +282,12 @@ def traits_of(runs):
             t["sync_depth_v"] = round(sd, 3)
             # A TBC's regenerated sync is ~0.29 V into 75 ohms, twice that open.
             t["ch1_termination"] = "75 ohm (terminated)" if sd < TERMINATED_BELOW_V else "open (unterminated)"
+        si = ((v0.get("input") or {}).get("level") or {}).get("sync_depth_v")
+        if si:
+            # The input level the TBC saw. A TBC regenerates its own sync but
+            # passes the picture in proportion, so its luma gain (against its
+            # own sync) reads low by as much as the input was low.
+            t["input_sync_v"] = round(si, 3)
     return t, G
 
 

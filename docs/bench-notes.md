@@ -92,13 +92,22 @@ so runs are now deleted after their report unless `--keep` is given.
   frame task writes nothing until the rebuild finishes. Three full verifier
   passes afterwards (55 configurations each) had **no DMA restarts**, against
   about one per pass before. Keep watching `dma_restarts`.
-- **Verifier flake, fixed 2026-10-24:** about once per full
-  `verify_timing.py` run, one test showed a 180° burst-phase error (S1 r5,
-  S2 r3, S4 r5; never the same one, and never in isolation). The previous
-  firmware did it too. Cause: `hold 1` didn't take the lock, so a frame write
-  already in progress finished after `hold` reported the frame numbers, and
-  the half held the next frame (the other colour phase). `hold` now takes the
-  lock and the frame task checks it under the lock.
+- **Verifier flake: it was the serial link (found 2026-10-24).** About once
+  per full `verify_timing.py` run, one line failed: a 180° burst phase (S1
+  r5, S2 r3, S4 r5, H4 r3) or an undecodable marker (S1 r5, S4 r6), never
+  the same one and never in isolation. A stress test (150 test switches,
+  7,500 line dumps) caught it on single random lines with errors of −90°,
+  −180°, +90° and −122°: samples shifted, not a wrong frame. The cause was
+  the serial link dropping or garbling a byte in about **0.4 % of line
+  dumps** (`dump`, ~1,800 hex characters at 921600 baud), which shifted
+  every sample after it, and nothing checked. Now `dump` sends the sample
+  count and sum, and `gen_cmd.dump_line` re-reads any copy that doesn't match
+  (and never uses it): 0 wrong lines in 150 iterations, with 31 bad
+  transfers caught. Earlier today this was put down to a race in `hold`;
+  `hold` does now take the frame lock (harmless and correct), but that wasn't
+  the cause. Captures never go over this link, so no field-trial data was
+  affected. `lens`, `pdump` and `manifest` replies aren't checksummed yet
+  (TODO).
 - **Open issue (probably fixed, see above): the I2S DMA occasionally stops.** Seen as the frame counter
   freezing, with `diag` showing the same descriptor every time. It happens
   about once per full `verify_timing.py` run, always on the switch from S8
@@ -365,7 +374,26 @@ rms line jitter.
     head-switch skew 77–86 ns left, H6 91–92 % at 1 kHz, clock +1.75 to
     +1.85 ppm.
 - **Cleanest output of the frame synchronisers:** noise 0.28–0.35 IRE,
-  output jitter 0.57–0.58 ns.
+  output jitter 0.57–0.58 ns (old rig).
+- **Re-measured on the calibrated rig (2026-10-24, 3 trials per input):**
+
+  | | Input A | Input B |
+  |---|---|---|
+  | Luma gain (old rig) | ×0.989 (×0.825) | ×0.943 (×0.789) |
+  | Hue offset | −1.3° | +3.1° |
+  | Correction bandwidth (old rig) | 532 Hz (448) | 523 Hz (424) |
+  | Head-switch skew left (old rig) | 66 ns (85) | 58 ns (77) |
+  | Output noise (input carries 0.22 IRE) | 0.20 IRE | 0.42 IRE |
+  | Output jitter | 0.81–0.85 ns | 0.69–0.71 ns |
+  | Captions after a signal loss (B1 r3) | 1–2 fields damaged, every trial | none damaged (3 trials) |
+  | Score | 61.7–62.4 | 48.7–53.6 |
+
+  Every model trait from the old rig held on both inputs. The front ends
+  differ more clearly now: on the old rig both inputs read 0.33 IRE of noise,
+  the floor hiding B's extra noise. Input A now passes V0 (luma within
+  2 IRE), so its score rose by about 12. Input B's caption damage after
+  losses may depend on level: on an old-level trial earlier that day it
+  damaged one field.
 - **Clock offset drifts a little over a day, and it's the TBC's crystal.**
   Input B read +1.80–1.83 ppm against the generator on the night of
   2026-10-23 and +2.10 the next afternoon (input A: +1.75–1.90, then up to
@@ -404,6 +432,31 @@ rms line jitter.
     trial; 6 repeats on the same firmware passed). It's the frame
     synchroniser slipping a field as the frame store wraps, so it depends on
     when that falls in the capture.
+
+## Panasonic DMR-ES10 on the calibrated rig (2026-10-24, lid off)
+
+- **Same unit, same behaviour:** every old-rig behaviour trait held; line TBC
+  (bandwidth above 8 kHz, head-switch skew left 1.6 ns); luma ×1.01 (it
+  wasn't biased by the old under-level input, unlike the TBC-3000); hue
+  +0.3°; score 59.6–60.0 (61.3–61.5 without the new B tests, as before).
+- **Captions:** intact, but line 21 and the picture take separately buffered
+  paths: in a run, 46 of 77 fields in step and 31 a frame ahead; in another,
+  8 and 69. The caption stream itself stays continuous.
+- **Copy protection:** given our B3 pulses it puts out its **own** APS on
+  lines 10–17 (pseudo-syncs −54 IRE, AGC pulses +154 IRE, three pairs in the
+  first half of the line) and **cuts its output sync to 75 %** (210 mV
+  against 281), latched on through our cycle's off half. Its picture is
+  unchanged in volts (557–574 mV above black against 558 on V0). On a clean
+  input it adds nothing (V0, B1: lines 10–17 flat). In one cycling run
+  (B3 r2) it kept the 75 % sync but added no pulses, so its logic depends
+  on what came before. Colour stripe passes through.
+- **Lost fields:** with snow it shows its own picture for a field or two on
+  most short gaps (S11 r1–r2, 5 of 6 runs); with no signal it rides through.
+- **Three attempts:** the first was graded with a bad slicer fix (markers
+  double-counted), and the second with B analysis that called its slipping
+  captions "damaged", its own APS "altered", and its 75 % sync "blinded"
+  (an unchanged picture read 34 % bright in sync-scaled IRE). Each was found
+  in the data, fixed and checked on kept captures before re-running.
 
 ## Pioneer DVR-220 (DVD recorder, line-in to line-out)
 
@@ -467,6 +520,46 @@ rms line jitter.
   frame). `tools/colour_watch.py` therefore starts V0 once and only
   listens.
 
+## Generator: levels and the DAC
+
+- **Calibrated 2026-10-24** on CH2 (tee at a TBC-3000's 75 Ω input), with
+  `tools/calibrate_levels.py`: `levels 5 92` gives sync 282.5 mV and white
+  718 mV (nominal 286 / 714). About 11.5 mV per DAC code, so ±1 code is the
+  limit. The old default `0 73` gave 235 / 605 mV (82 / 85 %).
+- **The DAC distorts colour slightly at full amplitude** into 150 Ω (75 Ω
+  source resistor + 75 Ω input). Yellow on CH2, A/B twice:
+
+  | Levels | Sync | White | Yellow hue | Yellow chroma | Gray bar |
+  |---|---|---|---|---|---|
+  | 0 73 | 235 mV | 605 mV | 168.3° | 59.6 IRE | 77.4 IRE |
+  | 5 92 | 283 mV | 718 mV | 164.5° | 57.7 IRE | 79.1 IRE |
+  | nominal | 286 | 714 | 167.1° | 62 | 76.9 |
+
+  Where the span sits (tip at codes 0–20) barely matters: it's the swing.
+  Burst is unaffected (37–38 IRE). A video buffer after the DAC would fix it.
+- **One-code step at DAC code 64:** a 50 IRE flat reads 352.6 mV with the
+  tip at code 5 and 367.3 mV at code 10, as the 50 IRE code crosses 64 (the
+  DAC's major carry). It shows up as a small step in mid-gray.
+- **Luma gain was biased by the low input.** A TBC regenerates its sync at
+  full size but passes the picture in proportion, so at 82 % input every
+  TBC's luma gain (against its own sync) read about 18 % low. The TBC-3000
+  input B read ×0.79 at the old levels and ×0.94 calibrated. Fingerprints
+  now record the input level (`input_sync_v`).
+- **Input level changes how much timing a TBC corrects.** TBC-3000 input B,
+  same terminated rig, only the generator level changed (A/B twice):
+  head-switch skew left (H4 r5) 79.5 / 77.2 ns at 235 mV sync, 56.8 / 56.7
+  ns at 283 mV; correction bandwidth 423 / 430 Hz against 546 / 553 Hz. The
+  displacement fit and the bandwidth (a CH2/CH1 ratio) don't depend on
+  amplitude, so this is the TBC: its sync separator locks harder on
+  full-size sync. Old-rig timing figures are biased the same way; the timing
+  classes don't change (0.4–0.55 kHz is a frame synchroniser either way).
+  The V0 displacement floor also drops, from 11.6 to 9.9 ns.
+- **Verifier, burst amplitude:** its measurement window wasn't a whole
+  number of colour cycles, biasing amplitude by a few percent depending on
+  where the window fell. With the new levels C1 r4 read 63.4 IRE for a
+  buffer holding exactly 61.2 (±19 codes). The window is now trimmed to whole
+  cycles.
+
 ## Generator: vertical blanking data (B tests)
 
 - **Caption lines are rendered every frame,** like the frame markers: their
@@ -500,6 +593,27 @@ rms line jitter.
   second.
 
 ## Measurement pitfalls
+
+- **A bouncing sync edge** (found 2026-10-24, DMR-ES10 on the bench). CH2's
+  line jitter read 18–20 ns instead of 6, at the calibrated levels (8 ns at
+  the old ones), whether the ES-10 was on or off. The falling sync edge
+  bounces: 0.306 → 0.213 → 0.218 → **0.255** → 0.187 → 0.108 V, likely the
+  DAC glitching as the code crosses 16 on the way down (17 → 8). With the
+  ES-10's input on the line the bounce rose back above the slicer on ~10 %
+  of lines, so the edge was taken at the second crossing, ~50 ns late. With
+  the TBC-3000 it stayed below. Sliced at 15–70 % of sync depth on the first
+  crossing, the input was clean (4.9–6.5 ns). `sync_pulses` now looks back
+  up to 0.25 µs from each edge for an earlier crossing and uses it; which
+  pulses exist is decided as before. CH2 reads 6.0–6.2 ns at both levels,
+  and kept runs analyse identically. **My first fix was wrong:** it closed
+  short gaps above the slicer anywhere, which at full levels merged
+  colour-burst troughs into extra pulses, so frame markers were counted
+  twice (L4 r4: 47 markers in a 30-field capture). The first ES-10
+  rebaseline trials were graded with it (dozens of runs "invalid: generator
+  frame sequence broken"); they were set aside and re-run. The
+  TBC-3000 rebaseline and every earlier trial read 6.0–6.5 ns on CH2, so
+  they weren't affected. A reconstruction low-pass after the DAC would
+  remove the glitch at its source (TODO).
 
 - **Output H jitter depends on the capture rate:** 0.62 ns at 50 MS/s, 2.51
   ns at 12.5 MS/s on the same unit (V0, TBC-3000), from coarser sampling of

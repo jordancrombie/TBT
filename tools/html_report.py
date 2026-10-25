@@ -254,7 +254,10 @@ def fault_html(r):
     if A:
         cls = "b-ok" if A["state"] == "stripped" else "b-warn"
         p = A.get("pumping_ire")
-        parts.append(f'<p><span class="badge {cls}">AGC pulses {esc(A["state"])}</span> '
+        o = A.get("own_pulses") or {}
+        own = (f' · its own pulses {o["min_ire"]:.0f} / {o["max_ire"]:.0f} IRE on lines {o["lines"][0]}–{o["lines"][-1]}'
+               if A["state"] == "replaced" and o.get("lines") else "")
+        parts.append(f'<p><span class="badge {cls}">AGC pulses {esc(A["state"])}</span>{own} '
                      f'pseudo-sync {A["pseudo_ire"] or 0:.0f} IRE · AGC {A["agc_on_ire"] or 0:.0f} IRE'
                      + (f' · picture pumping {p:+.1f} IRE' if p is not None else '')
                      + (f' · colour stripe {"on output" if A["stripe_on_output"] else "removed"}'

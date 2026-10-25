@@ -1,33 +1,33 @@
 {
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-3000 (input B)",
- "notes": "Input B, controls at baseline, trial 1 of 3.",
- "created": "2026-10-24 16:24",
+ "notes": "Source B (rear, left as seen from the back); controls at baseline; calibrated levels 5/92; CH1 terminated",
+ "created": "2026-10-24 20:29",
  "trials": [
   {
-   "trial": "20261023-233659",
+   "trial": "20261024-172834",
    "channels": 2,
-   "runs": 76,
-   "score": 50.7
+   "runs": 83,
+   "score": 53.7
   },
   {
-   "trial": "20261023-234808",
+   "trial": "20261024-174013",
    "channels": 2,
-   "runs": 76,
-   "score": 50.7
+   "runs": 83,
+   "score": 54.1
   },
   {
-   "trial": "20261023-235917",
+   "trial": "20261024-175153",
    "channels": 2,
-   "runs": 76,
-   "score": 51.6
+   "runs": 83,
+   "score": 49.2
   }
  ],
  "score": {
-  "median": 50.7,
+  "median": 53.7,
   "range": [
-   50.7,
-   51.6
+   49.2,
+   54.1
   ]
  },
  "traits": {
@@ -149,7 +149,11 @@
    "unit": "",
    "n": 3,
    "value": "corrects",
-   "agree": 1.0
+   "agree": 0.67,
+   "seen": {
+    "corrects": 2,
+    "partial": 1
+   }
   },
   "progressive_240p": {
    "kind": "model",
@@ -183,15 +187,63 @@
    "value": "passes the level",
    "agree": 1.0
   },
+  "captions": {
+   "kind": "model",
+   "label": "Line 21 captions (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "passed intact",
+   "agree": 1.0
+  },
+  "captions_after_loss": {
+   "kind": "model",
+   "label": "Captions around lost fields (B1 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "intact",
+   "agree": 1.0
+  },
+  "vbi_lines": {
+   "kind": "model",
+   "label": "VBI lines 10-20 (B2)",
+   "unit": "",
+   "n": 3,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "agc_pulses": {
+   "kind": "model",
+   "label": "AGC copy-protection pulses (B3)",
+   "unit": "",
+   "n": 3,
+   "value": "stripped",
+   "agree": 1.0
+  },
+  "agc_blinded": {
+   "kind": "model",
+   "label": "Blinded by AGC pulses (B3 r2)",
+   "unit": "",
+   "n": 3,
+   "value": "no",
+   "agree": 1.0
+  },
+  "colour_stripe": {
+   "kind": "model",
+   "label": "Colour stripe (B3 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "removed",
+   "agree": 1.0
+  },
   "rate_ppm": {
    "kind": "unit",
    "label": "Output line rate vs input",
    "unit": "ppm",
    "n": 3,
-   "value": 1.82,
+   "value": 2.15,
    "range": [
-    1.8,
-    1.83
+    2.12,
+    2.19
    ],
    "agree": null
   },
@@ -201,8 +253,8 @@
    "unit": "ms",
    "n": 3,
    "value": [
-    0.41,
-    33.32
+    0.49,
+    31.58
    ],
    "agree": null
   },
@@ -211,10 +263,10 @@
    "label": "Luma gain (V0, gray out / in)",
    "unit": "×",
    "n": 3,
-   "value": 0.789,
+   "value": 0.943,
    "range": [
-    0.789,
-    0.79
+    0.942,
+    0.944
    ],
    "agree": null
   },
@@ -223,10 +275,10 @@
    "label": "Saturation (V0, chroma/burst out ÷ in)",
    "unit": "×",
    "n": 3,
-   "value": 0.996,
+   "value": 1.002,
    "range": [
-    0.995,
-    0.998
+    1.001,
+    1.002
    ],
    "agree": null
   },
@@ -238,7 +290,7 @@
    "value": 3.1,
    "range": [
     3.1,
-    3.1
+    3.2
    ],
    "agree": null
   },
@@ -247,10 +299,10 @@
    "label": "Output burst (V0)",
    "unit": "IRE p-p",
    "n": 3,
-   "value": 37.8,
+   "value": 38.3,
    "range": [
-    37.8,
-    37.8
+    38.3,
+    38.3
    ],
    "agree": null
   },
@@ -259,10 +311,10 @@
    "label": "ACC fraction (0 none, 1 full)",
    "unit": "",
    "n": 3,
-   "value": 0.31,
+   "value": 0.37,
    "range": [
-    0.31,
-    0.31
+    0.37,
+    0.38
    ],
    "agree": null
   },
@@ -271,7 +323,7 @@
    "label": "H1 r4 correction (input ÷ residual)",
    "unit": "dB",
    "n": 3,
-   "value": -1.3,
+   "value": -1.2,
    "range": [
     -1.3,
     -1.2
@@ -283,10 +335,10 @@
    "label": "Timing-correction bandwidth (H1, CH2)",
    "unit": "Hz",
    "n": 3,
-   "value": 424,
+   "value": 523,
    "range": [
-    407,
-    447
+    521,
+    530
    ],
    "agree": null
   },
@@ -295,10 +347,10 @@
    "label": "Jitter passed at 4-8 kHz (H1, CH2)",
    "unit": "%",
    "n": 3,
-   "value": 112,
+   "value": 114,
    "range": [
-    112,
-    112
+    114,
+    115
    ],
    "agree": null
   },
@@ -307,10 +359,10 @@
    "label": "Head-switch skew left (H4 r5, over V0)",
    "unit": "ns rms",
    "n": 3,
-   "value": 76.6,
+   "value": 57.9,
    "range": [
-    76.1,
-    78.8
+    57.8,
+    58.1
    ],
    "agree": null
   },
@@ -319,10 +371,10 @@
    "label": "Jitter passed at 1 kHz (H6 r3)",
    "unit": "%",
    "n": 3,
-   "value": 92,
+   "value": 87,
    "range": [
-    92,
-    92
+    87,
+    87
    ],
    "agree": null
   },
@@ -331,10 +383,22 @@
    "label": "Jitter passed at 3 kHz (H6 r4)",
    "unit": "%",
    "n": 3,
-   "value": 119,
+   "value": 122,
    "range": [
-    119,
-    119
+    122,
+    122
+   ],
+   "agree": null
+  },
+  "caption_gain": {
+   "kind": "unit",
+   "label": "Caption data level (B1, out ÷ in)",
+   "unit": "×",
+   "n": 3,
+   "value": 0.968,
+   "range": [
+    0.968,
+    0.969
    ],
    "agree": null
   },
@@ -343,18 +407,30 @@
    "label": "CH1 (TBC output) termination, from its sync depth",
    "unit": "",
    "n": 3,
-   "value": "open (unterminated)",
+   "value": "75 ohm (terminated)",
    "agree": 1.0
+  },
+  "input_sync_v": {
+   "kind": "rig",
+   "label": "Generator sync into the TBC (V0, CH2; nominal 0.286)",
+   "unit": "V",
+   "n": 3,
+   "value": 0.283,
+   "range": [
+    0.283,
+    0.283
+   ],
+   "agree": null
   },
   "sync_depth_v": {
    "kind": "rig",
    "label": "Output sync depth (V0; depends on termination)",
    "unit": "V",
    "n": 3,
-   "value": 0.561,
+   "value": 0.28,
    "range": [
-    0.561,
-    0.561
+    0.28,
+    0.28
    ],
    "agree": null
   },
@@ -363,10 +439,10 @@
    "label": "Output H jitter (V0; scope floor, depends on termination)",
    "unit": "ns rms",
    "n": 3,
-   "value": 0.64,
+   "value": 0.69,
    "range": [
-    0.64,
-    0.64
+    0.69,
+    0.71
    ],
    "agree": null
   },
@@ -375,18 +451,48 @@
    "label": "Output noise on gray (V0; scope floor, depends on termination)",
    "unit": "IRE rms",
    "n": 3,
-   "value": 0.33,
+   "value": 0.42,
    "range": [
-    0.33,
-    0.34
+    0.41,
+    0.42
    ],
    "agree": null
   }
  },
  "variable": [
   {
+   "test": "H3",
+   "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "S4",
+   "rung": 6,
+   "trials": 3,
+   "verdicts": {
+    "fail": 1,
+    "marginal": 2
+   },
+   "pass_rate": 0.33
+  },
+  {
    "test": "S6",
    "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "pass": 1,
+    "fail": 2
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S6",
+   "rung": 6,
    "trials": 3,
    "verdicts": {
     "fail": 2,

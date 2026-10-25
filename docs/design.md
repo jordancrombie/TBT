@@ -321,9 +321,9 @@ checked against a known-good TBC, so every grade is labelled provisional.
 | Hum clamped | L3 | blanking wander | < 1 IRE rms |
 | Rides through the gap; clean recovery (minor) | S10, S11 | loss summary | handled; no garbled fields |
 | Clean after stress; no stuck or ghosted fields (minor) | X1 | hunt windows | after window clean |
-| Captions intact; every caption intact (minor); caption stream as sent (minor) | B1, B2 | line 21 decoded on every one of our fields, against what was sent; repeated or skipped caption data, against the input's | ≥ 98 % of fields (B1 r2/r3: ≥ 90 %, since a field damaged as the TBC recovers is minor, as in S10); 0; ≤ the input's |
+| Captions intact; every caption intact (minor); in step with the picture (minor); caption stream as sent (minor) | B1, B2 | line 21 decoded on every one of our fields: intact = the exact bytes of a frame within 3 of the picture's (the offsets are reported); repeated or skipped data in field 2's frame counter, against the input's | ≥ 98 % of fields (B1 r2/r3: ≥ 90 %, since a field damaged as the TBC recovers is minor, as in S10); 0; ≤ the input's |
 | VBI lines not corrupted; lines 10–20 passed (minor) | B2 | line IDs | 0 moved or damaged; 0 blanked |
-| Not blinded; AGC pulses removed (minor); colour stripe removed (minor) | B3 | gray level, cycle's on half against off half, beyond the input's; pulse lines flat; hue on striped lines | ± 2 IRE; all lines flat; < 90° |
+| Not blinded; AGC pulses removed (minor); output sync as on V0 (minor); colour stripe removed (minor) | B3 | picture level in volts above black against V0's (and the cycle's on half against its off half), since a unit may change its sync; pulse lines flat (a unit that puts out its own protection reads "replaced"); output sync depth against V0's; hue on striped lines | ± 5 IRE (a fooled AGC shifts far more; 2–3 IRE isn't it); all lines flat; ± 5 %; < 90° |
 
 **Not yet graded:**
 - *Recovery time* for S4 and S6 (H3's is graded, above).
@@ -350,8 +350,8 @@ Rules:
   it handled its own fault.
 - **Single-channel runs** use the nominal picture (adjusted for what the test
   changes) where two-channel runs use CH2. That matters because the
-  generator's real output differs from nominal (sync 82 %, chroma within
-  about 5 %, relative to sync).
+  generator's real output differs from nominal (hue about 2.6° and chroma
+  7 % low on yellow at the calibrated levels).
   When CH2's picture can't be measured for a test (S1's shallow sync, L3's
   hum, L2's heaviest noise), the input is worked out from V0's input
   instead.
@@ -466,9 +466,10 @@ model the firmware renders from.
 
 ### Phases
 
-1. **Phase 0, rig calibration (in progress):** CH2 wired 2026-10-14; the
-   chroma shortfall (0.68×) went away on 2026-10-15. Still to do: terminate
-   CH1, set `levels` to 286 / 714 mV, trim `ppm`.
+1. **Phase 0, rig calibration (done 2026-10-24):** CH2 wired 2026-10-14;
+   the chroma shortfall (0.68×) went away on 2026-10-15; CH1 terminated and
+   `levels` calibrated (283 / 718 mV) on 2026-10-24. Every unit is being
+   re-measured on the calibrated rig. Optional: trim `ppm`.
 2. **Phase 1, timing (done 2026-10-13):** descriptor-length control, frame
    task, frame marker, manifest, host capture runner. V0, H1–H5, F1.
 3. **Phase 2, structure and colour (done 2026-10-13):** S1–S9, C1–C4, F2,

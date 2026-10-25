@@ -458,6 +458,23 @@ rms line jitter.
   (an unchanged picture read 34 % bright in sync-scaled IRE). Each was found
   in the data, fixed and checked on kept captures before re-running.
 
+## AVT-8710 (green) on the calibrated rig (2026-10-25)
+
+- **Luma gain unchanged** (×0.988, old ×0.992): unlike the Datavideos it
+  scales its picture to its input's sync, so the old under-level input never
+  biased it. Burst ×1.16 (43.4 IRE out, so V0 fails on burst, as before).
+- **Same behaviour:** 6 lost fields, then its own colour bars; clock +12.4
+  ppm; correction bandwidth 512 Hz (frame synchroniser). Head-switch skew
+  left 98 → 60 ns with full-size sync, as on the others.
+- **H3 r5 fails in every trial** (one line jolted 1.1 µs; displacement
+  16.5–17.9 ns over V0). The old entry said "slow timing corrects" because
+  three of its four trials (2026-10-15) captured H3 for only 0.39 s, which
+  can miss the step that toggles every 0.5 s: no step was seen at all. Since
+  the 1.1 s H3 capture (2026-10-20) it has failed every time.
+- **B tests:** it **strips captions** (line 21 removed, the first unit to do
+  so), blanks lines 10–20, and removes copy protection without being
+  blinded. Output sync steady (267–272 mV). Score 38.4–39.8.
+
 ## Datavideo TBC-1000 on the calibrated rig (2026-10-25)
 
 - **Behaviour unchanged** from the old rig; same family as the TBC-3000 and

@@ -78,7 +78,7 @@ Scored for value against what the suite already covers.
   - [x] Datavideo TBC-3000 input A (the reference unit), 2026-10-24
   - [x] Datavideo TBC-1000, 2026-10-25 (its output sync wandered; see the
         bench notes)
-  - [ ] AVT-8710 (green)
+  - [x] AVT-8710 (green), 2026-10-25. All units rebaselined.
   - [x] Pioneer DVR-220, 2026-10-24/25 (third set: the first had V0 caught
         mid-recovery, the second the old B3 detector)
   - [x] Panasonic DMR-ES10 (lid off), 2026-10-24 (third attempt: the first
@@ -105,7 +105,7 @@ Scored for value against what the suite already covers.
 
 ## Grader and fingerprints
 - [x] `tools/grade.py` with provisional thresholds (2026-10-14).
-- [x] Fingerprints and the library: 7 entries for 5 devices (2026-10-24).
+- [x] Fingerprints and the library: 6 entries for 5 devices, all re-measured on the calibrated rig (2026-10-24/25); the first entries are in `fingerprints/old-rig/`.
 - [x] Line TBC or frame synchroniser: H6, jitter transfer, H3 step recovery,
       and the timing class, calibrated on four devices (2026-10-23).
 - [ ] Check the thresholds and group weights against a known-good TBC.

@@ -38,11 +38,11 @@ Open work is in [TODO.md](TODO.md).
 | Reports | Done | `--dut`/`--note` on every run; optional `--html` report; `compare_suites.py` lines field trials up |
 | Grader | Provisional | `tools/grade.py` (or `run_suite.py --grade`) grades every run, each test and the whole field trial. Thresholds not yet checked against a known-good TBC |
 | Line TBC or frame synchroniser | Done | H6 jitter sweep, jitter transfer and H3 step recovery, calibrated on four devices (see [docs/design.md](docs/design.md)) |
-| Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 7 entries for 5 devices |
+| Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 6 entries for 5 devices (the TBC-3000 once per input), measured on the calibrated rig; the first entries are in `fingerprints/old-rig/` |
 | Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. Fingerprints are being re-measured on the calibrated rig |
+| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25) |
 
 Open work is in [TODO.md](TODO.md).
 
@@ -504,16 +504,15 @@ the library that identification will match unknown TBCs against.
 
 The library holds five devices so far (the TBC-3000 once per input).
 
-> **The library is being re-measured on the calibrated rig** (from
-> 2026-10-24). The entries in the table below were measured on the **old
-> rig**: CH1 unterminated, and the generator at 82 % of nominal level. Each
-> records both ("CH1 termination: open", "generator sync into the TBC:
-> 0.236 V"). Their behaviour traits, hue and clock compare with any rig.
-> Their **luma gain reads about 18 % low** (the under-level input), and their
-> output jitter and noise read lower than a terminated rig would (about
-> ×1.5 and ×1.2), which makes them a direct reference for an unterminated,
-> uncalibrated rig. As each unit is re-measured, its old entry moves to
-> `fingerprints/old-rig/` and the table is updated.
+> **Every entry was re-measured on the calibrated rig** (2026-10-24/25):
+> CH1 terminated and the generator at nominal level. The first entries, from
+> the old rig (CH1 unterminated, generator at 82 %), are kept in
+> `fingerprints/old-rig/` with a README. Their behaviour traits, hue and
+> clock compare with any rig; their luma gain reads low on units that pass
+> the picture in proportion to the input (about 18 % on the Datavideos,
+> not on the AVT, which scales to its input's sync); and their output
+> jitter and noise read lower (about ×1.5 and ×1.2). That makes them a
+> direct reference for an unterminated, uncalibrated rig.
 
 The **timing correction class** comes
 from how fast and how completely each one corrects line timing (see
@@ -521,20 +520,28 @@ from how fast and how completely each one corrects line timing (see
 
 | Trait | Datavideo TBC-1000 | Datavideo TBC-3000 (input A / B) | AVT-8710 (green) | Pioneer DVR-220 | Panasonic DMR-ES10 |
 |---|---|---|---|---|---|
-| Measured on | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | old rig | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-24) |
+| Measured on | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-24) |
 | Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** |
-| Correction bandwidth | 0.49 kHz | 0.53 / 0.52 kHz | 0.5 kHz | 3.6 kHz | above 8 kHz |
-| Head-switch skew left (H4) | 63 ns | 66 / 58 ns | 98 ns | 9 ns | 2 ns |
-| At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.3 µs | 1 line jolted 1.4 µs | no jolt |
+| Correction bandwidth | 0.49 kHz | 0.53 / 0.52 kHz | 0.51 kHz | 3.6 kHz | above 8 kHz |
+| Head-switch skew left (H4) | 63 ns | 66 / 58 ns | 60 ns | 9 ns | 2 ns |
+| At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.1 µs | 1 line jolted 1.4 µs | no jolt |
 | With no input at all | black | black | its own colour bars | black | no output |
 | Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ with no signal; with snow its own picture shows at once |
 | Colour killer | yes | yes | no | no | no |
 | Output vs input | free-running, +22 ppm | free-running, +2.1 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−16 to +2 ppm) |
-| Luma gain (old rig reads ~18 % low) | ×0.83 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.02 | ×1.01 |
-| Output noise / jitter (rig-dependent) | 0.36 IRE / 1.01 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.39 IRE / 0.42 ns | 0.40 IRE / 1.10 ns | 0.57 IRE / 0.99 ns |
-| Field-trial score (provisional) | 50–52 | 62 / 49–54 | 38–44 | 30–41 | 60 |
-| Captions / VBI lines 10–20 (B1, B2) | intact, in step; first fields after a loss damaged / blanked | intact; after a signal loss A damages 1–2 fields, B none / blanked | not yet tested | intact, but line 21 slips against the picture / lines 10–19 blanked, line 20 carries its stray copy of our frame marker | intact, but line 21 slips between in step and a frame ahead of the picture; first fields after a loss damaged / blanked |
-| Copy protection: AGC pulses / colour stripe (B3) | removed, not blinded / removed | removed, not blinded / removed | not yet tested | **blinded**: picture darkens 21 % and keeps falling; also replaces ours with its own (−56 / up to +151 IRE, AGC cycling) and cuts sync to 75 % / removed | replaced with its own (−54 / +154 IRE on lines 10–17, sync cut to 75 %), picture not affected / passed |
+| Luma gain | ×0.83 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.02 | ×1.01 |
+| Output noise / jitter (rig-dependent) | 0.36 IRE / 1.01 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.33 IRE / 0.64 ns | 0.40 IRE / 1.10 ns | 0.57 IRE / 0.99 ns |
+| Field-trial score (provisional) | 50–52 | 62 / 49–54 | 38–40 | 30–41 | 60 |
+| Captions / VBI lines 10–20 (B1, B2) | intact, in step; first fields after a loss damaged / blanked | intact; after a signal loss A damages 1–2 fields, B none / blanked | **stripped** / blanked | intact, but line 21 slips against the picture / lines 10–19 blanked, line 20 carries its stray copy of our frame marker | intact, but line 21 slips between in step and a frame ahead of the picture; first fields after a loss damaged / blanked |
+| Copy protection: AGC pulses / colour stripe (B3) | removed, not blinded / removed | removed, not blinded / removed | removed, not blinded / removed | **blinded**: picture darkens 21 % and keeps falling; also replaces ours with its own (−56 / up to +151 IRE, AGC cycling) and cuts sync to 75 % / removed | replaced with its own (−54 / +154 IRE on lines 10–17, sync cut to 75 %), picture not affected / passed |
+
+The AVT-8710 (green) on the calibrated rig: its luma gain didn't move
+(×0.99), because it scales the picture to its input's sync, so the old
+under-level input never biased it. It still gives up after 6 lost fields
+and shows its own bars, and its head-switch skew left fell from 98 to 60 ns
+with full-size sync. It is the one unit that **strips captions** (line 21).
+Its H3 step fails now in every trial: the old entry's passes came from
+0.39 s captures too short to include a step.
 
 The Datavideo TBC-1000 on the calibrated rig behaves like its sibling the
 TBC-3000: luma ×0.83 (×0.63 on the old rig, the biggest level correction),

@@ -18,14 +18,21 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
       the 2026-10-24 regression trials did it by hand. Match clock offsets
       within about ±0.5 ppm: a unit's crystal drifts by 0.2–0.3 ppm over a
       day (bench notes).
-- [ ] **Regenerate the sample report** (`docs/sample-report.html` and
-      `docs/sample-report.jpg`). The current one predates CH2, grading and
-      H6. Run `run_suite.py full --grade --html`, copy the report from
-      `reports/` to `docs/sample-report.html`, then re-render the
-      screenshot:
-      `qlmanage -t -s 1400 -o /tmp docs/sample-report.html` and
-      `sips -s format jpeg -s formatOptions 80 /tmp/sample-report.html.png --out docs/sample-report.jpg`.
-      Repeat whenever tests or the report layout change.
+- [x] **Sample reports.** Done 2026-10-31: [docs/samples/](docs/samples/)
+      has one field trial per device and input, as a summary GitHub
+      renders plus the full report for GitHub Pages
+      (`tools/sample_report.py`). It replaces the single 2026-10-13
+      `docs/sample-report.html`. Regenerate every sample when the grader or
+      the report changes.
+  - [ ] Turn on GitHub Pages (Settings → Pages → deploy from `main`,
+        folder `/docs`) so the full reports open as pages.
+  - [ ] Keep each run's waveform in the suite JSON, so a re-written
+        report (and the summary) can show it. Today only trials run with
+        `--html` have them (the TBC-4000's).
+- [ ] **TBC-4000 output lock.** All four inputs lock to their input (or sit
+      just over the 0.5 ppm limit), where the TBC-3000 free-runs; the blind
+      trial before the settings reset read +1.1 to +1.4 ppm. Check the
+      manual for a lock or genlock setting, and test it both ways.
 
 ## Feature requests (ranked 2026-10-24)
 Scored for value against what the suite already covers.

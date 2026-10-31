@@ -435,15 +435,16 @@ def grades_html(G):
             f'<tbody>{rows}</tbody></table></div>' + (f'<ul class="cap">{notes}</ul>' if notes else ""))
 
 
-def write(results, path=None, title="TBT field trial", grades=None):
-    """Write the report and return its path. `grades` is grade.grade()'s result, if any."""
+def write(results, path=None, title="TBT field trial", grades=None, when=None):
+    """Write the report and return its path. `grades` is grade.grade()'s result, if any;
+    `when` dates the page (default now: pass the trial's time when re-writing a saved one)."""
     gmap = {(g["test"], g["rung"]): g for g in grades["runs"]} if grades else {}
     if not results:
         raise ValueError("no results to report")
     first = results[0]
     dut = first.get("dut", {}) or {}
     name = dut.get("name") or "unspecified device"
-    now = dt.datetime.now()
+    now = when or dt.datetime.now()
     if path is None:
         slug = re.sub(r"[^A-Za-z0-9]+", "-", name).strip("-").lower() or "dut"
         os.makedirs(REPORTS, exist_ok=True)

@@ -1,0 +1,9 @@
+{
+ "name": "Datavideo TBC-1000",
+ "suite": "20261025-003047_suite_datavideo-tbc-1000.json",
+ "class": "frame",
+ "when": "2026-10-25",
+ "runs": 83,
+ "score": 49.78870140801959,
+ "report": "re-written"
+}

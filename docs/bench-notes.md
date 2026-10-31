@@ -494,6 +494,43 @@ rms line jitter.
   B3 check "output sync as on V0" caught it (94–108 %). B2's one "damaged"
   line 10 (trial 2) fell in the same window. Worth watching its temperature.
 
+## Datavideo TBC-4000 (four inputs, 2026-10-28/31)
+
+- **Identified blind** (2026-10-28, `unknown-blind-2`): one field trial
+  showed TBC-3000 behaviour on every model trait, with a crystal (+1.1 to
+  +1.4 ppm against the input) matching no unit in the library. Called a
+  TBC-4000 from the planned list: correct. Forum posts describe it as two
+  TBC-3000s in one box; what we measured fits.
+- **One timing core, four front ends.** Each input was fingerprinted from 3
+  field trials, after a settings reset. The timing figures are the
+  TBC-3000's on every input; the picture figures differ per input, as on
+  the TBC-3000:
+
+  | | Input A | Input B | Input C | Input D |
+  |---|---|---|---|---|
+  | Output vs input | locked, +0.21 to +0.28 ppm | +0.58 to +0.63 ppm (just over the 0.5 limit: "free-running") | locked in 2 of 3, +0.17 to +1.1 ppm | |
+  | Hue | −3.9° | −2.5° | +0.7 to +0.9° | |
+  | Luma gain | ×0.988 | ×0.971 | ×0.962 | |
+  | Saturation | ×1.043 | ×1.017–1.019 | ×1.037–1.038 | |
+  | Output burst | 38.3 IRE | 35.4–36.4 IRE | 38.2 IRE | |
+  | Noise on gray | 0.19 IRE | 0.25–0.29 IRE | 0.46–0.50 IRE | |
+  | Correction bandwidth | 538–543 Hz | 532–543 Hz | 514–533 Hz | |
+  | Head-switch skew left (H4) | 62–63 ns | 62–64 ns | 62–64 ns | |
+  | Captions after lost fields (B1 r3) | first fields damaged | intact | first fields damaged | |
+  | L4 (120 % level) / C1 (ACC rungs) | fails / 1 of 4 | fails / 1 of 4 | passes / 2 of 4 | |
+  | Score (provisional) | 45–51 | 46–50 | 52–53 | |
+
+- **Locked output, unlike the TBC-3000** (which free-runs at +2.1 ppm).
+  Before the settings reset the blind trial read +1.1 to +1.4 ppm, so the
+  lock may be a setting; not yet checked against the manual.
+- **Captions split as on the TBC-3000:** after a signal loss inputs A and C
+  damage the first fields' captions, B keeps them (3000: A damaged, B
+  intact).
+- **Varies between trials:** H3 r5 (5 µs timing step: passes on A in 2 of
+  3, on B in 1 of 3, on C always), S6 r5, S8 r5 and B1 r2 on every input;
+  also S6 r6 on A and C, S4 r6 on A, S9 r4, S10 r3 and X1 r5 on B. Input C
+  is the steadiest (52.2–52.9).
+
 ## Pioneer DVR-220 on the calibrated rig (2026-10-24/25)
 
 - **Slow gain recovery after losing its input:** V0 gray 76.1 IRE 2 s after

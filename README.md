@@ -24,7 +24,7 @@ Measured hardware and toolchain facts (settling times, quirks, pitfalls) are in
 [docs/bench-notes.md](docs/bench-notes.md). Read it before changing the tools.
 Open work is in [TODO.md](TODO.md).
 
-## Status (2026-10-24)
+## Status (2026-10-31)
 
 | Area | State | Details |
 |---|---|---|
@@ -35,11 +35,11 @@ Open work is in [TODO.md](TODO.md).
 | Frame marker, manifest, capture runner | Done | The marker decodes through every TBC tested, and on the CH2 reference |
 | CH2 reference | Done | Each two-channel run checks its input, and measures latency, output lock and gain against the real input |
 | One-channel rigs | Supported | `--channels 1` needs only CH1 (one scope channel, no tee) |
-| Reports | Done | `--dut`/`--note` on every run; optional `--html` report; `compare_suites.py` lines field trials up |
+| Reports | Done | `--dut`/`--note` on every run; optional `--html` report; `compare_suites.py` lines field trials up; [sample reports](docs/samples/) for every device, viewable on GitHub |
 | Grader | Provisional | `tools/grade.py` (or `run_suite.py --grade`) grades every run, each test and the whole field trial. Thresholds not yet checked against a known-good TBC |
 | Line TBC or frame synchroniser | Done | H6 jitter sweep, jitter transfer and H3 step recovery, calibrated on four devices (see [docs/design.md](docs/design.md)) |
-| Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 6 entries for 5 devices (the TBC-3000 once per input), measured on the calibrated rig; the first entries are in `fingerprints/old-rig/` |
-| Identification | By hand | A blind test identified a TBC-3000 (and both its inputs) from the library; a tool for it (and for regression checks) is next |
+| Fingerprinting | Done | `tools/fingerprint.py`; `fingerprints/` holds 10 entries for 6 devices (the TBC-3000 and TBC-4000 once per input), measured on the calibrated rig; the first entries are in `fingerprints/old-rig/` |
+| Identification | By hand | Blind tests identified a TBC-3000 (and both its inputs) and a TBC-4000 from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
 | Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25) |
@@ -390,25 +390,25 @@ python3 tools/run_suite.py full --grade --html --cards   # adds ~2.8 min to a fu
 As with the title card, nothing is captured while a card shows, and the test
 pattern is restored before each test.
 
-## Sample report
+## Sample reports
 
-[docs/sample-report.html](docs/sample-report.html) is an early `--html`
-report (2026-10-13), from before CH2, grading and H6 existed. Today's reports
-add an input check, latency, grades and the line-TBC measurements;
-regenerating it is on the TODO. It is a field trial of 56 runs on a
-warmed-up green AVT-8710, covering one rung of every test, every
-rung of S10/S11, all five X1 stresses and V1. GitHub shows HTML files as
-source, so download it and open it in a browser. The page is self-contained.
+[docs/samples/](docs/samples/) holds one field trial of every device in the
+fingerprint library, one per input for the TBC-3000 and TBC-4000: the
+median-scoring trial of the three behind each fingerprint. Each comes two
+ways:
+- a **summary that GitHub renders** (`README.md`): setup, score, a grade
+  for every test and rung, the fault-test findings, and charts of the
+  output fields on V0 and on the hardest lost-field rung;
+- the **full report** (`report.html`), every run's card, which opens
+  through GitHub Pages.
 
-[![Top of the sample report: fault-test findings and the summary table](docs/sample-report.jpg)](docs/sample-report.html)
+GitHub shows HTML as source and strips inline SVG from Markdown, so the
+summaries carry the report's charts as separate SVG files.
+[docs/samples/README.md](docs/samples/README.md) explains the layout and
+how to make or refresh a sample with `tools/sample_report.py`.
 
-It was made with:
-
-```
-python3 tools/run_suite.py V0:1 H1:4 H2:3 H3:5 H4:5 H5:4 F1:3 F2:5 F3:2 S1:5 S2:3 S3:5 S4:3 S4:6 S5:1 \
-    S6:5 S6:6 S7:4 S8:5 S9:4 C1:3 C2:1 C3:3 C4:3 L1:4 L2:3 L3:3 L4:4 S10:all S11:all X1:all V1:1 \
-    --dut "AVT-8710 (green)" --note "..." --seconds 0.4 --html
-```
+A field trial is `python3 tools/run_suite.py full --grade --html --dut "..."`
+(83 runs, about 14 minutes).
 
 ## Fault tests and the fallback guard
 
@@ -502,7 +502,7 @@ same unit.
 the library that identification will match unknown TBCs against.
 `--html` writes a readable trait card to `reports/`.
 
-The library holds five devices so far (the TBC-3000 once per input).
+The library holds six devices so far (the TBC-3000 and TBC-4000 once per input).
 
 > **Every entry was re-measured on the calibrated rig** (2026-10-24/25):
 > CH1 terminated and the generator at nominal level. The first entries, from
@@ -693,6 +693,7 @@ It found the DMR-ES10's overheating colour fault (see
 | `tools/dwf_scope.py` | ADP2230 capture (`Scope` stays open; inputs settle once) |
 | `tools/observe_tbc.py` | TBC output report from a run (`analyze()` returns it as data); with CH2, the input check, latency and gain against the input (`compare_input()`) |
 | `tools/html_report.py` | the optional HTML reports (suites and the dropout watch) |
+| `tools/sample_report.py` | writes a saved field trial into `docs/samples/` as a GitHub-rendered summary plus the full report |
 | `tools/fingerprint.py` | builds a TBC's fingerprint (model traits, unit traits, variable behaviours) from several field trials |
 | `fingerprints/` | the fingerprint library, one JSON per unit or model |
 | `tools/cards.py` | the text cards shown between tests (`--cards`): layout and "watch" hints |

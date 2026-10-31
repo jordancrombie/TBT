@@ -1,0 +1,9 @@
+{
+ "name": "Datavideo TBC-3000 (input A)",
+ "suite": "20261024-180741_suite_datavideo-tbc-3000-input-a.json",
+ "class": "frame",
+ "when": "2026-10-24",
+ "runs": 83,
+ "score": 62.444425313743494,
+ "report": "re-written"
+}

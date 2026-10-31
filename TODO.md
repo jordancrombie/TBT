@@ -24,8 +24,8 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
       (`tools/sample_report.py`). It replaces the single 2026-10-13
       `docs/sample-report.html`. Regenerate every sample when the grader or
       the report changes.
-  - [ ] Turn on GitHub Pages (Settings → Pages → deploy from `main`,
-        folder `/docs`) so the full reports open as pages.
+  - [x] Turn on GitHub Pages (Settings → Pages → deploy from `main`,
+        folder `/docs`) so the full reports open as pages. Done 2026-10-31.
   - [ ] Keep each run's waveform in the suite JSON, so a re-written
         report (and the summary) can show it. Today only trials run with
         `--html` have them (the TBC-4000's).

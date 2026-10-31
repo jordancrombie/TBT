@@ -1,0 +1,9 @@
+{
+ "name": "AVT-8710 (green)",
+ "suite": "20261025-114542_suite_avt-8710-green.json",
+ "class": "frame",
+ "when": "2026-10-25",
+ "runs": 83,
+ "score": 39.50843663911846,
+ "report": "re-written"
+}

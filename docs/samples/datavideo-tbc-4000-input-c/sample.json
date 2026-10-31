@@ -1,0 +1,9 @@
+{
+ "name": "Datavideo TBC-4000 input C",
+ "suite": "20261031-112811_suite_datavideo-tbc-4000-input-c.json",
+ "class": "frame",
+ "when": "2026-10-31",
+ "runs": 83,
+ "score": 52.64223676155495,
+ "report": "original"
+}

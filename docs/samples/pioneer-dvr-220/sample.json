@@ -1,0 +1,9 @@
+{
+ "name": "Pioneer DVR-220",
+ "suite": "20261024-234257_suite_pioneer-dvr-220.json",
+ "class": "frame",
+ "when": "2026-10-24",
+ "runs": 83,
+ "score": 37.00814967860423,
+ "report": "re-written"
+}

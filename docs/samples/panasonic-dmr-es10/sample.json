@@ -1,0 +1,9 @@
+{
+ "name": "Panasonic DMR-ES10",
+ "suite": "20261024-205223_suite_panasonic-dmr-es10.json",
+ "class": "frame",
+ "when": "2026-10-24",
+ "runs": 83,
+ "score": 59.886459289868384,
+ "report": "re-written"
+}

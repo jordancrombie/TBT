@@ -29,10 +29,6 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
   - [ ] Keep each run's waveform in the suite JSON, so a re-written
         report (and the summary) can show it. Today only trials run with
         `--html` have them (the TBC-4000's).
-- [ ] **TBC-4000 output lock.** All four inputs lock to their input
-      (+0.08 to +0.31 ppm), where the TBC-3000 free-runs; the blind trial
-      before the settings reset read +1.1 to +1.4 ppm. Check the
-      manual for a lock or genlock setting, and test it both ways.
 
 ## Feature requests (ranked 2026-10-24)
 Scored for value against what the suite already covers.
@@ -112,7 +108,7 @@ Scored for value against what the suite already covers.
 
 ## Grader and fingerprints
 - [x] `tools/grade.py` with provisional thresholds (2026-10-14).
-- [x] Fingerprints and the library: 6 entries for 5 devices, all re-measured on the calibrated rig (2026-10-24/25); the first entries are in `fingerprints/old-rig/`.
+- [x] Fingerprints and the library: 10 entries for 6 devices (the TBC-3000 and TBC-4000 once per input), all on the calibrated rig (2026-10-24/31); the first entries are in `fingerprints/old-rig/`.
 - [x] Line TBC or frame synchroniser: H6, jitter transfer, H3 step recovery,
       and the timing class, calibrated on four devices (2026-10-23).
 - [ ] Check the thresholds and group weights against a known-good TBC.
@@ -142,6 +138,13 @@ Scored for value against what the suite already covers.
         (2026-10-23/24).
   - [ ] Find which control setting caused input B's step jolt (one
         control moved at a time).
+- **Datavideo TBC-4000**
+  - [x] Identified blind (2026-10-28); all four inputs fingerprinted
+        (2026-10-28/31), with a sample each in `docs/samples/`.
+  - [ ] **Output lock.** All four inputs lock to their input (+0.08 to
+        +0.31 ppm), where the TBC-3000 free-runs; the blind trial before the
+        settings reset read +1.1 to +1.4 ppm. Check the manual for a lock or
+        genlock setting, and test it both ways.
 - **Pioneer DVR-220**
   - [ ] One more field trial for its fingerprint (has 2).
   - [ ] Look at L3 (hum) and X1 r4 on the monitor. Are its saturation swings

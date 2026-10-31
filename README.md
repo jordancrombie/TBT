@@ -42,7 +42,7 @@ Open work is in [TODO.md](TODO.md).
 | Identification | By hand | Blind tests identified a TBC-3000 (and both its inputs) and a TBC-4000 from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25) |
+| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25); the TBC-4000 measured on it (2026-10-28/31) |
 
 Open work is in [TODO.md](TODO.md).
 

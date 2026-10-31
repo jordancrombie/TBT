@@ -488,6 +488,10 @@ model the firmware renders from.
    Datavideo TBC-3000, and both its inputs, against the library.
 8. **Phase 7, vertical blanking data (2026-10-24):** B1 captions and the B2
    VBI line map (issue #25); B3 AGC pulses and colour stripe (issue #27).
+   Every unit re-measured on the calibrated rig (2026-10-24/25).
+   A second blind test identified a Datavideo TBC-4000 (2026-10-28); all
+   four of its inputs fingerprinted, and a sample report per device and
+   input published in `docs/samples/` (2026-10-31).
 9. **Next:** an automatic identification and regression tool (the blind
    test's comparison, formalised).
 10. **Later:** H7 velocity error, and a tape program mode

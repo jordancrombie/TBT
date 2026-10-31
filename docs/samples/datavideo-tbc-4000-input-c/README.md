@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| Trial | 2026-10-31 11:28 · 83 runs · `20261031-112811_suite_datavideo-tbc-4000-input-c.json` |
+| Trial | 2026-10-31 14:16 · 83 runs · `20261031-141606_suite_datavideo-tbc-4000-input-c.json` |
 | Generator | firmware ntsc-gen 0.6.0 · levels 5 / 92 (sync / white code) · colour_under |
 | Graded as | frame TBC (provisional thresholds, [docs/design.md](../../design.md)) |
-| **Score** | **53 / 100** (B 78 · C 62 · F 33 · H 49 · L 65 · S 64 · V 0 · X 70) |
+| **Score** | **53 / 100** (B 72 · C 62 · F 33 · H 49 · L 65 · S 71 · V 0 · X 70) |
 | Fingerprint | [fingerprints/datavideo-tbc-4000-input-c.json](../../../fingerprints/datavideo-tbc-4000-input-c.json) |
 
 ### V0, every output field (clean input)
@@ -41,9 +41,9 @@
 | S1 | sync amplitude | rung 5: fail | r5❌ |
 | S2 | slow sync edges | rung 3: pass | r3✅ |
 | S3 | missing H syncs | rung 5: pass | r5✅ |
-| S4 | malformed vertical interval | 2 of 2 rungs passed | r3✅ r6🟡 |
+| S4 | malformed vertical interval | 1 of 2 rungs passed | r3✅ r6❌ |
 | S5 | progressive 240p | rung 1: pass | r1✅ |
-| S6 | line count per field | 0 of 2 rungs passed | r5❌ r6❌ |
+| S6 | line count per field | 2 of 2 rungs passed | r5✅ r6✅ |
 | S7 | dropped field | rung 4: fail | r4❌ |
 | S8 | field-length wow | rung 5: pass | r5✅ |
 | S9 | search noise bar | rung 4: pass | r4✅ |
@@ -57,7 +57,7 @@
 | L4 | video level | rung 4: pass | r4✅ |
 | S10 | lost fields (no signal) | passes up to rung 11 of 11 | r1🟡 r2🟡 r3🟡 r4🟡 r5✅ r6✅ r7✅ r8✅ r9✅ r10✅ r11✅ |
 | S11 | lost fields (snow) | passes up to rung 11 of 11 | r1🟡 r2🟡 r3🟡 r4🟡 r5🟡 r6🟡 r7🟡 r8🟡 r9🟡 r10🟡 r11🟡 |
-| B1 | captions (line 21) | passes up to rung 3 of 3 | r1✅ r2✅ r3🟡 |
+| B1 | captions (line 21) | passes up to rung 3 of 3 | r1✅ r2🟡 r3🟡 |
 | B2 | VBI line map | rung 1: marginal | r1🟡 |
 | B3 | AGC pulses (copy protection) | passes up to rung 3 of 3 | r1✅ r2✅ r3✅ |
 | X1 | fault hunt (stress, recovery) | 5 of 5 rungs passed | r1🟡 r2🟡 r3✅ r4✅ r5🟡 |

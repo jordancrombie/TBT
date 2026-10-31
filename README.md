@@ -42,7 +42,7 @@ Open work is in [TODO.md](TODO.md).
 | Identification | By hand | Blind tests identified a TBC-3000 (and both its inputs) and a TBC-4000 from the library; a tool for it (and for regression checks) is next |
 | Validation | Policy | [docs/validation.md](docs/validation.md): what to run before a merge, by what a change touches; regression field trials on a reference unit |
 | Watches | Done | `dropout_watch.py` (dead output) and `colour_watch.py` (colour and clock over time) |
-| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25) |
+| Rig calibration | Done | CH2 wired; CH1 terminated and the generator's levels calibrated (283 / 718 mV) on 2026-10-24. All five devices re-measured on it (2026-10-24/25); the TBC-4000 measured on it (2026-10-28/31) |
 
 Open work is in [TODO.md](TODO.md).
 
@@ -522,16 +522,16 @@ from how fast and how completely each one corrects line timing (see
 |---|---|---|---|---|---|---|
 | Measured on | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-25) | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-24) | **calibrated rig** (2026-10-28/31) |
 | Timing correction class | frame synchroniser (slow lock) | frame synchroniser (slow lock) | frame synchroniser (slow lock) | fast lock, no per-line correction | **line TBC** | frame synchroniser (slow lock) |
-| Correction bandwidth | 0.49 kHz | 0.53 / 0.52 kHz | 0.51 kHz | 3.6 kHz | above 8 kHz | 0.54 / 0.54 / 0.53 / 0.55 kHz |
-| Head-switch skew left (H4) | 63 ns | 66 / 58 ns | 60 ns | 9 ns | 2 ns | 62 / 63 / 63 / 64 ns |
+| Correction bandwidth | 0.49 kHz | 0.53 / 0.52 kHz | 0.51 kHz | 3.6 kHz | above 8 kHz | 0.54 / 0.52 / 0.54 / 0.55 kHz |
+| Head-switch skew left (H4) | 63 ns | 66 / 58 ns | 60 ns | 9 ns | 2 ns | 62 / 61 / 64 / 64 ns |
 | At a 5 µs timing step (H3) | no jolt | no jolt | 1 line jolted 1.1 µs | 1 line jolted 1.4 µs | no jolt | no jolt (fails in some trials on A, B and D) |
 | With no input at all | black | black | its own colour bars | black | no output | black |
 | Lost fields ridden through | ∞ | ∞ | 6, then its own bars | ∞, cleanly | ∞ with no signal; with snow its own picture shows at once | ∞ |
 | Colour killer | yes | yes | no | no | no | yes |
-| Output vs input | free-running, +22 ppm | free-running, +2.1 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−16 to +2 ppm) | locked (+0.1 to +0.3 ppm; B +0.6) |
-| Luma gain | ×0.83 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.02 | ×1.01 | ×0.99 / ×0.97 / ×0.96 / ×0.96 (hue −3.9° / −2.5° / +0.8° / +0.4°) |
-| Output noise / jitter (rig-dependent) | 0.36 IRE / 1.01 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.33 IRE / 0.64 ns | 0.40 IRE / 1.10 ns | 0.57 IRE / 0.99 ns | 0.19 / 0.26 / 0.48 / 0.42 IRE, 0.8–1.7 ns |
-| Field-trial score (provisional) | 50–52 | 62 / 49–54 | 38–40 | 30–41 | 60 | 45–51 / 46–50 / 52–53 / 50–54 |
+| Output vs input | free-running, +22 ppm | free-running, +2.1 ppm | free-running, +12 to +15 ppm | locked | free-running, wanders (−16 to +2 ppm) | locked (+0.1 to +0.3 ppm) |
+| Luma gain | ×0.83 | ×0.99 / ×0.94 (hue −1.3° / +3.1°) | ×0.99 | ×1.02 | ×1.01 | ×0.99 / ×0.97 / ×0.96 / ×0.96 (hue −3.9° / −2.6° / +0.4° / +0.4°) |
+| Output noise / jitter (rig-dependent) | 0.36 IRE / 1.01 ns | 0.20 / 0.42 IRE, 0.82 / 0.69 ns | 0.33 IRE / 0.64 ns | 0.40 IRE / 1.10 ns | 0.57 IRE / 0.99 ns | 0.19 / 0.22 / 0.43 / 0.42 IRE, 0.8–0.9 ns |
+| Field-trial score (provisional) | 50–52 | 62 / 49–54 | 38–40 | 30–41 | 60 | 45–51 / 46–52 / 51–54 / 50–54 |
 | Captions / VBI lines 10–20 (B1, B2) | intact, in step; first fields after a loss damaged / blanked | intact; after a signal loss A damages 1–2 fields, B none / blanked | **stripped** / blanked | intact, but line 21 slips against the picture / lines 10–19 blanked, line 20 carries its stray copy of our frame marker | intact, but line 21 slips between in step and a frame ahead of the picture; first fields after a loss damaged / blanked | intact; after a signal loss A, C and D damage the first fields, B none / blanked |
 | Copy protection: AGC pulses / colour stripe (B3) | removed, not blinded / removed | removed, not blinded / removed | removed, not blinded / removed | **blinded**: picture darkens 21 % and keeps falling; also replaces ours with its own (−56 / up to +151 IRE, AGC cycling) and cuts sync to 75 % / removed | replaced with its own (−54 / +154 IRE on lines 10–17, sync cut to 75 %), picture not affected / passed | removed, not blinded / removed |
 

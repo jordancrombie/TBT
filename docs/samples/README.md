@@ -15,6 +15,7 @@ run, not the best one.
 | [Datavideo TBC-4000 input A](datavideo-tbc-4000-input-a/README.md) | 49 | 2026-10-28 | 83 | [open](https://jordancrombie.github.io/TBT/samples/datavideo-tbc-4000-input-a/report.html) |
 | [Datavideo TBC-4000 input B](datavideo-tbc-4000-input-b/README.md) | 47 | 2026-10-28 | 83 | [open](https://jordancrombie.github.io/TBT/samples/datavideo-tbc-4000-input-b/report.html) |
 | [Datavideo TBC-4000 input C](datavideo-tbc-4000-input-c/README.md) | 53 | 2026-10-31 | 83 | [open](https://jordancrombie.github.io/TBT/samples/datavideo-tbc-4000-input-c/report.html) |
+| [Datavideo TBC-4000 input D](datavideo-tbc-4000-input-d/README.md) | 52 | 2026-10-31 | 83 | [open](https://jordancrombie.github.io/TBT/samples/datavideo-tbc-4000-input-d/report.html) |
 | [Panasonic DMR-ES10](panasonic-dmr-es10/README.md) | 60 | 2026-10-24 | 83 | [open](https://jordancrombie.github.io/TBT/samples/panasonic-dmr-es10/report.html) |
 | [Pioneer DVR-220](pioneer-dvr-220/README.md) | 37 | 2026-10-24 | 83 | [open](https://jordancrombie.github.io/TBT/samples/pioneer-dvr-220/report.html) |
 <!-- samples:end -->

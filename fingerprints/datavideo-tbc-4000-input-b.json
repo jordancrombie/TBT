@@ -1,33 +1,33 @@
 {
  "schema": "tbt-fingerprint/1",
  "name": "Datavideo TBC-4000 input B",
- "notes": "after power-distro reset 2026-10-28: CH2 (generator line) shows fast spiky noise, ~9 mV rms on sync tip, input H jitter 47-90 ns; run at user request",
- "created": "2026-10-29 00:08",
+ "notes": "",
+ "created": "2026-10-31 13:28",
  "trials": [
   {
-   "trial": "20261028-234107",
+   "trial": "20261031-125949",
    "channels": 2,
    "runs": 83,
-   "score": 46.5
+   "score": 49.9
   },
   {
-   "trial": "20261028-235447",
-   "channels": 2,
-   "runs": 83,
-   "score": 50.2
-  },
-  {
-   "trial": "20261029-000830",
+   "trial": "20261031-131359",
    "channels": 2,
    "runs": 83,
    "score": 46.1
+  },
+  {
+   "trial": "20261031-132808",
+   "channels": 2,
+   "runs": 83,
+   "score": 51.8
   }
  ],
  "score": {
-  "median": 46.5,
+  "median": 49.9,
   "range": [
    46.1,
-   50.2
+   51.8
   ]
  },
  "traits": {
@@ -36,7 +36,7 @@
    "label": "Output locked to its input",
    "unit": "",
    "n": 3,
-   "value": "free-running",
+   "value": "locked",
    "agree": 1.0
   },
   "no_signal_output": {
@@ -148,11 +148,11 @@
    "label": "Slow timing correction (H2, H3, F1)",
    "unit": "",
    "n": 3,
-   "value": "partial",
+   "value": "corrects",
    "agree": 0.67,
    "seen": {
-    "partial": 2,
-    "corrects": 1
+    "corrects": 2,
+    "partial": 1
    }
   },
   "progressive_240p": {
@@ -248,10 +248,10 @@
    "label": "Output line rate vs input",
    "unit": "ppm",
    "n": 3,
-   "value": 0.6,
+   "value": 0.16,
    "range": [
-    0.58,
-    0.63
+    0.08,
+    0.25
    ],
    "agree": null
   },
@@ -261,8 +261,8 @@
    "unit": "ms",
    "n": 3,
    "value": [
-    0.58,
-    32.83
+    1.81,
+    30.77
    ],
    "agree": null
   },
@@ -271,10 +271,10 @@
    "label": "Luma gain (V0, gray out / in)",
    "unit": "×",
    "n": 3,
-   "value": 0.971,
+   "value": 0.972,
    "range": [
     0.971,
-    0.971
+    0.972
    ],
    "agree": null
   },
@@ -283,10 +283,10 @@
    "label": "Saturation (V0, chroma/burst out ÷ in)",
    "unit": "×",
    "n": 3,
-   "value": 1.017,
+   "value": 1.029,
    "range": [
-    1.016,
-    1.019
+    1.029,
+    1.03
    ],
    "agree": null
   },
@@ -295,10 +295,10 @@
    "label": "Hue offset (V0, out − in)",
    "unit": "°",
    "n": 3,
-   "value": -2.5,
+   "value": -2.6,
    "range": [
-    -2.5,
-    -2.5
+    -2.6,
+    -2.6
    ],
    "agree": null
   },
@@ -307,10 +307,10 @@
    "label": "Output burst (V0)",
    "unit": "IRE p-p",
    "n": 3,
-   "value": 36.0,
+   "value": 38.1,
    "range": [
-    35.4,
-    36.4
+    38.1,
+    38.1
    ],
    "agree": null
   },
@@ -319,10 +319,10 @@
    "label": "ACC fraction (0 none, 1 full)",
    "unit": "",
    "n": 3,
-   "value": 0.36,
+   "value": 0.35,
    "range": [
-    0.36,
-    0.36
+    0.35,
+    0.35
    ],
    "agree": null
   },
@@ -343,10 +343,10 @@
    "label": "Timing-correction bandwidth (H1, CH2)",
    "unit": "Hz",
    "n": 3,
-   "value": 537,
+   "value": 517,
    "range": [
-    532,
-    543
+    508,
+    547
    ],
    "agree": null
   },
@@ -367,10 +367,10 @@
    "label": "Head-switch skew left (H4 r5, over V0)",
    "unit": "ns rms",
    "n": 3,
-   "value": 62.7,
+   "value": 61.3,
    "range": [
-    61.8,
-    64.4
+    60.3,
+    61.8
    ],
    "agree": null
   },
@@ -391,7 +391,7 @@
    "label": "Jitter passed at 3 kHz (H6 r4)",
    "unit": "%",
    "n": 3,
-   "value": 121,
+   "value": 122,
    "range": [
     121,
     122
@@ -403,10 +403,10 @@
    "label": "Caption data level (B1, out ÷ in)",
    "unit": "×",
    "n": 3,
-   "value": 0.98,
+   "value": 0.982,
    "range": [
-    0.979,
-    0.981
+    0.982,
+    0.982
    ],
    "agree": null
   },
@@ -435,10 +435,10 @@
    "label": "Output sync depth (V0; depends on termination)",
    "unit": "V",
    "n": 3,
-   "value": 0.298,
+   "value": 0.302,
    "range": [
-    0.298,
-    0.298
+    0.302,
+    0.303
    ],
    "agree": null
   },
@@ -447,10 +447,10 @@
    "label": "Output H jitter (V0; scope floor, depends on termination)",
    "unit": "ns rms",
    "n": 3,
-   "value": 1.68,
+   "value": 0.8,
    "range": [
-    0.97,
-    1.88
+    0.79,
+    0.81
    ],
    "agree": null
   },
@@ -459,10 +459,10 @@
    "label": "Output noise on gray (V0; scope floor, depends on termination)",
    "unit": "IRE rms",
    "n": 3,
-   "value": 0.26,
+   "value": 0.22,
    "range": [
-    0.25,
-    0.29
+    0.22,
+    0.22
    ],
    "agree": null
   }
@@ -473,14 +473,24 @@
    "rung": 5,
    "trials": 3,
    "verdicts": {
-    "fail": 2,
-    "pass": 1
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "S4",
+   "rung": 6,
+   "trials": 3,
+   "verdicts": {
+    "fail": 1,
+    "marginal": 2
    },
    "pass_rate": 0.33
   },
   {
    "test": "S6",
-   "rung": 5,
+   "rung": 6,
    "trials": 3,
    "verdicts": {
     "pass": 2,
@@ -495,36 +505,6 @@
    "verdicts": {
     "fail": 1,
     "pass": 2
-   },
-   "pass_rate": 0.67
-  },
-  {
-   "test": "S9",
-   "rung": 4,
-   "trials": 3,
-   "verdicts": {
-    "pass": 2,
-    "fail": 1
-   },
-   "pass_rate": 0.67
-  },
-  {
-   "test": "S10",
-   "rung": 3,
-   "trials": 3,
-   "verdicts": {
-    "marginal": 2,
-    "pass": 1
-   },
-   "pass_rate": 0.67
-  },
-  {
-   "test": "B1",
-   "rung": 2,
-   "trials": 3,
-   "verdicts": {
-    "pass": 1,
-    "marginal": 2
    },
    "pass_rate": 0.67
   },

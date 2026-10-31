@@ -29,9 +29,9 @@ live in [docs/bench-notes.md](docs/bench-notes.md).
   - [ ] Keep each run's waveform in the suite JSON, so a re-written
         report (and the summary) can show it. Today only trials run with
         `--html` have them (the TBC-4000's).
-- [ ] **TBC-4000 output lock.** All four inputs lock to their input (or sit
-      just over the 0.5 ppm limit), where the TBC-3000 free-runs; the blind
-      trial before the settings reset read +1.1 to +1.4 ppm. Check the
+- [ ] **TBC-4000 output lock.** All four inputs lock to their input
+      (+0.08 to +0.31 ppm), where the TBC-3000 free-runs; the blind trial
+      before the settings reset read +1.1 to +1.4 ppm. Check the
       manual for a lock or genlock setting, and test it both ways.
 
 ## Feature requests (ranked 2026-10-24)

@@ -4,10 +4,10 @@
 
 | | |
 |---|---|
-| Trial | 2026-10-28 23:41 · 83 runs · `20261028-234107_suite_datavideo-tbc-4000-input-b.json` |
+| Trial | 2026-10-31 12:59 · 83 runs · `20261031-125949_suite_datavideo-tbc-4000-input-b.json` |
 | Generator | firmware ntsc-gen 0.6.0 · levels 5 / 92 (sync / white code) · colour_under |
 | Graded as | frame TBC (provisional thresholds, [docs/design.md](../../design.md)) |
-| **Score** | **47 / 100** (B 83 · C 56 · F 33 · H 32 · L 40 · S 62 · V 0 · X 80) |
+| **Score** | **50 / 100** (B 83 · C 56 · F 33 · H 49 · L 40 · S 57 · V 0 · X 80) |
 | Fingerprint | [fingerprints/datavideo-tbc-4000-input-b.json](../../../fingerprints/datavideo-tbc-4000-input-b.json) |
 
 ### V0, every output field (clean input)
@@ -31,7 +31,7 @@
 | V0 | clean baseline | rung 1: fail | r1❌ |
 | H1 | random line jitter | passes up to rung 2 of 6 | r1✅ r2✅ r3❌ r4❌ r5❌ r6❌ |
 | H2 | sinusoidal jitter | rung 3: pass | r3✅ |
-| H3 | timing step | rung 5: fail | r5❌ |
+| H3 | timing step | rung 5: pass | r5✅ |
 | H4 | head-switch skew | rung 5: fail | r5❌ |
 | H5 | displaced single line | rung 4: fail | r4❌ |
 | H6 | jitter frequency sweep | 4 of 5 rungs passed | r1✅ r2✅ r3❌ r4🟡 r5🟡 |
@@ -43,7 +43,7 @@
 | S3 | missing H syncs | rung 5: pass | r5✅ |
 | S4 | malformed vertical interval | 1 of 2 rungs passed | r3✅ r6❌ |
 | S5 | progressive 240p | rung 1: pass | r1✅ |
-| S6 | line count per field | 2 of 2 rungs passed | r5✅ r6✅ |
+| S6 | line count per field | 1 of 2 rungs passed | r5❌ r6✅ |
 | S7 | dropped field | rung 4: fail | r4❌ |
 | S8 | field-length wow | rung 5: fail | r5❌ |
 | S9 | search noise bar | rung 4: pass | r4✅ |

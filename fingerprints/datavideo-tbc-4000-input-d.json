@@ -1,0 +1,522 @@
+{
+ "schema": "tbt-fingerprint/1",
+ "name": "Datavideo TBC-4000 input D",
+ "notes": "",
+ "created": "2026-10-31 12:24",
+ "trials": [
+  {
+   "trial": "20261031-115533",
+   "channels": 2,
+   "runs": 83,
+   "score": 51.9
+  },
+  {
+   "trial": "20261031-120942",
+   "channels": 2,
+   "runs": 83,
+   "score": 53.7
+  },
+  {
+   "trial": "20261031-122349",
+   "channels": 2,
+   "runs": 83,
+   "score": 49.6
+  }
+ ],
+ "score": {
+  "median": 51.9,
+  "range": [
+   49.6,
+   53.7
+  ]
+ },
+ "traits": {
+  "output_lock": {
+   "kind": "model",
+   "label": "Output locked to its input",
+   "unit": "",
+   "n": 3,
+   "value": "locked",
+   "agree": 1.0
+  },
+  "no_signal_output": {
+   "kind": "model",
+   "label": "With no input at all (V1)",
+   "unit": "",
+   "n": 3,
+   "value": "black",
+   "agree": 1.0
+  },
+  "lost_fields_no_signal": {
+   "kind": "model",
+   "label": "Lost fields ridden through, no signal (S10)",
+   "unit": "fields",
+   "n": 3,
+   "value": 11,
+   "range": [
+    11,
+    11
+   ],
+   "agree": 1.0
+  },
+  "lost_fields_snow": {
+   "kind": "model",
+   "label": "Lost fields ridden through, snow (S11)",
+   "unit": "fields",
+   "n": 3,
+   "value": 11,
+   "range": [
+    11,
+    11
+   ],
+   "agree": 1.0
+  },
+  "gap_shows_as": {
+   "kind": "model",
+   "label": "A lost-field gap shows as",
+   "unit": "",
+   "n": 3,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "colour_killer": {
+   "kind": "model",
+   "label": "Colour killer (C2)",
+   "unit": "",
+   "n": 3,
+   "value": "yes",
+   "agree": 1.0
+  },
+  "acc": {
+   "kind": "model",
+   "label": "Automatic colour control (C1, 10 IRE burst)",
+   "unit": "",
+   "n": 3,
+   "value": "partial",
+   "agree": 1.0
+  },
+  "chroma_phase_correction": {
+   "kind": "model",
+   "label": "Per-line chroma phase correction (C3)",
+   "unit": "",
+   "n": 3,
+   "value": "no",
+   "agree": 1.0
+  },
+  "line_jitter_correction": {
+   "kind": "model",
+   "label": "Random line-jitter correction (H1, 50 ns rms)",
+   "unit": "",
+   "n": 3,
+   "value": "none",
+   "agree": 1.0
+  },
+  "head_switch_correction": {
+   "kind": "model",
+   "label": "Head-switch skew correction (H4, 10 µs)",
+   "unit": "",
+   "n": 3,
+   "value": "passes it through",
+   "agree": 1.0
+  },
+  "timing_class": {
+   "kind": "model",
+   "label": "Timing correction class",
+   "unit": "",
+   "n": 3,
+   "value": "frame synchroniser (slow lock)",
+   "agree": 1.0
+  },
+  "fast_timing_correction": {
+   "kind": "model",
+   "label": "Corrects timing changes at 1 kHz (H6 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "no",
+   "agree": 1.0
+  },
+  "step_recovery": {
+   "kind": "model",
+   "label": "After a timing step (H3)",
+   "unit": "",
+   "n": 3,
+   "value": "no visible disturbance",
+   "agree": 1.0
+  },
+  "slow_timing_correction": {
+   "kind": "model",
+   "label": "Slow timing correction (H2, H3, F1)",
+   "unit": "",
+   "n": 3,
+   "value": "corrects",
+   "agree": 0.67,
+   "seen": {
+    "corrects": 2,
+    "partial": 1
+   }
+  },
+  "progressive_240p": {
+   "kind": "model",
+   "label": "240p input (S5)",
+   "unit": "",
+   "n": 3,
+   "value": "converted to standard fields",
+   "agree": 1.0
+  },
+  "no_vsync_position": {
+   "kind": "model",
+   "label": "Picture with no V-sync (S4 r6)",
+   "unit": "",
+   "n": 3,
+   "value": "drops lower",
+   "agree": 1.0
+  },
+  "hum_clamp": {
+   "kind": "model",
+   "label": "Hum clamped (L3, 20 IRE)",
+   "unit": "",
+   "n": 3,
+   "value": "yes",
+   "agree": 1.0
+  },
+  "level_control": {
+   "kind": "model",
+   "label": "Level control (L4, 120 %)",
+   "unit": "",
+   "n": 3,
+   "value": "passes the level",
+   "agree": 1.0
+  },
+  "captions": {
+   "kind": "model",
+   "label": "Line 21 captions (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "passed intact",
+   "agree": 1.0
+  },
+  "captions_after_loss": {
+   "kind": "model",
+   "label": "Captions around lost fields (B1 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "first fields damaged",
+   "agree": 1.0
+  },
+  "captions_in_step": {
+   "kind": "model",
+   "label": "Captions in step with the picture (B1)",
+   "unit": "",
+   "n": 3,
+   "value": "in step",
+   "agree": 1.0
+  },
+  "vbi_lines": {
+   "kind": "model",
+   "label": "VBI lines 10-20 (B2)",
+   "unit": "",
+   "n": 3,
+   "value": "blanked",
+   "agree": 1.0
+  },
+  "agc_pulses": {
+   "kind": "model",
+   "label": "AGC copy-protection pulses (B3)",
+   "unit": "",
+   "n": 3,
+   "value": "stripped",
+   "agree": 1.0
+  },
+  "agc_blinded": {
+   "kind": "model",
+   "label": "Blinded by AGC pulses (B3 r2)",
+   "unit": "",
+   "n": 3,
+   "value": "no",
+   "agree": 1.0
+  },
+  "colour_stripe": {
+   "kind": "model",
+   "label": "Colour stripe (B3 r3)",
+   "unit": "",
+   "n": 3,
+   "value": "removed",
+   "agree": 1.0
+  },
+  "rate_ppm": {
+   "kind": "unit",
+   "label": "Output line rate vs input",
+   "unit": "ppm",
+   "n": 3,
+   "value": 0.11,
+   "range": [
+    0.1,
+    0.15
+   ],
+   "agree": null
+  },
+  "latency_ms": {
+   "kind": "unit",
+   "label": "Latency, range seen",
+   "unit": "ms",
+   "n": 3,
+   "value": [
+    0.45,
+    32.65
+   ],
+   "agree": null
+  },
+  "luma_gain": {
+   "kind": "unit",
+   "label": "Luma gain (V0, gray out / in)",
+   "unit": "×",
+   "n": 3,
+   "value": 0.957,
+   "range": [
+    0.957,
+    0.958
+   ],
+   "agree": null
+  },
+  "saturation_ratio": {
+   "kind": "unit",
+   "label": "Saturation (V0, chroma/burst out ÷ in)",
+   "unit": "×",
+   "n": 3,
+   "value": 1.036,
+   "range": [
+    1.035,
+    1.036
+   ],
+   "agree": null
+  },
+  "hue_offset_deg": {
+   "kind": "unit",
+   "label": "Hue offset (V0, out − in)",
+   "unit": "°",
+   "n": 3,
+   "value": 0.4,
+   "range": [
+    0.4,
+    0.4
+   ],
+   "agree": null
+  },
+  "burst_out_ire": {
+   "kind": "unit",
+   "label": "Output burst (V0)",
+   "unit": "IRE p-p",
+   "n": 3,
+   "value": 38.2,
+   "range": [
+    38.1,
+    38.2
+   ],
+   "agree": null
+  },
+  "acc_fraction": {
+   "kind": "unit",
+   "label": "ACC fraction (0 none, 1 full)",
+   "unit": "",
+   "n": 3,
+   "value": 0.39,
+   "range": [
+    0.39,
+    0.39
+   ],
+   "agree": null
+  },
+  "jitter_correction_db": {
+   "kind": "unit",
+   "label": "H1 r4 correction (input ÷ residual)",
+   "unit": "dB",
+   "n": 3,
+   "value": -1.3,
+   "range": [
+    -1.3,
+    -1.2
+   ],
+   "agree": null
+  },
+  "correction_bandwidth_hz": {
+   "kind": "unit",
+   "label": "Timing-correction bandwidth (H1, CH2)",
+   "unit": "Hz",
+   "n": 3,
+   "value": 547,
+   "range": [
+    541,
+    548
+   ],
+   "agree": null
+  },
+  "near_line_rate_passed": {
+   "kind": "unit",
+   "label": "Jitter passed at 4-8 kHz (H1, CH2)",
+   "unit": "%",
+   "n": 3,
+   "value": 114,
+   "range": [
+    113,
+    115
+   ],
+   "agree": null
+  },
+  "h4_residual_ns": {
+   "kind": "unit",
+   "label": "Head-switch skew left (H4 r5, over V0)",
+   "unit": "ns rms",
+   "n": 3,
+   "value": 63.7,
+   "range": [
+    63.1,
+    64.8
+   ],
+   "agree": null
+  },
+  "h6_passed_1k": {
+   "kind": "unit",
+   "label": "Jitter passed at 1 kHz (H6 r3)",
+   "unit": "%",
+   "n": 3,
+   "value": 87,
+   "range": [
+    87,
+    87
+   ],
+   "agree": null
+  },
+  "h6_passed_3k": {
+   "kind": "unit",
+   "label": "Jitter passed at 3 kHz (H6 r4)",
+   "unit": "%",
+   "n": 3,
+   "value": 122,
+   "range": [
+    122,
+    122
+   ],
+   "agree": null
+  },
+  "caption_gain": {
+   "kind": "unit",
+   "label": "Caption data level (B1, out ÷ in)",
+   "unit": "×",
+   "n": 3,
+   "value": 0.975,
+   "range": [
+    0.975,
+    0.977
+   ],
+   "agree": null
+  },
+  "ch1_termination": {
+   "kind": "rig",
+   "label": "CH1 (TBC output) termination, from its sync depth",
+   "unit": "",
+   "n": 3,
+   "value": "75 ohm (terminated)",
+   "agree": 1.0
+  },
+  "input_sync_v": {
+   "kind": "rig",
+   "label": "Generator sync into the TBC (V0, CH2; nominal 0.286)",
+   "unit": "V",
+   "n": 3,
+   "value": 0.282,
+   "range": [
+    0.282,
+    0.282
+   ],
+   "agree": null
+  },
+  "sync_depth_v": {
+   "kind": "rig",
+   "label": "Output sync depth (V0; depends on termination)",
+   "unit": "V",
+   "n": 3,
+   "value": 0.289,
+   "range": [
+    0.289,
+    0.29
+   ],
+   "agree": null
+  },
+  "output_jitter_ns": {
+   "kind": "rig",
+   "label": "Output H jitter (V0; scope floor, depends on termination)",
+   "unit": "ns rms",
+   "n": 3,
+   "value": 0.84,
+   "range": [
+    0.82,
+    0.84
+   ],
+   "agree": null
+  },
+  "noise_out_ire": {
+   "kind": "rig",
+   "label": "Output noise on gray (V0; scope floor, depends on termination)",
+   "unit": "IRE rms",
+   "n": 3,
+   "value": 0.42,
+   "range": [
+    0.41,
+    0.42
+   ],
+   "agree": null
+  }
+ },
+ "variable": [
+  {
+   "test": "H3",
+   "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "S4",
+   "rung": 6,
+   "trials": 3,
+   "verdicts": {
+    "marginal": 2,
+    "fail": 1
+   },
+   "pass_rate": 0.33
+  },
+  {
+   "test": "S6",
+   "rung": 6,
+   "trials": 3,
+   "verdicts": {
+    "fail": 1,
+    "pass": 2
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "S8",
+   "rung": 5,
+   "trials": 3,
+   "verdicts": {
+    "fail": 1,
+    "pass": 2
+   },
+   "pass_rate": 0.67
+  },
+  {
+   "test": "B1",
+   "rung": 2,
+   "trials": 3,
+   "verdicts": {
+    "pass": 2,
+    "marginal": 1
+   },
+   "pass_rate": 0.83
+  }
+ ]
+}
